@@ -92,7 +92,7 @@ checkTile('assets/sidewalk.png', 'sidewalk strip', 'x');
 // Load everything the lots can reference, so the click-target checks below
 // measure the real thing rather than an empty scene.
 const SPRITES = new Map<string, Bitmap>();
-for (const name of ['grass','road','sidewalk','house1','weed1','weed2','weed3','trash-green','trash-brown']) {
+for (const name of ['grass','road','sidewalk','house1','house2','house3','house4','house5','house6','fence1','fence2','fence3','weed1','weed2','weed3','trash-green','trash-brown']) {
   for (const ext of ['png','jpg']) {
     const path = `assets/${name}.${ext}`;
     if (!existsSync(path)) continue;
@@ -110,6 +110,7 @@ for (const name of ['grass','road','sidewalk','house1','weed1','weed2','weed3','
 }
 for (const name of ['grass','road','sidewalk','house1'])
   if (!SPRITES.has(name)) fail(`required asset "${name}" is missing from assets/`);
+
 
 // A house sprite with no alpha relies on its baked lawn matching the grass
 // tile. Measure that rather than trusting it — a drift here shows as a
@@ -183,6 +184,12 @@ function checkAnchorSurfaces(houseId: string, used: Set<string>): void {
     const a = table[name];
     if (!want || !a) continue;
     const report = used.has(name) ? fail : warn;
+    if (want === 'attach') {
+      // Must sit against the right side of the house, not out in the yard.
+      if (a.hx < 0.75 || a.hx > 0.99)
+        report(`${houseId}: anchor ${name} at hx ${a.hx} is not against the house's right wall.`);
+      continue;
+    }
     if (want === 'road') {
       // Below the house sprite entirely — checked by position, not by pixel.
       if (a.hy <= 1.0)
@@ -203,6 +210,16 @@ function checkAnchorSurfaces(houseId: string, used: Set<string>): void {
       );
   }
 }
+
+// Check EVERY house that has both art and an anchor table, not just the ones a
+// lot happens to route to today. A table authored now and first used in ten
+// days is exactly the one that will be wrong and unnoticed.
+//
+// Placed here, below the helpers: fail/warn and surfaceChecked are const, so
+// calling this any earlier dies in the temporal dead zone before validating
+// anything — which is how a validator ends up silently passing.
+for (const hid of Object.keys((housesData as any).houses ?? {}))
+  if (SPRITES.has(hid)) checkAnchorSurfaces(hid, new Set());
 
 // --- Days and lots --------------------------------------------------------
 for (const day of DAYS) {

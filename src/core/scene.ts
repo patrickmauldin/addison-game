@@ -103,7 +103,7 @@ export type AnchorTable = Record<string, Anchor>;
  * and fail the build instead. `road` anchors sit below the house sprite
  * entirely, so they are checked by position rather than by pixel.
  */
-export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road'> = {
+export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road' | 'attach'> = {
   DRIVEWAY_1: 'paving', DRIVEWAY_2: 'paving', DRIVEWAY_3: 'paving',
   APRON_1: 'paving', APRON_2: 'paving',
   WALK_1: 'paving', PORCH_1: 'paving',
@@ -111,6 +111,10 @@ export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road'>
   YARD_4: 'grass', YARD_5: 'grass', YARD_6: 'grass',
   BED_FRONT: 'bed',
   CURB_1: 'road', CURB_2: 'road',
+  // The fence ATTACHES to the house's right wall rather than standing on a
+  // surface, so it is checked by position, not by the pixel under it. Requiring
+  // grass here pushed it off the wall and left a gap.
+  FENCE_1: 'attach',
 };
 
 /**
@@ -150,6 +154,12 @@ export const DEFAULT_ANCHORS: AnchorTable = {
   // road starts at hy 1.086; these sit just into it.
   CURB_1: { hx: 0.40, hy: 1.13 },
   CURB_2: { hx: 0.51, hy: 1.13 },
+  /**
+   * Side-yard fence, on the clean (right) side of every plan. Left-aligned
+   * rather than centred, so the panel's end post meets the wall instead of
+   * straddling it — see PropSpec.align.
+   */
+  FENCE_1: { hx: 0.960, hy: 0.604 },
 };
 
 /**

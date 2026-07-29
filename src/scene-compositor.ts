@@ -26,6 +26,13 @@ export type PropSpec = {
   label: string;
   /** Draw scale relative to the house scale. 1 = same world scale. */
   scale?: number;
+  /**
+   * Horizontal alignment of the sprite on its anchor. Default 'center' suits
+   * anything standing on a spot — a bin, a weed patch. 'left' suits anything
+   * that BUTTS something: a fence panel running back from the house wall wants
+   * its end post on the anchor, not its middle.
+   */
+  align?: 'center' | 'left' | 'right';
   first_seen?: string;
   flaggable?: boolean;
 };
@@ -226,8 +233,10 @@ export function renderLot(
     const s = L.scale * (p.scale ?? 1);
     const w = Math.max(1, Math.round(spr.w * s));
     const h = Math.max(1, Math.round(spr.h * s));
-    // Anchors mark where a prop MEETS THE GROUND, so sprites are bottom-centred.
-    blitScaled(r, spr, Math.round(a.x - w / 2), Math.round(a.y - h), w, h, false);
+    // Anchors mark where a prop MEETS THE GROUND, so sprites are bottom-aligned
+    // vertically; horizontally they follow p.align.
+    const ax = p.align === 'left' ? a.x : p.align === 'right' ? a.x - w : a.x - w / 2;
+    blitScaled(r, spr, Math.round(ax), Math.round(a.y - h), w, h, false);
   }
 
   return { raster: r, objects, byKey, layout: L };

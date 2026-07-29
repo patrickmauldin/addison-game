@@ -84,7 +84,9 @@ async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Ui
 }
 
 const ASSET_FILES = [
-  'grass', 'road', 'sidewalk', 'house1',
+  'grass', 'road', 'sidewalk',
+  'house1', 'house2', 'house3', 'house4', 'house5', 'house6',
+  'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
 ];
 

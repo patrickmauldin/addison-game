@@ -9,7 +9,8 @@
     "simulate": "npx esbuild tools/simulate.ts --bundle --platform=node --outfile=dist/simulate.cjs --loader:.json=json --log-level=warning && node dist/simulate.cjs",
     "typecheck": "tsc --noEmit",
     "serve": "python3 -m http.server 8123",
-    "ingest": "npx esbuild tools/ingest.ts --bundle --platform=node --outfile=dist/ingest.cjs --loader:.json=json --log-level=warning && node dist/ingest.cjs"
+    "ingest": "npx esbuild tools/ingest.ts --bundle --platform=node --outfile=dist/ingest.cjs --loader:.json=json --log-level=warning && node dist/ingest.cjs",
+    "map-houses": "npx esbuild tools/map-houses.ts --bundle --platform=node --outfile=dist/map-houses.cjs --loader:.json=json --log-level=warning && node dist/map-houses.cjs"
   },
   "keywords": [],
   "author": "",
