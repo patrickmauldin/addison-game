@@ -91,12 +91,37 @@ export function layout(w: number, h: number): Layout {
   };
 }
 
+export type Anchor = { hx: number; hy: number };
+export type AnchorTable = Record<string, Anchor>;
+
 /**
- * Anchors, expressed relative to the house so props stay put as the house
- * scales. `hx` and `hy` are fractions of the house rect; a prop at hy > 1 sits
- * below the house, in the front yard.
+ * What surface an anchor is REQUIRED to sit on.
+ *
+ * This is the contract that makes per-house overrides safe. A driveway anchor
+ * on a plan whose driveway is on the other side would silently park a truck on
+ * the lawn; declaring the requirement lets the validator sample the house art
+ * and fail the build instead. `road` anchors sit below the house sprite
+ * entirely, so they are checked by position rather than by pixel.
  */
-export const ANCHORS: Record<string, { hx: number; hy: number }> = {
+export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road'> = {
+  DRIVEWAY_1: 'paving', DRIVEWAY_2: 'paving', DRIVEWAY_3: 'paving',
+  APRON_1: 'paving', APRON_2: 'paving',
+  WALK_1: 'paving', PORCH_1: 'paving',
+  YARD_1: 'grass', YARD_2: 'grass', YARD_3: 'grass',
+  YARD_4: 'grass', YARD_5: 'grass', YARD_6: 'grass',
+  BED_FRONT: 'bed',
+  CURB_1: 'road', CURB_2: 'road',
+};
+
+/**
+ * Default anchors, relative to the house rect so props hold position as the
+ * house scales. `hx`/`hy` are fractions; hy > 1 is below the house sprite.
+ *
+ * These are FALLBACKS. Any house whose floor plan differs — driveway on the
+ * left, a walk that reaches the sidewalk, a deeper setback — overrides the
+ * anchors that moved in src/data/houses.json and inherits the rest.
+ */
+export const DEFAULT_ANCHORS: AnchorTable = {
   DRIVEWAY_1: { hx: 0.74, hy: 0.70 },
   DRIVEWAY_2: { hx: 0.74, hy: 0.82 },
   DRIVEWAY_3: { hx: 0.74, hy: 0.95 },
@@ -127,11 +152,29 @@ export const ANCHORS: Record<string, { hx: number; hy: number }> = {
   CURB_2: { hx: 0.51, hy: 1.13 },
 };
 
-export function anchor(name: string, L: Layout): { x: number; y: number } {
-  const a = ANCHORS[name];
+/**
+ * Merge a house's overrides over the defaults. Per-anchor, not per-table, so a
+ * house that only moved its driveway does not have to restate its whole yard.
+ */
+export function mergeAnchors(overrides?: Partial<AnchorTable>): AnchorTable {
+  if (!overrides) return DEFAULT_ANCHORS;
+  const out: AnchorTable = { ...DEFAULT_ANCHORS };
+  for (const [k, v] of Object.entries(overrides)) if (v) out[k] = v;
+  return out;
+}
+
+export function anchor(
+  name: string,
+  L: Layout,
+  table: AnchorTable = DEFAULT_ANCHORS,
+): { x: number; y: number } {
+  const a = table[name];
   if (!a) throw new Error(`scene: unknown anchor "${name}"`);
   return {
     x: Math.round(L.house.x + a.hx * L.house.w),
     y: Math.round(L.house.y + a.hy * L.house.h),
   };
 }
+
+/** Back-compat alias; prefer DEFAULT_ANCHORS. */
+export const ANCHORS = DEFAULT_ANCHORS;

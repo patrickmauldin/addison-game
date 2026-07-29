@@ -26,6 +26,7 @@ import {
 
 import day01 from './data/day01.json';
 import rulesData from './data/rules.json';
+import housesData from './data/houses.json';
 import lot04 from './data/lots/bonerville_04.json';
 import lot07 from './data/lots/bonerville_07.json';
 
@@ -87,6 +88,19 @@ const ASSET_FILES = [
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
 ];
 
+/** Strip the _-prefixed documentation keys out of the authored override data. */
+function houseAnchorTable(): Record<string, Record<string, { hx: number; hy: number }>> {
+  const out: Record<string, Record<string, { hx: number; hy: number }>> = {};
+  for (const [id, h] of Object.entries((housesData as any).houses ?? {})) {
+    const anchors = (h as any).anchors ?? {};
+    const t: Record<string, { hx: number; hy: number }> = {};
+    for (const [name, a] of Object.entries(anchors as Record<string, any>))
+      if (a && typeof a.hx === 'number' && typeof a.hy === 'number') t[name] = { hx: a.hx, hy: a.hy };
+    out[id] = t;
+  }
+  return out;
+}
+
 async function loadAssets(): Promise<SceneAssets> {
   const sprites = new Map<string, { w: number; h: number; rgba: Uint8ClampedArray }>();
   await Promise.all(
@@ -99,7 +113,7 @@ async function loadAssets(): Promise<SceneAssets> {
       }
     }),
   );
-  return { sprites };
+  return { sprites, houseAnchors: houseAnchorTable() };
 }
 
 // --- Session state --------------------------------------------------------

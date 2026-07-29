@@ -12,7 +12,7 @@
  * draws, and a click resolves in O(1) with no geometry.
  */
 
-import { anchor, layout, WALK_NATIVE_H, type Layout } from './core/scene.js';
+import { anchor, layout, mergeAnchors, WALK_NATIVE_H, type AnchorTable, type Layout } from './core/scene.js';
 import { PALETTE, type Rgb } from './core/palette.js';
 import { Raster } from './core/raster.js';
 
@@ -58,6 +58,8 @@ export type RenderedLot = {
 export type SceneAssets = {
   /** grass, road, sidewalk, house1, weed1..3, trash-green, trash-brown ... */
   sprites: Map<string, Bitmap>;
+  /** Per-house anchor overrides, keyed by house sprite id. See data/houses.json. */
+  houseAnchors?: Record<string, Partial<AnchorTable> | undefined>;
 };
 
 // --- Blitting --------------------------------------------------------------
@@ -209,8 +211,12 @@ export function renderLot(
         r.px(x, y, ((x + y) % 14) < 2 ? c[1] : c[2]);
   }
 
-  // Props, back to front by screen y.
-  const placed = spec.props.map((p) => ({ p, a: anchor(p.anchor, L) }));
+  // Props, back to front by screen y. Anchors come from this house's table:
+  // its own plan where it declares one, the defaults everywhere else.
+  const anchors = mergeAnchors(
+    spec.house?.sprite ? assets.houseAnchors?.[spec.house.sprite] : undefined,
+  );
+  const placed = spec.props.map((p) => ({ p, a: anchor(p.anchor, L, anchors) }));
   placed.sort((a, b) => a.a.y - b.a.y);
   for (const { p, a } of placed) {
     const spr = S.get(p.sprite);

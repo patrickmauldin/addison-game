@@ -1,0 +1,28 @@
+{
+  "_note": "Per-house anchor overrides. Anything omitted falls back to DEFAULT_ANCHORS in core/scene.ts, so a house only declares what its floor plan actually moves.",
+  "_why": "Anchors are fractions of the house rect, which makes them survive scaling but NOT a different floor plan. A driveway on the left, a walk that reaches the sidewalk, a deeper setback — each moves the points where props are allowed to stand. Without overrides every house would have to share one layout, which also lets a player pattern-match on screen position instead of reading the lot.",
+  "_check": "core/scene.ts declares what surface each anchor must sit on, and the validator samples the house art at every anchor a lot uses. A driveway anchor on grass fails the build rather than showing up as a truck parked on a lawn.",
+
+  "houses": {
+    "house1": {
+      "_plan": "Garage right, driveway right of centre, front walk curving from the door to meet the driveway high near the garage. Front lawn is one unbroken expanse.",
+      "anchors": {
+        "WALK_1": {
+          "hx": 0.49,
+          "hy": 0.68,
+          "_note": "The walk joins the driveway around hy 0.75, so this sits mid-walk above the junction. The old default of hy 0.85 landed on grass once the walk was rerouted."
+        },
+        "YARD_5": {
+          "hx": 0.945,
+          "hy": 0.8,
+          "_note": "Grass right of the driveway starts at hx 0.901; the default 0.92 left almost no margin."
+        },
+        "YARD_6": {
+          "hx": 0.945,
+          "hy": 0.96,
+          "_note": "The default 0.90 sat directly on the driveway edge."
+        }
+      }
+    }
+  }
+}

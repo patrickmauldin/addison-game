@@ -22,9 +22,10 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { renderLot, type Bitmap, type LotSpec } from '../src/scene-compositor.js';
-import { ANCHORS } from '../src/core/scene.js';
+import { ANCHOR_SURFACE, DEFAULT_ANCHORS, mergeAnchors } from '../src/core/scene.js';
 import { decodePng } from '../src/core/png.js';
 
+import housesData from '../src/data/houses.json';
 import day01 from '../src/data/day01.json';
 import rulesData from '../src/data/rules.json';
 import lot04 from '../src/data/lots/bonerville_04.json';
@@ -131,6 +132,78 @@ if (g && h1) {
     warn(`house1 lawn is ${worst.toFixed(0)}/255 off the grass tile at its corners — the join will show. Export the house with alpha instead.`);
 }
 
+// --- Anchors land on the right surface ------------------------------------
+/**
+ * Sample the house art under every anchor and check it against the surface the
+ * anchor contract requires.
+ *
+ * This is what makes per-house overrides safe to author. Anchors are fractions
+ * of the house rect, which survives scaling but NOT a different floor plan: move
+ * the driveway to the left and DRIVEWAY_1 is suddenly a patch of lawn. Caught
+ * two real cases on house1 the first time it ran — WALK_1 left on grass after
+ * the walk was rerouted to meet the driveway, and YARD_6 sitting on the driveway
+ * edge — neither of which was visible because no lot happened to use them yet.
+ */
+function anchorTableFor(houseId: string) {
+  const raw = (housesData as any).houses?.[houseId]?.anchors ?? {};
+  const clean: Record<string, { hx: number; hy: number }> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, any>))
+    if (v && typeof v.hx === 'number' && typeof v.hy === 'number') clean[k] = { hx: v.hx, hy: v.hy };
+  return mergeAnchors(clean);
+}
+
+// Every lot on a street shares a house, so without this the same anchor is
+// reported once per lot and the real count is lost in the repeats.
+const surfaceChecked = new Set<string>();
+
+function checkAnchorSurfaces(houseId: string, used: Set<string>): void {
+  if (surfaceChecked.has(houseId)) return;
+  surfaceChecked.add(houseId);
+  // Anchors a lot USES are errors; the rest are warnings. A stale anchor no lot
+  // references yet is not breaking anything today, but it is a trap primed for
+  // whoever authors the next lot — which is exactly how WALK_1 ended up on grass
+  // and went unnoticed.
+  const art = SPRITES.get(houseId);
+  if (!art) return;
+  const table = anchorTableFor(houseId);
+  const at = (hx: number, hy: number) => {
+    const x = Math.min(art.w - 1, Math.max(0, Math.round(hx * art.w)));
+    const y = Math.min(art.h - 1, Math.max(0, Math.round(hy * art.h)));
+    const i = (y * art.w + x) << 2;
+    return [art.rgba[i], art.rgba[i + 1], art.rgba[i + 2]];
+  };
+  // Grass is strongly green-over-blue; paving is pale and near-neutral. On this
+  // art grass reads ~100 on green-minus-blue and paving ~40, so 60 splits them
+  // with room on both sides.
+  const classify = (c: number[]) =>
+    c[1] - c[2] > 60 ? 'grass' : c[0] > 150 && c[1] > 130 ? 'paving' : 'bed';
+
+  for (const name of Object.keys(ANCHOR_SURFACE)) {
+    const want = ANCHOR_SURFACE[name];
+    const a = table[name];
+    if (!want || !a) continue;
+    const report = used.has(name) ? fail : warn;
+    if (want === 'road') {
+      // Below the house sprite entirely — checked by position, not by pixel.
+      if (a.hy <= 1.0)
+        report(`${houseId}: anchor ${name} is meant to be in the road but sits at hy ${a.hy}, on the lot.`);
+      continue;
+    }
+    if (a.hy > 1.0) {
+      report(`${houseId}: anchor ${name} sits at hy ${a.hy}, below the house art — nothing to stand on.`);
+      continue;
+    }
+    const got = classify(at(a.hx, a.hy));
+    // A bed anchor may legitimately be on mulch or on grass.
+    const ok = want === 'bed' ? got !== 'paving' : got === want;
+    if (!ok)
+      report(
+        `${houseId}: anchor ${name} (hx ${a.hx}, hy ${a.hy}) must be on ${want} but the art has ${got} there. ` +
+          `Override it in src/data/houses.json for this plan.`,
+      );
+  }
+}
+
 // --- Days and lots --------------------------------------------------------
 for (const day of DAYS) {
   const active = new Set(day.active_rules);
@@ -150,7 +223,7 @@ for (const day of DAYS) {
     const objectIds = new Set(lot.props.map((p) => p.id));
 
     for (const p of lot.props)
-      if (!(p.anchor in ANCHORS)) fail(`${lotId}: unknown anchor "${p.anchor}"`);
+      if (!(p.anchor in DEFAULT_ANCHORS)) fail(`${lotId}: unknown anchor "${p.anchor}"`);
 
     for (const v of lot.truth.violations) {
       if (!objectIds.has(v.object)) fail(`${lotId}: violation names missing object "${v.object}"`);
@@ -165,7 +238,16 @@ for (const day of DAYS) {
     if (day.verdict_mode === 'binary' && lot.expected_verdict !== derived)
       fail(`${lotId}: expected_verdict is ${lot.expected_verdict} but truth implies ${derived}`);
 
-    const { raster, objects } = renderLot(lot, { sprites: SPRITES }, 1060, 860);
+    // Every anchor this lot actually uses must land on the surface it claims.
+    if (lot.house?.sprite)
+      checkAnchorSurfaces(lot.house.sprite, new Set(lot.props.map((p) => p.anchor)));
+
+    const { raster, objects } = renderLot(
+      lot,
+      { sprites: SPRITES, houseAnchors: { [lot.house?.sprite ?? '']: anchorTableFor(lot.house?.sprite ?? '') } },
+      1060,
+      860,
+    );
     const counts = new Map<number, number>();
     for (let i = 0; i < raster.id.length; i++) {
       const k = raster.id[i];
