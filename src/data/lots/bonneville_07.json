@@ -1,0 +1,66 @@
+{
+  "lot_id": "bonerville_07",
+  "address": "4418 Bonerville",
+  "street": "Bonerville",
+  "seed": 70418,
+
+  "shell": {
+    "stories": 1,
+    "lower_mat": "stone",
+    "upper_mat": "board_batten",
+    "lower_key": "limestone_white",
+    "upper_key": "sage",
+    "trim_key": "trim_cream",
+    "roof_key": "roof_brown",
+    "door_key": "cedar_stained",
+    "band_height": 2.2,
+    "garage_bays": 2
+  },
+
+  "turf": { "yard": "dormant_tan", "parkway": "dormant_tan" },
+  "driveway_stain": "clean",
+  "sidewalk": "clean",
+  "fence": { "condition": "new", "stain": "cedar_new" },
+
+  "landscaping": [
+    { "gen": "live_oak", "anchor": "YARD_1", "params": { "size": 2 } },
+    { "gen": "crepe_myrtle", "anchor": "YARD_5", "params": { "bloom": false } },
+    { "gen": "shrub_row", "anchor": "BED_FRONT", "params": { "run": 2.8, "trim": "trimmed" } }
+  ],
+
+  "props": [
+    {
+      "id": "xeri_bed",
+      "gen": "native_bed",
+      "anchor": "YARD_4",
+      "label": "Landscape bed, front turf",
+      "params": { "spread": 2.1, "edging": "stone", "fill": "dg" },
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bins_garage",
+      "gen": "waste_bin",
+      "anchor": "GARAGE_SIDE",
+      "label": "Refuse container at garage",
+      "params": { "type": "trash" },
+      "first_seen": "2025-03-03"
+    }
+  ],
+
+  "truth": {
+    "violations": [],
+    "decoys": [
+      {
+        "object": "xeri_bed",
+        "why": "Intentional native/xeriscape planting: stone border, decomposed granite field, plants on deliberate spacing. Chapter 202 Texas Property Code limits Association authority over drought-tolerant landscaping. Citing this loses on appeal."
+      },
+      {
+        "object": "bins_garage",
+        "why": "Stored at the garage face, screened from the right-of-way."
+      }
+    ]
+  },
+
+  "expected_verdict": "PASS",
+  "notes_for_designer": "The decoy lot, and the entire point of this slice. It sits at the SAME anchor (YARD_4) as 4412's weed patch and uses the same green family, so the player cannot pattern-match on position or hue. The only difference is containment and spacing. If a playtester flags this, the art has failed the readability test in manifest 4.8 and the pair needs retuning before any further content is authored."
+}

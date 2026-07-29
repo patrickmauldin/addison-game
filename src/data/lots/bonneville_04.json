@@ -1,0 +1,88 @@
+{
+  "lot_id": "bonerville_04",
+  "address": "4412 Bonerville",
+  "street": "Bonerville",
+  "seed": 40412,
+
+  "shell": {
+    "stories": 1,
+    "lower_mat": "stone",
+    "upper_mat": "lap",
+    "lower_key": "limestone_tan",
+    "upper_key": "khaki",
+    "trim_key": "trim_white",
+    "roof_key": "weathered_gray",
+    "door_key": "bronze_dark",
+    "band_height": 2.6,
+    "garage_bays": 2
+  },
+
+  "turf": { "yard": "dormant_tan", "parkway": "dormant_patchy" },
+  "driveway_stain": "weathered",
+  "sidewalk": "cracked",
+  "fence": { "condition": "weathered", "stain": "cedar_weathered" },
+
+  "landscaping": [
+    { "gen": "live_oak", "anchor": "YARD_1", "params": { "size": 3 } },
+    { "gen": "live_oak", "anchor": "YARD_3", "params": { "size": 2 } },
+    { "gen": "shrub_row", "anchor": "BED_FRONT", "params": { "run": 3.2, "trim": "trimmed" } }
+  ],
+
+  "props": [
+    {
+      "id": "weeds_yard",
+      "gen": "weed_patch",
+      "anchor": "YARD_4",
+      "label": "Weed growth, front turf",
+      "params": { "density": 3, "spread": 2.1 },
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "weeds_walk",
+      "gen": "crack_weeds",
+      "anchor": "WALK_JOINT",
+      "label": "Volunteer growth, walk joints",
+      "params": { "run": 1.35 },
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bins_garage",
+      "gen": "waste_bin",
+      "anchor": "GARAGE_SIDE",
+      "label": "Refuse container at garage",
+      "params": { "type": "trash" },
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "ac_side",
+      "gen": "ac_condenser",
+      "anchor": "AC_PAD",
+      "label": "AC condenser",
+      "flaggable": false
+    }
+  ],
+
+  "truth": {
+    "violations": [
+      {
+        "object": "weeds_yard",
+        "article": "R-101",
+        "why": "Unbordered weed mass in the front turf, visible from the street. No containment, no edging, bleeds into surrounding Bermuda."
+      },
+      {
+        "object": "weeds_walk",
+        "article": "R-101",
+        "why": "Volunteer growth in the front walk joints. Article VII 3(a) names pavement cracks explicitly."
+      }
+    ],
+    "decoys": [
+      {
+        "object": "bins_garage",
+        "why": "Container stored at the garage face, screened from the right-of-way. R-104 is not active until Day 2 and would not be violated even then."
+      }
+    ]
+  },
+
+  "expected_verdict": "FAIL",
+  "notes_for_designer": "The teaching lot. Both findings are the same article, one in turf and one in pavement, so the player learns R-101 covers both substrates. The bin is present and deliberately unflagged-correct: it establishes the object on Day 1 so that when it becomes a violation on Day 3 the player recognises the sprite rather than meeting it cold."
+}

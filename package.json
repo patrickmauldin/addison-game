@@ -1,0 +1,23 @@
+{
+  "name": "addison-game",
+  "version": "1.0.0",
+  "description": "ADDISON \u2014 Compliance Inspector. Vertical slice: Day 1, Bonerville.",
+  "scripts": {
+    "build": "./build.sh",
+    "watch": "./build.sh --watch",
+    "render": "npx esbuild tools/render.ts --bundle --platform=node --outfile=dist/render.cjs --loader:.json=json --log-level=warning && node dist/render.cjs",
+    "validate": "npx esbuild tools/validate.ts --bundle --platform=node --outfile=dist/validate.cjs --loader:.json=json --log-level=warning && node dist/validate.cjs",
+    "simulate": "npx esbuild tools/simulate.ts --bundle --platform=node --outfile=dist/simulate.cjs --loader:.json=json --log-level=warning && node dist/simulate.cjs",
+    "compare": "npx esbuild tools/compare.ts --bundle --platform=node --outfile=dist/compare.cjs --loader:.json=json --log-level=warning && node dist/compare.cjs",
+    "typecheck": "tsc --noEmit",
+    "serve": "python3 -m http.server 8123"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "esbuild": "^0.28.1",
+    "typescript": "^7.0.2"
+  }
+}
