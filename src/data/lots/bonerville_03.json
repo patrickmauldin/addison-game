@@ -13,7 +13,7 @@
       "sprite": "weed3",
       "anchor": "YARD_2",
       "label": "Weed growth, front turf",
-      "first_seen": "2025-03-03"
+      "first_seen": "2024-01-01"
     },
     {
       "id": "fence",
@@ -21,7 +21,7 @@
       "anchor": "FENCE_1",
       "align": "left",
       "label": "Side-yard fence",
-      "first_seen": "2025-03-03"
+      "first_seen": "2024-01-01"
     }
   ],
   "truth": {

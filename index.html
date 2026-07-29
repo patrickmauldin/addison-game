@@ -248,6 +248,9 @@
          ~128px, the stamp has to shrink below legibility to fit, and clipping
          it instead looks like a rendering fault rather than like ink. */
       #casefile-card { position: relative; overflow: hidden; min-height: 178px; }
+      /* The address is what identifies the lot; it should read at a glance
+         rather than compete with the card heading. */
+      #cf-addr { font-size: 20px; line-height: 1.15; margin: 2px 0 4px; }
       #stamp-mark {
         position: absolute; left: 50%; top: 50%;
         width: 68%; max-width: none; pointer-events: none;
@@ -396,8 +399,7 @@
 
           <div class="card" id="casefile-card">
             <h2>Case File</h2>
-            <div id="cf-addr" class="art" style="font-size:15px">—</div>
-            <div id="cf-lot" class="muted" style="font-size:11px">—</div>
+            <div id="cf-addr" class="art">—</div>
             <div id="casefile" class="muted" style="margin-top:6px">—</div>
             <img id="stamp-mark" alt="" />
           </div>

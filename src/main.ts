@@ -46,6 +46,18 @@ const LOTS: Record<string, LotSpec> = {
 const day = day01;
 const ARTICLES = rulesData.articles;
 
+/**
+ * "2024-01-01" -> "Jan 1". The year is deliberately dropped: it is stored so
+ * dates sort and grace periods can be measured, but showing it would date a
+ * fictional community for no gain.
+ */
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function shortDate(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  return `${MONTHS[Number(m[2]) - 1]} ${Number(m[3])}`;
+}
+
 // --- DOM ------------------------------------------------------------------
 const $ = <T extends HTMLElement>(id: string): T => document.getElementById(id) as T;
 
@@ -284,7 +296,6 @@ function renderCaseFile(rec: { address: string; lot_id: string; rulings: Ruling[
   // A new address means a fresh sheet — the previous verdict's ink goes with it.
   stampMark.classList.remove('on');
   $('cf-addr').textContent = rec.address;
-  $('cf-lot').textContent = `${rec.lot_id} · ${current.street}`;
   const el = $('casefile');
   if (!rec.rulings.length) {
     el.className = 'muted';
@@ -292,16 +303,17 @@ function renderCaseFile(rec: { address: string; lot_id: string; rulings: Ruling[
   } else {
     el.className = '';
     el.innerHTML = rec.rulings
-      .map((r) => `<div>${r.date} — stamped <b>${r.verdict}</b>, ${r.findings.length} finding(s)</div>`)
+      .map((r) => `<div>${shortDate(r.date)} — stamped <b>${r.verdict}</b>, ${r.findings.length} finding(s)</div>`)
       .join('');
   }
 }
 
 function syncDesk(): void {
-  // Day and weekday on one line. The calendar date is deliberately absent —
-  // the weekday is what rules key off (trash day, decor windows) and the ISO
-  // date was noise. The Calendar tool carries the full date when it unlocks.
-  $('c-day').textContent = `${day.day_id} · ${day.weekday}`;
+  // Day number, weekday and date on one line. The weekday earns its place —
+  // rules key off it (trash day, decor windows) — and the date is what makes a
+  // grace period legible when the case file says an object was first seen on
+  // one and it is now another.
+  $('c-day').textContent = `${day.day_id} · ${day.weekday.slice(0, 3)} ${shortDate(day.date)}`;
   $('c-prog').textContent = `${routeIndex + 1} of ${day.route.length}`;
   $('c-quota').textContent = String(day.quota);
   $('c-strikes').textContent = `${saveFile.inspector.strikes_today} / 3`;
@@ -578,7 +590,7 @@ function endDay(): void {
   sheet.innerHTML = `
     <img class="day-mark" src="assets/${cleanDay ? 'good' : 'bad'}.png" alt="" />
     <h1>END OF DAY ${day.day_id}</h1>
-    <div class="muted">${day.weekday} ${day.date} · ${current.street}</div>
+    <div class="muted">${day.weekday}, ${shortDate(day.date)} · ${current.street}</div>
 
     <h3>Board Audit</h3>
     <p class="muted">Findings are reviewed the following morning. You were not told at the time.</p>
@@ -600,7 +612,7 @@ function endDay(): void {
 function briefing(): void {
   sheet.innerHTML = `
     <h1>ADDISON MASTER COMMUNITY ASSOCIATION</h1>
-    <div class="muted">Compliance Inspector · Day ${day.day_id} · ${day.weekday} ${day.date}</div>
+    <div class="muted">Compliance Inspector · Day ${day.day_id} · ${day.weekday}, ${shortDate(day.date)}</div>
     <h3>Morning Briefing</h3>
     <p>${day.briefing}</p>
     <h3>Today's Route</h3>

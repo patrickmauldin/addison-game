@@ -1,9 +1,9 @@
 {
   "day_id": 1,
-  "date": "2025-03-03",
+  "date": "2024-01-01",
   "weekday": "Monday",
   "weather": "clear",
-  "_date_note": "The gameplan's calendar (Day 1 Mon Mar 3, Day 2 Wed Mar 5, Day 3 Fri Mar 7, Day 7 Wed Mar 19) resolves to 2025, not the 2026 used in the manifest's illustrative example. Every weekday in the 20-day schedule checks out against 2025. Using 2025.",
+  "_date_note": "Campaign starts Jan 1. The year is stored but never shown \u2014 it exists so dates sort and so grace periods can be measured across months. 2024-01-01 is genuinely a Monday, so the stored date and the authored weekday cannot contradict each other.",
   "active_rules": [
     "R-101"
   ],

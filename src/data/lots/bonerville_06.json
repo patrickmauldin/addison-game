@@ -14,21 +14,21 @@
       "anchor": "FENCE_1",
       "align": "left",
       "label": "Side-yard fence",
-      "first_seen": "2025-03-03"
+      "first_seen": "2024-01-01"
     },
     {
       "id": "bin_green",
       "sprite": "trash-green",
       "anchor": "CURB_1",
       "label": "Refuse container, green",
-      "first_seen": "2025-03-03"
+      "first_seen": "2024-01-01"
     },
     {
       "id": "bin_brown",
       "sprite": "trash-brown",
       "anchor": "CURB_2",
       "label": "Refuse container, brown",
-      "first_seen": "2025-03-03"
+      "first_seen": "2024-01-01"
     }
   ],
   "truth": {
