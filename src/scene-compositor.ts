@@ -155,6 +155,42 @@ function fill(r: Raster, y0: number, y1: number, c: Rgb): void {
     for (let x = 0; x < r.w; x++) r.px(x, y, c);
 }
 
+/**
+ * Where a sprite actually meets the ground, in its own pixel space.
+ *
+ * Props are placed by their contact point, not by their canvas. Those differ
+ * whenever a sprite carries an asymmetric drop shadow: the delivered bins put
+ * their shadow in the left third, so their solid body sits at x 50..137 of a
+ * 138-wide frame — centring the canvas would stand the bin a quarter of its
+ * width right of its anchor, and every future sprite with a shadow would be
+ * wrong by a different amount.
+ *
+ * Measured from the BOTTOM band of solid pixels, because that is the part
+ * touching the ground; the lid flaring wider than the wheels should not shift
+ * where the bin stands.
+ */
+const footprintCache = new WeakMap<Bitmap, { cx: number; baseY: number }>();
+function footprint(src: Bitmap): { cx: number; baseY: number } {
+  const hit = footprintCache.get(src);
+  if (hit) return hit;
+  const SOLID = 128;
+  let baseY = src.h - 1;
+  for (let y = src.h - 1; y >= 0; y--) {
+    let any = false;
+    for (let x = 0; x < src.w; x++) if (src.rgba[((y * src.w + x) << 2) + 3] >= SOLID) { any = true; break; }
+    if (any) { baseY = y; break; }
+  }
+  // Bottom eighth of the sprite's height, which is the contact band.
+  const band = Math.max(1, Math.round(src.h * 0.12));
+  let sum = 0, n = 0;
+  for (let y = Math.max(0, baseY - band); y <= baseY; y++)
+    for (let x = 0; x < src.w; x++)
+      if (src.rgba[((y * src.w + x) << 2) + 3] >= SOLID) { sum += x; n++; }
+  const res = { cx: n ? sum / n : src.w / 2, baseY };
+  footprintCache.set(src, res);
+  return res;
+}
+
 // --- Render ----------------------------------------------------------------
 
 export function renderLot(
@@ -233,10 +269,15 @@ export function renderLot(
     const s = L.scale * (p.scale ?? 1);
     const w = Math.max(1, Math.round(spr.w * s));
     const h = Math.max(1, Math.round(spr.h * s));
-    // Anchors mark where a prop MEETS THE GROUND, so sprites are bottom-aligned
-    // vertically; horizontally they follow p.align.
-    const ax = p.align === 'left' ? a.x : p.align === 'right' ? a.x - w : a.x - w / 2;
-    blitScaled(r, spr, Math.round(ax), Math.round(a.y - h), w, h, false);
+    // An anchor marks where the prop MEETS THE GROUND, so the sprite is placed
+    // by its contact point rather than by its canvas — see footprint().
+    const fp = footprint(spr);
+    const ax =
+      p.align === 'left' ? a.x
+      : p.align === 'right' ? a.x - w
+      : a.x - fp.cx * s;
+    const ay = a.y - (fp.baseY + 1) * s;
+    blitScaled(r, spr, Math.round(ax), Math.round(ay), w, h, false);
   }
 
   return { raster: r, objects, byKey, layout: L };
