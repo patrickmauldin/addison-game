@@ -307,22 +307,36 @@
 
 
       /* --- Title screen ------------------------------------------------ */
+      /* Austin at dusk behind the title. The gradient stays underneath as a
+         fallback and as the colour the image is letterboxed against on aspect
+         ratios it cannot cover. */
       #title {
         position: fixed; inset: 0; z-index: 40; display: none;
         flex-direction: column; align-items: center; justify-content: center;
-        gap: 26px; padding: 32px;
-        background: radial-gradient(ellipse at 50% 38%, #4c4639 0%, #2a2722 72%);
+        gap: 22px; padding: 32px;
+        background:
+          url('assets/title-bg.jpg') center / cover no-repeat,
+          radial-gradient(ellipse at 50% 38%, #24303c 0%, #10161d 72%);
+        image-rendering: pixelated;
       }
+      /* Darkens the sky just enough for the menu to hold its own against it
+         without flattening the skyline. */
+      #title::after {
+        content: ''; position: absolute; inset: 0; pointer-events: none;
+        background: linear-gradient(to bottom, rgba(8,12,18,.30), rgba(8,12,18,.72));
+      }
+      #title > * { position: relative; z-index: 1; }
       #title.on { display: flex; }
       #title-logo {
-        /* The logo is close to square (1210x979), so a width-only cap would
-           make it ~615px tall and shove START GAME off the bottom on any
-           laptop screen. Height is the binding constraint here, not width. */
+        /* The logo is close to square, so a width-only cap would shove START
+           GAME off the bottom on any laptop screen. Height is the binding
+           constraint here, not width. */
         max-width: min(680px, 84vw);
         max-height: 54vh;
         width: auto; height: auto; object-fit: contain;
         image-rendering: pixelated;
-        filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.55));
+        /* The glow variant carries its own halo, so no drop-shadow — stacking
+           one on top would ring it twice. */
       }
       /* Shown only if the logo file is missing, so the title screen still
          reads rather than collapsing to an empty box. */
@@ -346,7 +360,10 @@
       }
       #menu button:hover { background: #3b5c37; }
       #menu button:active { transform: translateY(2px); box-shadow: 0 1px 0 #1b2c1a; }
-      #title .sub { color: #b9ac8c; font-size: 12px; letter-spacing: .1em; }
+      #title .sub {
+        color: #cbbfa2; font-size: 12px; letter-spacing: .1em;
+        text-shadow: 0 1px 3px rgba(0,0,0,.9);
+      }
 
       /* Boot guard. Visible by default; main.ts removes it once the module has
          actually executed. If the script never runs — the usual cause is
@@ -464,7 +481,7 @@
     </div>
 
     <div id="title">
-      <img id="title-logo" src="./assets/addison-logo.png" alt="Addison — Lawn &amp; Order" />
+      <img id="title-logo" src="./assets/logo-glow.png" alt="Addison — Lawn &amp; Order" />
       <div id="title-fallback">
         <div class="a">ADDISON</div>
         <div class="b">LAWN &amp; ORDER</div>

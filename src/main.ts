@@ -95,8 +95,8 @@ const xMark = new Image();
 xMark.src = 'assets/x.png' + CB;
 
 /**
- * Beds follow where you are: office for the briefing and the audit, the
- * neighbourhood while you are out on the route.
+ * Beds follow where you are: the theme over the title and the briefing, the
+ * neighbourhood once you are out on the route, the office for the audit.
  */
 const sound = new Sound(CB);
 
@@ -815,9 +815,10 @@ function titleScreen(): void {
 
   title.classList.add('on');
   $('btn-start-game').onclick = () => {
-    // The browser refuses audio before a gesture; this is the first one.
+    // Autoplay may already have started the theme; if it was refused this is
+    // the gesture that lets it in. Either way the theme keeps running through
+    // the briefing — the handover is the route, not this button.
     sound.unlock();
-    sound.bed('office');
     title.classList.remove('on');
     briefing();
   };
@@ -826,6 +827,7 @@ function titleScreen(): void {
 async function boot(): Promise<void> {
   try {
     saveFile.inspector.strikes_today = 0;
+    sound.autoBed('theme');
     // Loaded before the title screen, so the first lot never renders a
     // placeholder that then pops to real art a frame later.
     assets = await loadAssets();

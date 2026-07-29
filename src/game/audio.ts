@@ -14,7 +14,7 @@
  *     never stop the game, so failures are swallowed rather than surfaced.
  */
 
-export type BedName = 'ambiance' | 'office';
+export type BedName = 'ambiance' | 'office' | 'theme';
 
 const BED_VOLUME = 0.6;
 /**
@@ -35,7 +35,7 @@ export class Sound {
 
   constructor(cacheBust = '') {
     this.muted = localStorage.getItem('addison.muted') === '1';
-    for (const name of ['ambiance', 'office'] as BedName[]) {
+    for (const name of ['ambiance', 'office', 'theme'] as BedName[]) {
       const a = new Audio(`assets/${name}.mp3${cacheBust}`);
       a.loop = true;
       a.preload = 'auto';
@@ -51,6 +51,45 @@ export class Sound {
   unlock(): void {
     this.unlocked = true;
     if (this.current) void this.beds.get(this.current)?.play().catch(() => {});
+  }
+
+  /**
+   * Start a bed as early as the browser allows.
+   *
+   * The theme is meant to be playing on the title screen, which is on screen
+   * before the player has clicked anything — and autoplay is refused until a
+   * gesture. So: try now, and if refused, arm a one-shot listener and start on
+   * the very first interaction anywhere on the page. That is as early as it is
+   * possible to be, and it costs nothing when autoplay happens to be allowed.
+   */
+  autoBed(name: BedName): void {
+    this.current = name;
+    const a = this.beds.get(name);
+    if (!a) return;
+    const begin = () => {
+      if (this.current !== name || this.muted) return;
+      a.volume = 0;
+      void a.play().catch(() => {});
+      this.fade(a, BED_VOLUME);
+    };
+    if (this.muted) return;
+    a.volume = 0;
+    a.play().then(
+      () => {
+        this.unlocked = true;
+        this.fade(a, BED_VOLUME);
+      },
+      () => {
+        const arm = () => {
+          window.removeEventListener('pointerdown', arm);
+          window.removeEventListener('keydown', arm);
+          this.unlocked = true;
+          begin();
+        };
+        window.addEventListener('pointerdown', arm);
+        window.addEventListener('keydown', arm);
+      },
+    );
   }
 
   setMuted(m: boolean): void {
