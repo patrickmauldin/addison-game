@@ -5,7 +5,8 @@
   "seed": 40005,
   "_schema_note": "Full-bleed three-quarter scene. Anchors resolve against this house's table in src/data/houses.json.",
   "house": {
-    "sprite": "house5"
+    "sprite": "house5",
+    "mirror": true
   },
   "props": [
     {
@@ -74,5 +75,5 @@
     ]
   },
   "expected_verdict": "FAIL",
-  "notes_for_designer": "The worst lot on the route. Three patches, so a player who flags one and moves on still misses two and learns that a finding is not the same as a finished inspection."
+  "notes_for_designer": "The worst lot on the route. Three patches, so a player who flags one and moves on still misses two and learns that a finding is not the same as a finished inspection. Plan is MIRRORED: the same art reflected, so the driveway and fence swap sides. Anchors reflect with it, so no second measurement is needed."
 }

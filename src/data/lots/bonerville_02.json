@@ -5,7 +5,8 @@
   "seed": 40002,
   "_schema_note": "Full-bleed three-quarter scene. Anchors resolve against this house's table in src/data/houses.json.",
   "house": {
-    "sprite": "house2"
+    "sprite": "house2",
+    "mirror": true
   },
   "props": [
     {
@@ -37,5 +38,5 @@
     ]
   },
   "expected_verdict": "PASS",
-  "notes_for_designer": "First clean lot, and the first chance to wrongly cite. Bins are at the curb and look exactly like a violation; R-104 does not exist yet."
+  "notes_for_designer": "First clean lot, and the first chance to wrongly cite. Bins are at the curb and look exactly like a violation; R-104 does not exist yet. Plan is MIRRORED: the same art reflected, so the driveway and fence swap sides. Anchors reflect with it, so no second measurement is needed."
 }

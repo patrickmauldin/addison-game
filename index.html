@@ -223,7 +223,22 @@
         text-transform: uppercase; color: var(--ink-soft);
         border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
       #sheet p { margin: 6px 0; }
-      .verdict-row { padding: 8px 10px; margin: 6px 0; background: var(--paper-2); }
+      /* Each line of the report card is marked, and the day carries one mark of
+         its own in the corner. Sized in em so they track the sheet's type. */
+      .verdict-row {
+        position: relative; padding: 8px 10px 8px 46px; margin: 6px 0;
+        background: var(--paper-2);
+      }
+      .verdict-row .mark {
+        position: absolute; left: 8px; top: 8px;
+        width: 28px; height: 28px; image-rendering: pixelated;
+      }
+      #sheet { position: relative; }
+      .day-mark {
+        position: absolute; right: 22px; top: 16px;
+        width: 76px; height: 76px; image-rendering: pixelated;
+        opacity: .92; transform: rotate(-8deg);
+      }
       .bad { border-left: 4px solid var(--stamp-red); }
       .good { border-left: 4px solid var(--stamp-green); }
       /* The verdict lands on the case file as an ink impression. Absolutely

@@ -41,7 +41,7 @@ export type LotSpec = {
   lot_id: string;
   address: string;
   street: string;
-  house?: { sprite?: string };
+  house?: { sprite?: string; mirror?: boolean };
   props: PropSpec[];
   truth: {
     violations: Array<{ object: string; article: string; why: string }>;
@@ -86,6 +86,7 @@ function blitScaled(
   dw: number,
   dh: number,
   opaque: boolean,
+  flipX = false,
 ): void {
   const sxr = src.w / dw;
   const syr = src.h / dh;
@@ -97,8 +98,9 @@ function blitScaled(
     for (let x = 0; x < dw; x++) {
       const tx = dx + x;
       if (tx < 0 || tx >= r.w) continue;
-      const sx0 = Math.floor(x * sxr);
-      const sx1 = Math.max(sx0 + 1, Math.floor((x + 1) * sxr));
+      const srcCol = flipX ? dw - 1 - x : x;
+      const sx0 = Math.floor(srcCol * sxr);
+      const sx1 = Math.max(sx0 + 1, Math.floor((srcCol + 1) * sxr));
       let rr = 0, gg = 0, bb = 0, aa = 0, n = 0;
       for (let j = sy0; j < sy1 && j < src.h; j++)
         for (let i = sx0; i < sx1 && i < src.w; i++) {
@@ -233,6 +235,7 @@ export function renderLot(
   };
   const scenery = () => r.setObject(0);
   const S = assets.sprites;
+  const mirror = !!spec.house?.mirror;
 
   scenery();
 
@@ -259,7 +262,7 @@ export function renderLot(
   // the join is invisible, so it blits opaque with no keying.
   const house = spec.house?.sprite ? S.get(spec.house.sprite) : undefined;
   if (house) {
-    blitScaled(r, house, L.house.x, L.house.y, L.house.w, L.house.h, true);
+    blitScaled(r, house, L.house.x, L.house.y, L.house.w, L.house.h, true, mirror);
   } else {
     // Hatched placeholder — can never be mistaken for finished art.
     const c = PALETTE.concrete_weathered;
@@ -270,9 +273,16 @@ export function renderLot(
 
   // Props, back to front by screen y. Anchors come from this house's table:
   // its own plan where it declares one, the defaults everywhere else.
-  const anchors = mergeAnchors(
+  //
+  // On a mirrored lot every anchor reflects about the house's centre line, so
+  // one measured table serves both handednesses — there is no second set of
+  // numbers to keep in step with the first.
+  const base = mergeAnchors(
     spec.house?.sprite ? assets.houseAnchors?.[spec.house.sprite] : undefined,
   );
+  const anchors: AnchorTable = mirror
+    ? Object.fromEntries(Object.entries(base).map(([k, a]) => [k, { hx: 1 - a.hx, hy: a.hy }]))
+    : base;
   const placed = spec.props.map((p) => ({ p, a: anchor(p.anchor, L, anchors) }));
   placed.sort((a, b) => a.a.y - b.a.y);
   for (const { p, a } of placed) {
@@ -286,12 +296,35 @@ export function renderLot(
     // An anchor marks where the prop MEETS THE GROUND, so the sprite is placed
     // by its contact point rather than by its canvas — see footprint().
     const fp = footprint(spr);
+    // A fence that butted the wall on the right must butt it on the left once
+    // the plan is reflected, so edge alignment swaps with the house.
+    const align = !mirror ? p.align
+      : p.align === 'left' ? 'right'
+      : p.align === 'right' ? 'left'
+      : p.align;
+
+    /**
+     * Only STRUCTURE flips with the plan. Edge-aligned props are attached to
+     * the building — a fence has to reverse to butt the other wall. Loose
+     * objects do not: every sprite carries a baked drop shadow, and flipping a
+     * bin would throw its shadow to the other side while identical bins on
+     * unmirrored lots kept theirs, which is visible the moment two lots share
+     * the screen during the drive between them.
+     *
+     * So a mirrored lot reflects WHERE things stand, not how they are lit.
+     */
+    const flipSprite = mirror && p.align !== undefined;
+    // Solid extents are measured in the sprite's own space; when it is drawn
+    // flipped, its left edge comes from what was its right.
+    const left = flipSprite ? spr.w - 1 - fp.x1 : fp.x0;
+    const right = flipSprite ? spr.w - 1 - fp.x0 : fp.x1;
+    const cx = flipSprite ? spr.w - 1 - fp.cx : fp.cx;
     const ax =
-      p.align === 'left' ? a.x - fp.x0 * s
-      : p.align === 'right' ? a.x - (fp.x1 + 1) * s
-      : a.x - fp.cx * s;
+      align === 'left' ? a.x - left * s
+      : align === 'right' ? a.x - (right + 1) * s
+      : a.x - cx * s;
     const ay = a.y - (fp.baseY + 1) * s;
-    blitScaled(r, spr, Math.round(ax), Math.round(ay), w, h, false);
+    blitScaled(r, spr, Math.round(ax), Math.round(ay), w, h, false, flipSprite);
   }
 
   return { raster: r, objects, byKey, layout: L };

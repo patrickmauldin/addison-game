@@ -106,6 +106,11 @@ const ASSET_FILES = [
   'house1', 'house2', 'house3', 'house4', 'house5', 'house6',
   'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
+  // Not yet placed by any lot, but loaded so content can reference them:
+  // R-107 clutter (couch, washer, dryer, boxes) and R-204 recreational
+  // vehicles. Missing sprites are skipped at render, so listing them early
+  // costs nothing but a fetch.
+  'couch', 'washer', 'dryer', 'boxes', 'rv1', 'rv2',
 ];
 
 /** Strip the _-prefixed documentation keys out of the authored override data. */
@@ -554,15 +559,24 @@ function endDay(): void {
           `<div><b>Appeal granted</b> — ${f.label}. The Association pays costs.<br>
            <span class="muted">${f.why}</span></div>`,
         );
-      const ok = o.verdictRight && !o.falsePositives.length;
+      // "Clean" has to mean NO EXCEPTIONS, missed findings included. Marking a
+      // row good while it lists an audit finding contradicts itself, and the
+      // audit finding is the part the player most needs to take seriously.
+      const ok = o.verdictRight && !o.falsePositives.length && !o.missed.length;
       return `<div class="verdict-row ${ok ? 'good' : 'bad'}">
+        <img class="mark" src="assets/${ok ? 'good' : 'bad'}.png" alt="${ok ? 'clean' : 'exception taken'}" />
         <b>${o.address}</b> — you stamped ${o.stamped}; correct verdict was ${o.expected}.
         ${bits.join('') || '<div>No exceptions taken.</div>'}
       </div>`;
     })
     .join('');
 
+  // One mark for the day as a whole. Clean means every lot came back without
+  // an audit finding or a successful appeal — not merely that the verdicts
+  // were right.
+  const cleanDay = outcomes.every((o) => o.verdictRight && !o.falsePositives.length && !o.missed.length);
   sheet.innerHTML = `
+    <img class="day-mark" src="assets/${cleanDay ? 'good' : 'bad'}.png" alt="" />
     <h1>END OF DAY ${day.day_id}</h1>
     <div class="muted">${day.weekday} ${day.date} · ${current.street}</div>
 
@@ -575,14 +589,6 @@ function endDay(): void {
        ${shortfall > 0 ? `<br><span class="muted">Quota was ${day.quota}. Short ${shortfall}. In the full campaign this docks the stub.</span>` : ''}</p>
     <p>Strikes today: <b>${strikes}</b> / 3 &nbsp;·&nbsp; Cumulative accuracy: <b>${acc}%</b>
        ${acc < 70 ? '<br><span class="muted">Below 70%. In the full campaign this triggers probation at the bi-weekly review.</span>' : ''}</p>
-
-    <h3>What this slice was testing</h3>
-    <p>1. Does a weed patch read as a violation at 100% zoom without frustration?<br>
-       2. Does the xeriscape bed at 4418 read as <i>intentional</i> — i.e. did you leave it alone?<br>
-       3. Did you open the binder's "enforcement limits" note before stamping?</p>
-    <p class="muted">Question 2 is the one that matters. Both beds sit at the same anchor and use the
-       same green family; only containment and spacing differ. If you flagged the bed at 4418,
-       the 4.8/4.9 pair needs retuning before any further content is authored.</p>
 
     <p style="margin-top:18px"><button class="btn" onclick="location.reload()">Run the day again</button></p>
   `;

@@ -5,7 +5,8 @@
   "seed": 40004,
   "_schema_note": "Full-bleed three-quarter scene. Anchors resolve against this house's table in src/data/houses.json.",
   "house": {
-    "sprite": "house4"
+    "sprite": "house4",
+    "mirror": true
   },
   "props": [
     {
@@ -27,5 +28,5 @@
     ]
   },
   "expected_verdict": "PASS",
-  "notes_for_designer": "The hardest PASS of the day. The fence is collapsed into a debris pile \u2014 the most obviously wrong thing on the whole route \u2014 and it is not citable, because R-305 is not in the binder. If a player fails this lot they have stopped reading the rules."
+  "notes_for_designer": "The hardest PASS of the day. The fence is collapsed into a debris pile \u2014 the most obviously wrong thing on the whole route \u2014 and it is not citable, because R-305 is not in the binder. If a player fails this lot they have stopped reading the rules. Plan is MIRRORED: the same art reflected, so the driveway and fence swap sides. Anchors reflect with it, so no second measurement is needed."
 }
