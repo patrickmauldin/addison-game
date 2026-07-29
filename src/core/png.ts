@@ -102,24 +102,32 @@ export function decodePng(buf: Buffer): Bitmap {
     p += 12 + len;
   }
 
-  if (depth !== 8) throw new Error(`png: only 8-bit depth is supported (got ${depth})`);
   const ch = CHANNELS[colorType];
   if (!ch) throw new Error(`png: unsupported colour type ${colorType}`);
+  if (depth !== 8 && depth !== 4 && depth !== 2 && depth !== 1)
+    throw new Error(`png: unsupported bit depth ${depth}`);
+  if (depth !== 8 && colorType !== 3 && colorType !== 0)
+    throw new Error(`png: sub-8-bit depth is only supported for indexed and greyscale`);
 
   const raw = inflateSync(Buffer.concat(idat));
-  const stride = w * ch;
+  // Sub-8-bit samples are packed several to a byte. Indexed PNGs from most
+  // pixel-art tools come out at 4-bit when the palette is 16 colours or fewer,
+  // so this is a normal case, not an exotic one.
+  const stride = Math.ceil((w * ch * depth) / 8);
+  const filterBpp = Math.max(1, Math.ceil((ch * depth) / 8));
   const out = new Uint8ClampedArray(new ArrayBuffer(w * h * 4));
   const prev = new Uint8Array(stride);
   const line = new Uint8Array(stride);
+  const samples = new Uint8Array(w * ch);
 
   let src = 0;
   for (let y = 0; y < h; y++) {
     const filter = raw[src++];
     for (let i = 0; i < stride; i++) {
       const x = raw[src + i];
-      const a = i >= ch ? line[i - ch] : 0;
+      const a = i >= filterBpp ? line[i - filterBpp] : 0;
       const b = prev[i];
-      const c = i >= ch ? prev[i - ch] : 0;
+      const c = i >= filterBpp ? prev[i - filterBpp] : 0;
       line[i] =
         filter === 0 ? x
         : filter === 1 ? x + a
@@ -130,22 +138,36 @@ export function decodePng(buf: Buffer): Bitmap {
     }
     src += stride;
 
+    // Expand packed samples to one byte each so the reader below is uniform.
+    if (depth === 8) {
+      samples.set(line.subarray(0, w * ch));
+    } else {
+      const per = 8 / depth;
+      const mask = (1 << depth) - 1;
+      for (let i = 0; i < w * ch; i++) {
+        const byte = line[(i / per) | 0];
+        const shift = 8 - depth * ((i % per) + 1);
+        samples[i] = (byte >> shift) & mask;
+      }
+    }
+
     for (let x = 0; x < w; x++) {
       const d = (y * w + x) << 2;
       const s = x * ch;
       if (colorType === 6) {
-        out[d] = line[s]; out[d + 1] = line[s + 1]; out[d + 2] = line[s + 2]; out[d + 3] = line[s + 3];
+        out[d] = samples[s]; out[d + 1] = samples[s + 1]; out[d + 2] = samples[s + 2]; out[d + 3] = samples[s + 3];
       } else if (colorType === 2) {
-        out[d] = line[s]; out[d + 1] = line[s + 1]; out[d + 2] = line[s + 2]; out[d + 3] = 255;
+        out[d] = samples[s]; out[d + 1] = samples[s + 1]; out[d + 2] = samples[s + 2]; out[d + 3] = 255;
       } else if (colorType === 3) {
-        const i = line[s];
+        const i = samples[s];
         if (!plte) throw new Error('png: indexed image with no PLTE');
         out[d] = plte[i * 3]; out[d + 1] = plte[i * 3 + 1]; out[d + 2] = plte[i * 3 + 2];
         out[d + 3] = trns && i < trns.length ? trns[i] : 255;
       } else if (colorType === 0) {
-        out[d] = out[d + 1] = out[d + 2] = line[s]; out[d + 3] = 255;
+        const v = depth === 8 ? samples[s] : Math.round((samples[s] * 255) / ((1 << depth) - 1));
+        out[d] = out[d + 1] = out[d + 2] = v; out[d + 3] = 255;
       } else {
-        out[d] = out[d + 1] = out[d + 2] = line[s]; out[d + 3] = line[s + 1];
+        out[d] = out[d + 1] = out[d + 2] = samples[s]; out[d + 3] = samples[s + 1];
       }
     }
     prev.set(line);

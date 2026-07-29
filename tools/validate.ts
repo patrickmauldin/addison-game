@@ -21,7 +21,6 @@ import { renderLot, ANCHORS, type LotSpec } from '../src/compositor.js';
 import { PALETTE } from '../src/core/palette.js';
 import { CANVAS_H, CANVAS_W, iso } from '../src/core/projection.js';
 import { decodePng } from '../src/core/png.js';
-import { classify } from '../src/core/quantize.js';
 import { makeSprite, type HouseManifest, type SpriteRegistry } from '../src/gen/sprite.js';
 
 import day01 from '../src/data/day01.json';
@@ -69,14 +68,15 @@ const warn = (m: string) => warnings.push(m);
 // temporal dead zone and the validator dies before validating anything.
 // Found by deliberately corrupting a manifest to confirm the guard fires.
 for (const [id, sp] of SPRITES) {
-  // Ingest is supposed to guarantee this; verifying it here means a sprite
-  // hand-edited after ingest cannot quietly reintroduce off-palette colour.
-  let off = 0;
-  for (let i = 0; i < sp.rgba.length; i += 4) {
-    if (sp.rgba[i + 3] === 0) continue;
-    if (!classify(sp.rgba[i], sp.rgba[i + 1], sp.rgba[i + 2])) off++;
-  }
-  if (off) fail(`sprite "${id}": ${off} px off-palette. Re-run "npm run ingest".`);
+  // Palette conformance is NOT checked on art any more. The lock was for
+  // procedural consistency; hand-authored assets carry their own colour.
+  // What still matters is that edges are hard — a feathered sprite haloes
+  // against the grass tile, and that is invisible until it is composited.
+  let soft = 0;
+  for (let i = 0; i < sp.rgba.length; i += 4)
+    if (sp.rgba[i + 3] > 0 && sp.rgba[i + 3] < 255) soft++;
+  if (soft > sp.w * sp.h * 0.02)
+    warn(`sprite "${id}": ${soft} px partial alpha. Feathered edges halo against grass.`);
 
   const [gx, gy] = sp.manifest.garage_anchor;
   if (gx < DW.x0 || gx > DW.x1 || gy < DW.y0 || gy > DW.y1)

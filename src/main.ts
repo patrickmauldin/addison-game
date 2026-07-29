@@ -6,9 +6,9 @@
  * removes all tension and turns the game into a quiz (gameplan section 5).
  */
 
-import { CANVAS_H, CANVAS_W } from './core/projection.js';
-import { renderLot, type LotSpec, type RenderedLot } from './compositor.js';
-import { makeSprite, type HouseManifest, type SpriteRegistry } from './gen/sprite.js';
+import { CANVAS_H, CANVAS_W } from './core/scene.js';
+import { renderLot, type LotSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
+
 import {
   adjudicate,
   bumpAccuracy,
@@ -56,49 +56,60 @@ const offCtx = off.getContext('2d')!;
 // --- Sprite loading -------------------------------------------------------
 
 /**
- * Loads ingested house sprites. Image + canvas IS a PNG decoder, so the browser
- * needs none of core/png.
- *
- * Every failure path here is non-fatal by design: a missing index, a missing
- * file, a broken manifest all just leave that shell out of the registry, and
- * the compositor falls back to the generator. Art arriving is an enhancement,
- * never a dependency — which is what lets content be authored ahead of it.
+ * Loads the ground tiles and any house sprites. Every failure path is
+ * non-fatal: a missing tile falls back to a flat band, a missing house sprite
+ * falls back to a hatched placeholder. Art arriving is an enhancement, never a
+ * dependency, so content can be authored and played ahead of it.
  */
-async function loadSprites(): Promise<SpriteRegistry> {
-  const reg: SpriteRegistry = new Map();
+/** Dev cache-buster. python -m http.server sends no cache headers, so the
+ *  browser applies heuristic caching and happily serves a stale index.json or
+ *  sprite after the files on disk have changed — which looks exactly like the
+ *  code ignoring your art. */
+const CB = `?v=${Math.floor(Date.now() / 1000)}`;
+
+async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Uint8ClampedArray } | undefined> {
   try {
-    const index = (await (await fetch('assets/houses/index.json')).json()) as { sprites: string[] };
+    const img = await new Promise<HTMLImageElement>((res, rej) => {
+      const im = new Image();
+      im.onload = () => res(im);
+      im.onerror = rej;
+      im.src = url + CB;
+    });
+    const c = document.createElement('canvas');
+    c.width = img.naturalWidth;
+    c.height = img.naturalHeight;
+    const cx = c.getContext('2d')!;
+    cx.imageSmoothingEnabled = false;
+    cx.drawImage(img, 0, 0);
+    const d = cx.getImageData(0, 0, c.width, c.height);
+    return { w: c.width, h: c.height, rgba: d.data };
+  } catch {
+    return undefined;
+  }
+}
+
+async function loadAssets(): Promise<SceneAssets> {
+  const [grass, road] = await Promise.all([
+    loadBitmap('assets/grass.png'),
+    loadBitmap('assets/road.png'),
+  ]);
+  const houses = new Map<string, { w: number; h: number; rgba: Uint8ClampedArray }>();
+  try {
+    const idx = (await (await fetch('assets/houses/index.json' + CB)).json()) as { sprites: string[] };
     await Promise.all(
-      index.sprites.map(async (id) => {
-        try {
-          const manifest = (await (await fetch(`assets/houses/${id}.json`)).json()) as HouseManifest;
-          const img = await new Promise<HTMLImageElement>((res, rej) => {
-            const im = new Image();
-            im.onload = () => res(im);
-            im.onerror = rej;
-            im.src = `assets/houses/${id}.png`;
-          });
-          const c = document.createElement('canvas');
-          c.width = img.naturalWidth;
-          c.height = img.naturalHeight;
-          const cx = c.getContext('2d')!;
-          cx.imageSmoothingEnabled = false;
-          cx.drawImage(img, 0, 0);
-          const data = cx.getImageData(0, 0, c.width, c.height);
-          reg.set(id, makeSprite(manifest, c.width, c.height, data.data));
-        } catch {
-          /* this shell falls back to the generator */
-        }
+      idx.sprites.map(async (id) => {
+        const b = await loadBitmap(`assets/houses/${id}.png`);
+        if (b) houses.set(id, b);
       }),
     );
   } catch {
-    /* no sprites ingested yet; every shell falls back to the generator */
+    /* no house art yet */
   }
-  return reg;
+  return { tiles: { grass, road }, houses };
 }
 
 // --- Session state --------------------------------------------------------
-let sprites: SpriteRegistry = new Map();
+let assets: SceneAssets = { tiles: {} };
 let saveFile: SaveFile = load();
 let routeIndex = 0;
 let current: LotSpec;
@@ -183,7 +194,7 @@ function toLotPixel(ev: MouseEvent): { x: number; y: number } {
 function loadLot(index: number): void {
   routeIndex = index;
   current = LOTS[day.route[index]];
-  rendered = renderLot(current, sprites);
+  rendered = renderLot(current, assets);
   flagged = new Set();
   centroidCache.clear();
   scale = 1;
@@ -523,7 +534,7 @@ async function boot(): Promise<void> {
     saveFile.inspector.strikes_today = 0;
     // Loaded before the title screen, so the first lot never renders a
     // placeholder that then pops to real art a frame later.
-    sprites = await loadSprites();
+    assets = await loadAssets();
     titleScreen();
     // Hidden, not removed: the window error handler re-shows this element if
     // something throws later (inside a click handler, say), which is otherwise
