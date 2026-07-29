@@ -28,6 +28,7 @@ import day01 from './data/day01.json';
 import rulesData from './data/rules.json';
 import housesData from './data/houses.json';
 import { FRAME_H, FRAME_W, PERSON_UPSCALE, seedFrom, Walker } from './game/walker.js';
+import { Sound } from './game/audio.js';
 import lot01 from './data/lots/bonerville_01.json';
 import lot02 from './data/lots/bonerville_02.json';
 import lot03 from './data/lots/bonerville_03.json';
@@ -92,6 +93,12 @@ const CB = `?v=${Math.floor(Date.now() / 1000)}`;
  */
 const xMark = new Image();
 xMark.src = 'assets/x.png' + CB;
+
+/**
+ * Beds follow where you are: office for the briefing and the audit, the
+ * neighbourhood while you are out on the route.
+ */
+const sound = new Sound(CB);
 
 const peopleSheet = new Image();
 /**
@@ -488,6 +495,15 @@ window.addEventListener('click', () =>
   document.querySelectorAll('[data-menu]').forEach((m) => m.classList.remove('open')),
 );
 
+function syncMute(): void {
+  $('mi-mute').innerHTML = `Sound<span class="when">${sound.muted ? 'off' : 'on'}</span>`;
+}
+$('mi-mute').onclick = () => {
+  sound.setMuted(!sound.muted);
+  syncMute();
+};
+syncMute();
+
 $('mi-reset').onclick = () => {
   reset();
   location.reload();
@@ -518,6 +534,7 @@ function stamp(v: Verdict): void {
   // The verdict lands as ink on the case file. Still no feedback on whether it
   // was RIGHT — that waits for the audit; this is only the physical act of
   // stamping, which is what the player just did.
+  sound.play('stamp');
   stampMark.src = v === 'PASS' ? 'assets/stamp-pass.png' : 'assets/stamp-fail.png';
   stampMark.classList.remove('on');
   // Force a reflow so re-stamping restarts the animation rather than skipping it.
@@ -684,6 +701,7 @@ function endDay(): void {
   }
   saveFile.inspector.strikes_today = strikes;
   save(saveFile);
+  sound.bed('office');
 
   const pay = outcomes.length * day.pay_per_inspection;
   const shortfall = day.quota - outcomes.length;
@@ -764,6 +782,7 @@ function briefing(): void {
   startBossIdle();
   $('btn-start').onclick = () => {
     clearTimeout(bossTimer);
+    sound.bed('ambiance');
     overlay.classList.remove('on');
     loadLot(0);
   };
@@ -796,6 +815,9 @@ function titleScreen(): void {
 
   title.classList.add('on');
   $('btn-start-game').onclick = () => {
+    // The browser refuses audio before a gesture; this is the first one.
+    sound.unlock();
+    sound.bed('office');
     title.classList.remove('on');
     briefing();
   };
