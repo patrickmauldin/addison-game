@@ -7,7 +7,7 @@
  */
 
 import { adjudicate, type Verdict } from '../src/game/state.js';
-import { renderLot, type LotSpec } from '../src/compositor.js';
+import { renderLot, type LotSpec } from '../src/scene-compositor.js';
 import lot04 from '../src/data/lots/bonerville_04.json';
 import lot07 from '../src/data/lots/bonerville_07.json';
 import day01 from '../src/data/day01.json';
@@ -24,7 +24,7 @@ const SCENARIOS: Array<{ name: string; note: string; plays: Play[] }> = [
     name: 'Diligent',
     note: 'Reads the binder, cites both weeds, leaves the xeriscape bed alone.',
     plays: [
-      { lot: 'bonerville_04', flag: ['weeds_yard', 'weeds_walk'], stamp: 'FAIL' },
+      { lot: 'bonerville_04', flag: ['r101_yard'], stamp: 'FAIL' },
       { lot: 'bonerville_07', flag: [], stamp: 'PASS' },
     ],
   },
@@ -32,8 +32,8 @@ const SCENARIOS: Array<{ name: string; note: string; plays: Play[] }> = [
     name: 'Pattern-matcher',
     note: 'Flags anything green and low. This is the behaviour the decoy exists to catch.',
     plays: [
-      { lot: 'bonerville_04', flag: ['weeds_yard'], stamp: 'FAIL' },
-      { lot: 'bonerville_07', flag: ['xeri_bed'], stamp: 'FAIL' },
+      { lot: 'bonerville_04', flag: ['r101_yard'], stamp: 'FAIL' },
+      { lot: 'bonerville_07', flag: ['r101_yard'], stamp: 'FAIL' },
     ],
   },
   {
@@ -53,7 +53,7 @@ for (const s of SCENARIOS) {
   let right = 0;
   for (const p of s.plays) {
     const lot = LOTS[p.lot];
-    const { objects } = renderLot(lot);
+    const { objects } = renderLot(lot, { tiles: {} });
     const labels = new Map(objects.map((o) => [o.id, o.label]));
     const o = adjudicate(lot, labels, new Set(p.flag), p.stamp, day01.pay_per_inspection);
     if (o.strike) strikes++;

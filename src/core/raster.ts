@@ -17,8 +17,10 @@
  * how it would be done in Godot, so it ports.
  */
 
-import type { Pt } from './projection.js';
 import type { Rgb } from './palette.js';
+
+/** A screen-space point. Owned here so the rasteriser depends on no projection. */
+export type Pt = { x: number; y: number };
 
 export type Shader = (x: number, y: number) => Rgb | null;
 

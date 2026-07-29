@@ -19,13 +19,9 @@ Then open <http://localhost:8123>. `npm run watch` rebuilds on change.
 | Command | What it does |
 |---|---|
 | `npm run validate` | Content validator (gameplan §11). Non-zero exit on failure. |
-| `npm run render` | Writes `out/<lot>.png` and `@2x`, plus a click-target report. |
-| `npm run compare` | Writes `out/r101-pair.png` — the weed patch and the decoy side by side. |
 | `npm run simulate` | Headless Day 1 under three player behaviours. |
 | `npm run typecheck` | `tsc --noEmit`. |
-| `npm run ingest` | Snap `assets/houses/raw/*.png` onto the palette, report, publish index. |
-| `npm run standin` | Regenerate placeholder house sprites from the house kit. |
-| `npm run sprite-test` | Prove drop-in equivalence, recolour, and quantisation. |
+| `npm run ingest` | Check `assets/houses/raw/*.png` is exportable, publish index. |
 
 ## The logo
 
@@ -59,49 +55,44 @@ separate greenbelt street.
 **Open:** Whistling Sparrow has no character yet — Whistling Sparrow is not on the
 map extract on hand, so its phase and position are unset rather than invented.
 
-## House sprites
+## Three-quarter scene
 
-House shells are flat images, not composed geometry. The shell carries no
-gameplay state that varies at runtime — fence condition, weeds, bins, vehicles,
-pods and decor are all separate tiers — and the camera never moves, so a shell
-is a backdrop and should be the best image available. **This removes Tier 2 of
-the manifest, 14 of its 74 generators.**
+The camera looks down at the lot from the street. There is **no skew**: screen x
+is world x, depth runs up the screen foreshortened, facades are face-on and
+roofs are seen from above. Draw order is simply screen y.
 
-The ground around the house stays procedural, which is why a sprite needs a
-manifest. Pipeline:
+Canvas is **440x640**, holding the reference image's 1254:1818 aspect so art
+drops in unreframed, at 1:1 beside the 380px desk.
 
 ```
-assets/houses/raw/<id>.png     source art, any palette
-        │  npm run ingest      quantise to the 44 ramps, report, verify
-        ▼
-assets/houses/<id>.png         conformant sprite
-assets/houses/<id>.json        origin, garage/door anchors, eave line, ramp roles
-assets/houses/index.json       what the browser should load
+ y=0    grass — a background pattern, not a bounded lot
+ HOUSE  sprite, centred, base on the house band (hatched placeholder until art lands)
+        front yard · driveway · walk
+ WALK   sidewalk band
+ ROAD   road tile, bottom of frame
 ```
 
-**Target size** is 278 x 259 px for one storey, 278 x 317 for two. The
-**garage anchor must land at screen (287, 344)** or the generated driveway
-visibly misses the garage — the validator fails the build if it does not.
+Anchors (`core/scene.ts`) are plain screen points. Drop art in
+`assets/houses/raw/`, run `npm run ingest`, reload.
 
-**Both paths coexist.** `shell.sprite` wins when the sprite is ingested;
-otherwise the generator draws a placeholder. So all twenty days of content can
-be authored, validated and playtested before any art exists, then have real art
-swapped in one shell at a time without touching a lot file. `npm run sprite-test`
-asserts the two paths are **pixel-identical**, so the swap cannot change
-placement, occlusion, anchors or the id buffer.
+**Colour is no longer locked.** The 44-ramp palette was enforced per-pixel while
+every layer was generated and had to agree with every other. Hand-authored art
+carries its own colour — `grass.png` alone has 4,775 — so the lock was retired.
+`core/palette.ts` survives as the vocabulary for the few things still generated
+(the R-101 weed/bed pair, ground fallbacks) and for UI chrome.
 
-**Repainting is free.** Because ingest guarantees every pixel belongs to a known
-ramp, `shell.paint` swaps ramps tone-for-tone at runtime — shading and light
-direction survive because only the hue family moves. That is R-308 (exterior
-paint vs the approved swatch card) working from **one image per shell** instead
-of one per shell per colour.
+**Consequence worth knowing:** R-308 (exterior paint vs the swatch card, Day 11)
+used to be free — every pixel belonged to a known ramp, so repainting was a
+lookup. That no longer works on multi-thousand-colour art. When Day 11 arrives
+it needs either a paint variant per approved colour, or a 1-bit siding mask
+beside each house sprite so a hue shift can be confined to it.
 
-## Layout
+## Layout## Layout
 
 ```
-src/core/       Tier 0 — palette (locked), projection, rasteriser, iso solids
-src/gen/        Tiers 1-6 — terrain, house kit, materials, site, vegetation, props
-src/compositor  Layer stack, anchors, generator dispatch, object-id registry
+src/core/       scene (bands + anchors), palette, rasteriser, PNG codec
+src/gen/        ground — tiled grass, road band
+src/scene-compositor  Draw order, generator dispatch, object-id registry
 src/game/       Persistence + adjudication
 src/data/       Day file, rules, streets, lot instances. All content lives here.
 assets/         Logo (UI chrome, exempt) and house sprites (palette-enforced).
@@ -109,11 +100,6 @@ tools/          Headless render, validate, compare, simulate
 ```
 
 ## Contracts worth not breaking
-
-**Tier 0 is a contract, not assets.** `UNIT` = 2.5 ft; `UW/UH/UZ` = 20/10/16 px;
-2:1 isometric; sun fixed upper-left at 45°. Nothing renders a colour outside
-`PALETTE`. The validator enforces the colour rule per-pixel — including shadows,
-which step down a ramp rather than multiplying (see `palette.darken`).
 
 **Code contains zero content.** Adding a house means adding JSON. Adding a
 generator means one row in `GENERATORS` and nothing else.
@@ -127,17 +113,17 @@ never at the moment you stamp.
 
 ## Known deviations from the manifest
 
-- **Lot depth is 28 units, not 26.** The manifest header says 26 but its own
-  band table sums to 28. The band table wins; it also makes the lot diamond
-  exactly fill the 480px canvas width.
+- **The isometric projection is gone.** The manifest specifies 2:1 isometric
+  throughout; the game is three-quarter with no skew. Tier 2's 14 house
+  generators, the material shaders and the iso terrain kit were deleted with it.
 - **The campaign is 2025, not 2026.** Every weekday in the gameplan's 20-day
   schedule (Mon Mar 3, Wed Mar 5, Fri Mar 7, Wed Mar 19 …) resolves to 2025. The
   2026 in the manifest's example day file does not match its own weekdays.
-- **Deferred from Tier 2**: hip roofs (2.5), roof intersections (2.6), dormers
-  (2.7), the portico arch (2.8), chimneys (2.13). Per the manifest's build
-  order, stop and evaluate after massing/walls/band/gable.
-- **`rear_treeline` is not in the manifest.** Added for the same reason as 1.9
-  neighbour slabs: an unbroken lawn running to the top of the frame reads as a
-  golf course rather than a subdivision.
+- **Houses are art, not generators.** A shell carries no gameplay state that
+  varies at runtime and the camera never moves, so it is a backdrop.
+- **Grass is summer green, but the campaign is March-April.** The manifest built
+  a violation/decoy pair on dormant Bermuda being tan (dormant is even, dead is
+  patchy) and assumed weeds read green against tan. Against green grass that
+  read is weaker; R-101 may need a different tell, or a dormant tile variant.
 - **UI is DOM, not Tier 8 generators.** Rendered binder pages and stamp ink
   impressions are deferred; this is enough to judge the flow.

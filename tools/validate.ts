@@ -4,24 +4,25 @@
  * "Content bugs in a rules game are lethal and near-invisible without this."
  *
  * Walks every day file and asserts:
- *   1. every violation in truth cites an article that is ACTIVE that day
- *   2. every violation/decoy names an object that actually exists on the lot
- *   3. every flaggable object is actually VISIBLE (non-zero pixels in the id
- *      buffer) — an object you cannot click is an unwinnable lot
+ *   1. every violation cites an article that is ACTIVE that day
+ *   2. every violation/decoy names an object that exists on the lot
+ *   3. every flaggable object is VISIBLE — an object you cannot click is an
+ *      unwinnable lot, and a violation with a tiny target is an eye test
  *   4. every expected_verdict is derivable from truth + active_rules
- *   5. every rule introduced has at least one decoy instance within two days
+ *   5. every rule introduced has a decoy in play
  *   6. no generator or anchor is referenced that does not exist
- *   7. nothing renders a colour outside the locked Tier 0 palette
+ *   7. delivered art is exportable: hard alpha, and tiles that actually tile
  *
- * Exit code is non-zero on any failure, so this can gate a build.
+ * Note what is NOT checked any more: palette conformance. That lock existed to
+ * keep procedurally generated layers consistent with each other. Art is now
+ * hand-authored and carries its own colour, so the useful question became
+ * "is this exportable" rather than "is this on my palette".
  */
 
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { renderLot, ANCHORS, type LotSpec } from '../src/compositor.js';
-import { PALETTE } from '../src/core/palette.js';
-import { CANVAS_H, CANVAS_W, iso } from '../src/core/projection.js';
+import { existsSync, readFileSync } from 'node:fs';
+import { renderLot, type LotSpec } from '../src/scene-compositor.js';
+import { ANCHORS } from '../src/core/scene.js';
 import { decodePng } from '../src/core/png.js';
-import { makeSprite, type HouseManifest, type SpriteRegistry } from '../src/gen/sprite.js';
 
 import day01 from '../src/data/day01.json';
 import rulesData from '../src/data/rules.json';
@@ -34,83 +35,59 @@ const LOTS: Record<string, LotSpec> = {
 };
 const DAYS = [day01];
 
-// --- Sprite registry ------------------------------------------------------
-// Validate the configuration that actually ships, not the fallback.
-const SPRITES: SpriteRegistry = new Map();
-const SPRITE_DIR = 'assets/houses';
-if (existsSync(SPRITE_DIR)) {
-  for (const f of readdirSync(SPRITE_DIR).filter((f) => f.endsWith('.json') && f !== 'index.json')) {
-    const id = f.replace(/\.json$/, '');
-    if (!existsSync(`${SPRITE_DIR}/${id}.png`)) continue;
-    const m = JSON.parse(readFileSync(`${SPRITE_DIR}/${f}`, 'utf8')) as HouseManifest;
-    const bmp = decodePng(readFileSync(`${SPRITE_DIR}/${id}.png`));
-    SPRITES.set(id, makeSprite(m, bmp.w, bmp.h, bmp.rgba));
-  }
-}
-
-// The driveway is generated and has to meet the garage door. Screen bounds of
-// the driveway where it abuts the house face, with a little tolerance.
-const DW = (() => {
-  const a = iso(12.0, 14.0, 0);
-  const b = iso(17.4, 14.0, 0);
-  return { x0: Math.min(a.x, b.x) - 12, x1: Math.max(a.x, b.x) + 12,
-           y0: Math.min(a.y, b.y) - 12, y1: Math.max(a.y, b.y) + 12 };
-})();
-
-
 const errors: string[] = [];
 const warnings: string[] = [];
 const fail = (m: string) => errors.push(m);
 const warn = (m: string) => warnings.push(m);
 
-// Sprite checks run HERE, not beside the registry construction above:
-// fail/warn are const arrow functions, so calling them earlier hits the
-// temporal dead zone and the validator dies before validating anything.
-// Found by deliberately corrupting a manifest to confirm the guard fires.
-for (const [id, sp] of SPRITES) {
-  // Palette conformance is NOT checked on art any more. The lock was for
-  // procedural consistency; hand-authored assets carry their own colour.
-  // What still matters is that edges are hard — a feathered sprite haloes
-  // against the grass tile, and that is invisible until it is composited.
-  let soft = 0;
-  for (let i = 0; i < sp.rgba.length; i += 4)
-    if (sp.rgba[i + 3] > 0 && sp.rgba[i + 3] < 255) soft++;
-  if (soft > sp.w * sp.h * 0.02)
-    warn(`sprite "${id}": ${soft} px partial alpha. Feathered edges halo against grass.`);
-
-  const [gx, gy] = sp.manifest.garage_anchor;
-  if (gx < DW.x0 || gx > DW.x1 || gy < DW.y0 || gy > DW.y1)
-    fail(
-      `sprite "${id}": garage_anchor [${gx},${gy}] is outside the driveway ` +
-        `(x ${DW.x0.toFixed(0)}-${DW.x1.toFixed(0)}, y ${DW.y0.toFixed(0)}-${DW.y1.toFixed(0)}). ` +
-        `The generated concrete will visibly miss the garage.`,
-    );
-
-  const [ox, oy] = sp.manifest.origin;
-  if (ox < 0 || oy < 0 || ox + sp.w > CANVAS_W || oy + sp.h > CANVAS_H)
-    warn(`sprite "${id}": placed at [${ox},${oy}] size ${sp.w}x${sp.h} — extends past the canvas.`);
-
-  for (const [role, key] of Object.entries(sp.manifest.ramps)) {
-    if (key && !(key in PALETTE)) fail(`sprite "${id}": ramps.${role} = "${key}" is not a palette ramp.`);
+// --- Ground tiles ---------------------------------------------------------
+// Grass is the background of every lot, so a seam in it is a seam in the whole
+// game. Measured by comparing the wrap-around edge against a typical adjacent
+// pair: if wrapping is much worse than neighbouring, it does not tile.
+function checkTile(path: string, name: string): void {
+  if (!existsSync(path)) {
+    warn(`${name}: ${path} missing — the scene falls back to a flat band.`);
+    return;
   }
+  const b = decodePng(readFileSync(path));
+  const at = (x: number, y: number) => (y * b.w + x) << 2;
+  const diff = (ia: number, ib: number) =>
+    Math.abs(b.rgba[ia] - b.rgba[ib]) +
+    Math.abs(b.rgba[ia + 1] - b.rgba[ib + 1]) +
+    Math.abs(b.rgba[ia + 2] - b.rgba[ib + 2]);
+  let seamX = 0, nbrX = 0, seamY = 0, nbrY = 0;
+  const cx = (b.w / 3) | 0;
+  const cy = (b.h / 3) | 0;
+  for (let y = 0; y < b.h; y++) {
+    seamX += diff(at(0, y), at(b.w - 1, y));
+    nbrX += diff(at(cx, y), at(cx + 1, y));
+  }
+  for (let x = 0; x < b.w; x++) {
+    seamY += diff(at(x, 0), at(x, b.h - 1));
+    nbrY += diff(at(x, cy), at(x, cy + 1));
+  }
+  seamX /= b.h * 3; nbrX /= b.h * 3; seamY /= b.w * 3; nbrY /= b.w * 3;
+  if (seamX > nbrX * 2.2)
+    warn(`${name}: horizontal seam (edge ${seamX.toFixed(1)} vs neighbour ${nbrX.toFixed(1)}). Repeats visibly across x.`);
+  if (seamY > nbrY * 2.2)
+    warn(`${name}: vertical seam (edge ${seamY.toFixed(1)} vs neighbour ${nbrY.toFixed(1)}). Bands every ${b.h}px.`);
+  let soft = 0;
+  for (let i = 0; i < b.rgba.length; i += 4) if (b.rgba[i + 3] > 0 && b.rgba[i + 3] < 255) soft++;
+  if (soft) warn(`${name}: ${soft} px partial alpha — feathered edges halo when composited.`);
 }
 
-// Every colour the palette permits, packed for O(1) lookup.
-const allowed = new Set<number>();
-for (const ramp of Object.values(PALETTE))
-  for (const [r, g, b] of ramp) allowed.add((r << 16) | (g << 8) | b);
+checkTile('assets/grass.png', 'grass tile');
+checkTile('assets/road.png', 'road tile');
 
+// --- Days and lots --------------------------------------------------------
 for (const day of DAYS) {
   const active = new Set(day.active_rules);
   const known = new Set(rulesData.articles.map((a) => a.id));
-
   for (const id of day.active_rules)
     if (!known.has(id)) fail(`day ${day.day_id}: active rule ${id} is not in rules.json`);
 
-  // Rules introduced on this day must be exercised by a decoy soon after.
   const introduced = rulesData.articles.filter((a) => a.introduced_day === day.day_id);
-
-  const decoyArticles = new Set<string>();
+  let anyDecoy = false;
 
   for (const lotId of day.route) {
     const lot = LOTS[lotId];
@@ -118,44 +95,25 @@ for (const day of DAYS) {
       fail(`day ${day.day_id}: route references unknown lot "${lotId}"`);
       continue;
     }
-
     const objectIds = new Set(lot.props.map((p) => p.id));
 
-    // 6 — anchors resolve
-    for (const p of [...lot.props, ...lot.landscaping])
+    for (const p of lot.props)
       if (!(p.anchor in ANCHORS)) fail(`${lotId}: unknown anchor "${p.anchor}"`);
 
-    // 1 + 2 — violations reference live rules and real objects
     for (const v of lot.truth.violations) {
       if (!objectIds.has(v.object)) fail(`${lotId}: violation names missing object "${v.object}"`);
       if (!active.has(v.article))
-        fail(`${lotId}: violation cites ${v.article}, which is NOT active on day ${day.day_id}`);
+        fail(`${lotId}: violation cites ${v.article}, not active on day ${day.day_id}`);
     }
-    for (const d of lot.truth.decoys) {
+    for (const d of lot.truth.decoys)
       if (!objectIds.has(d.object)) fail(`${lotId}: decoy names missing object "${d.object}"`);
-    }
+    if (lot.truth.decoys.length) anyDecoy = true;
 
-    // 4 — expected_verdict must follow from truth, not from an author's mood
     const derived = lot.truth.violations.length > 0 ? 'FAIL' : 'PASS';
     if (day.verdict_mode === 'binary' && lot.expected_verdict !== derived)
-      fail(
-        `${lotId}: expected_verdict is ${lot.expected_verdict} but truth implies ${derived} ` +
-          `(${lot.truth.violations.length} violation(s))`,
-      );
+      fail(`${lotId}: expected_verdict is ${lot.expected_verdict} but truth implies ${derived}`);
 
-    // 3 + 7 — render and inspect
-    // Declared-but-missing sprite is a warning, not a failure: the generator
-    // fallback is the whole point of the two-path shell.
-    if (lot.shell.sprite && !SPRITES.has(lot.shell.sprite))
-      warn(`${lotId}: shell.sprite "${lot.shell.sprite}" is not ingested; falling back to the generator.`);
-    if (lot.shell.paint) {
-      const sp = lot.shell.sprite ? SPRITES.get(lot.shell.sprite) : undefined;
-      for (const role of Object.keys(lot.shell.paint))
-        if (sp && !sp.manifest.ramps[role as keyof typeof sp.manifest.ramps])
-          fail(`${lotId}: paints "${role}" but sprite "${lot.shell.sprite}" declares no ${role} ramp — the repaint would do nothing.`);
-    }
-
-    const { raster, objects } = renderLot(lot, SPRITES);
+    const { raster, objects } = renderLot(lot, { tiles: {} });
     const counts = new Map<number, number>();
     for (let i = 0; i < raster.id.length; i++) {
       const k = raster.id[i];
@@ -164,46 +122,22 @@ for (const day of DAYS) {
     for (const o of objects) {
       const px = counts.get(o.key) ?? 0;
       if (px === 0) fail(`${lotId}: flaggable object "${o.id}" renders 0 px — it cannot be clicked`);
-      else if (px < 120)
-        warn(`${lotId}: "${o.id}" is only ${px} px. Small click target; verify it is not a pixel hunt.`);
+      else if (px < 400) warn(`${lotId}: "${o.id}" is only ${px} px. Verify it is not a pixel hunt.`);
     }
-    // Any violation object must be comfortably clickable.
     for (const v of lot.truth.violations) {
       const o = objects.find((x) => x.id === v.object);
       const px = o ? (counts.get(o.key) ?? 0) : 0;
-      if (px > 0 && px < 60)
+      if (px > 0 && px < 200)
         fail(`${lotId}: violation "${v.object}" is only ${px} px. That is a pixel hunt, not a puzzle.`);
     }
-
-    let offPalette = 0;
-    for (let i = 0; i < CANVAS_W * CANVAS_H; i++) {
-      const p = i << 2;
-      const c = (raster.color[p] << 16) | (raster.color[p + 1] << 8) | raster.color[p + 2];
-      if (!allowed.has(c)) offPalette++;
-    }
-    if (offPalette > 0)
-      fail(`${lotId}: ${offPalette} px use colours outside the locked palette (Tier 0 violation)`);
-
-    for (const d of lot.truth.decoys) {
-      // Attribute the decoy to whichever active article it is a look-alike for.
-      for (const a of active) decoyArticles.add(a);
-      void d;
-    }
   }
 
-  // 5 — every newly introduced rule needs a decoy in play
-  for (const a of introduced) {
-    if (!decoyArticles.has(a.id))
-      fail(`day ${day.day_id}: rule ${a.id} is introduced with no decoy instance on the route`);
-    const anyDecoy = day.route.some((l) => (LOTS[l]?.truth.decoys.length ?? 0) > 0);
+  for (const a of introduced)
     if (!anyDecoy)
-      fail(`day ${day.day_id}: no lot on the route carries a decoy. Every rule ships with a near-miss.`);
-  }
+      fail(`day ${day.day_id}: rule ${a.id} is introduced with no decoy on the route. Every rule ships with a near-miss.`);
 }
 
 for (const w of warnings) console.log(`  warn   ${w}`);
 for (const e of errors) console.log(`  FAIL   ${e}`);
-console.log(
-  `\n${errors.length ? '✗' : '✓'} validator: ${errors.length} error(s), ${warnings.length} warning(s)`,
-);
+console.log(`\n${errors.length ? '✗' : '✓'} validator: ${errors.length} error(s), ${warnings.length} warning(s)`);
 process.exit(errors.length ? 1 : 0);

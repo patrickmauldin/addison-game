@@ -220,3 +220,26 @@ export function crop(src: Bitmap, x0: number, y0: number, w: number, h: number):
   }
   return { w, h, rgba: out };
 }
+
+/**
+ * Measure a decoded asset without changing it.
+ *
+ * This is what replaced quantise-on-ingest once art became hand-authored. The
+ * useful question stopped being "how far is this from my palette" and became
+ * "is this exportable": hard alpha, a sane colour count, actually opaque.
+ */
+export function analyse(rgba: Uint8ClampedArray): {
+  pixels: number; opaque: number; softAlpha: number; colours: number;
+} {
+  const seen = new Set<number>();
+  let opaque = 0;
+  let softAlpha = 0;
+  for (let i = 0; i < rgba.length; i += 4) {
+    const a = rgba[i + 3];
+    if (a === 0) continue;
+    if (a < 255) softAlpha++;
+    opaque++;
+    seen.add((rgba[i] << 16) | (rgba[i + 1] << 8) | rgba[i + 2]);
+  }
+  return { pixels: rgba.length / 4, opaque, softAlpha, colours: seen.size };
+}

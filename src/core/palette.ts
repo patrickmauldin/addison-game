@@ -1,15 +1,19 @@
 /**
- * TIER 0.2 — MASTER PALETTE (LOCKED)
+ * COLOUR VOCABULARY.
  *
- * 44 ramps x 3 tones. Nothing in this project renders a color that is not in
- * this table. Adding a color means adding a ramp here, deliberately.
+ * 44 ramps x 3 tones, each [shade, base, light].
  *
- * Ramp order is ALWAYS [shade, base, light]:
- *   [0] shade — faces whose normal points away from the sun (screen right-down)
- *   [1] base  — faces toward the sun (screen left-down), and flat detail
- *   [2] light — horizontal top faces, which catch the most sun
+ * This was a LOCK: nothing could render a colour outside it, enforced per-pixel
+ * by the validator. That was the right contract while every layer was
+ * procedurally generated and had to agree with every other. It was retired for
+ * hand-authored art, which carries its own colour — grass.png alone has 4,775.
  *
- * SUN is fixed upper-left, 45deg, forever. See projection.ts.
+ * What remains is a shared vocabulary for the few things still generated at
+ * runtime (the R-101 weed/bed pair, ground fallbacks) and for UI chrome. Using
+ * it keeps procedural bits from drifting away from the delivered art; it no
+ * longer constrains the art.
+ *
+ * Light direction is upper-left: shade away from it, light toward it.
  */
 
 export type Rgb = readonly [number, number, number];
@@ -94,11 +98,6 @@ export const PALETTE = {
 
 export type PaletteKey = keyof typeof PALETTE;
 
-/** Tone index into a ramp. */
-export const SHADE = 0;
-export const BASE = 1;
-export const LIGHT = 2;
-
 export function ramps(key: PaletteKey): Ramp {
   const r = PALETTE[key];
   if (!r) throw new Error(`palette: unknown ramp "${key}"`);
@@ -107,42 +106,4 @@ export function ramps(key: PaletteKey): Ramp {
 
 export function tone(key: PaletteKey, t: 0 | 1 | 2): Rgb {
   return ramps(key)[t];
-}
-
-/** Count check — the manifest specifies ~44 ramps. Guards against drift. */
-export const RAMP_COUNT = Object.keys(PALETTE).length;
-
-// --- Palette-safe shading -------------------------------------------------
-// Multiplying a pixel by 0.72 to make a shadow is the obvious implementation
-// and it silently breaks the Tier 0 contract: it emits colours that are in no
-// ramp. In pixel art that is precisely the drift the locked palette exists to
-// prevent, and it compounds — every shadow pass widens the real palette.
-//
-// Instead, a shadow steps DOWN the ramp the pixel already belongs to. This is
-// how a pixel artist would shade it, it can never leave the palette, and it
-// makes shadow depth a discrete authored decision rather than a float.
-
-const packed = (c: Rgb) => (c[0] << 16) | (c[1] << 8) | c[2];
-
-const TONE_INDEX = new Map<number, { key: PaletteKey; tone: 0 | 1 | 2 }>();
-for (const [key, ramp] of Object.entries(PALETTE) as Array<[PaletteKey, Ramp]>) {
-  ramp.forEach((c, i) => {
-    // First writer wins: a colour shared by two ramps keeps its first home,
-    // which is stable because PALETTE is declared in a fixed order.
-    if (!TONE_INDEX.has(packed(c))) TONE_INDEX.set(packed(c), { key, tone: i as 0 | 1 | 2 });
-  });
-}
-
-/**
- * Step a colour `steps` tones darker within its own ramp. Colours already at
- * the darkest tone stay put — a shadow on an already-dark surface should be
- * subtle, and inventing a new dark colour is exactly what this prevents.
- * Unknown colours are returned unchanged rather than guessed at.
- */
-export function darken(c: Rgb | ArrayLike<number>, steps = 1): Rgb {
-  const key = ((c[0] << 16) | (c[1] << 8) | c[2]) >>> 0;
-  const found = TONE_INDEX.get(key);
-  if (!found) return [c[0], c[1], c[2]];
-  const t = Math.max(0, found.tone - steps) as 0 | 1 | 2;
-  return PALETTE[found.key][t];
 }
