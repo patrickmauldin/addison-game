@@ -315,9 +315,9 @@
 
 
       /* --- Title screen ------------------------------------------------ */
-      /* Austin at dusk behind the title. The gradient stays underneath as a
-         fallback and as the colour the image is letterboxed against on aspect
-         ratios it cannot cover. */
+      /* Austin at dusk behind the title, shown as delivered — no wash over it.
+         The gradient stays UNDERNEATH as a fallback and as the colour the image
+         is letterboxed against on aspect ratios it cannot cover. */
       #title {
         position: fixed; inset: 0; z-index: 40; display: none;
         flex-direction: column; align-items: center; justify-content: center;
@@ -327,13 +327,6 @@
           radial-gradient(ellipse at 50% 38%, #24303c 0%, #10161d 72%);
         image-rendering: pixelated;
       }
-      /* Darkens the sky just enough for the menu to hold its own against it
-         without flattening the skyline. */
-      #title::after {
-        content: ''; position: absolute; inset: 0; pointer-events: none;
-        background: linear-gradient(to bottom, rgba(8,12,18,.30), rgba(8,12,18,.72));
-      }
-      #title > * { position: relative; z-index: 1; }
       #title.on { display: flex; }
       #title-logo {
         /* The logo is close to square, so a width-only cap would shove START
