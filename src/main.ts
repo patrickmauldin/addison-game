@@ -104,6 +104,8 @@ async function loadAssets(): Promise<SceneAssets> {
 
 // --- Session state --------------------------------------------------------
 let assets: SceneAssets = { sprites: new Map() };
+let currentCanvas: HTMLCanvasElement | null = null;
+let sliding = false;
 let saveFile: SaveFile = load();
 let routeIndex = 0;
 let current: LotSpec;
@@ -113,6 +115,22 @@ let outcomes: LotOutcome[] = [];
 let stamping = false;
 
 // --- Rendering ------------------------------------------------------------
+
+/**
+ * Each lot is rendered once into its own canvas so the transition can slide
+ * two finished images past each other with drawImage, instead of recompositing
+ * ~900k pixels twice a frame in JS. The scene renders in tens of milliseconds,
+ * which is fine once but nowhere near a 60fps budget.
+ */
+function renderToCanvas(lot: LotSpec, worldX: number): { rl: RenderedLot; cv: HTMLCanvasElement } {
+  const { w, h } = stageSize();
+  const rl = renderLot(lot, assets, w, h, worldX);
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  cv.getContext('2d')!.putImageData(rl.raster.toImageData(), 0, 0);
+  return { rl, cv };
+}
 
 function stageSize(): { w: number; h: number } {
   const r = frame.getBoundingClientRect();
@@ -126,7 +144,8 @@ function paint(): void {
   canvas.style.width = `${w}px`;
   canvas.style.height = `${h}px`;
   ctx.imageSmoothingEnabled = false;
-  ctx.putImageData(rendered.raster.toImageData(), 0, 0);
+  if (currentCanvas) ctx.drawImage(currentCanvas, 0, 0);
+  else ctx.putImageData(rendered.raster.toImageData(), 0, 0);
 
   for (const id of flagged) {
     const obj = rendered.objects.find((o) => o.id === id);
@@ -151,8 +170,9 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     if (!current) return;
-    const { w, h } = stageSize();
-    rendered = renderLot(current, assets, w, h);
+    const built = renderToCanvas(current, routeIndex * stageSize().w);
+    rendered = built.rl;
+    currentCanvas = built.cv;
     centroidCache.clear();
     paint();
   }, 120) as unknown as number;
@@ -190,7 +210,9 @@ function loadLot(index: number): void {
   routeIndex = index;
   current = LOTS[day.route[index]];
   const sz = stageSize();
-  rendered = renderLot(current, assets, sz.w, sz.h);
+  const built = renderToCanvas(current, index * sz.w);
+  rendered = built.rl;
+  currentCanvas = built.cv;
   flagged = new Set();
   centroidCache.clear();
   stamping = false;
@@ -289,7 +311,7 @@ function syncDesk(): void {
 // --- Interaction ----------------------------------------------------------
 
 frame.addEventListener('click', (ev) => {
-  if (stamping) return;
+  if (stamping || sliding) return;
   const p = toLotPixel(ev as MouseEvent);
   const key = rendered.raster.idAt(p.x, p.y);
   if (!key) return;
@@ -302,6 +324,7 @@ frame.addEventListener('click', (ev) => {
 });
 
 frame.addEventListener('mousemove', (ev) => {
+  if (sliding) return;
   const p = toLotPixel(ev as MouseEvent);
   const obj = rendered.byKey.get(rendered.raster.idAt(p.x, p.y));
   // The loupe is an INFORMATION tool, not a magnifier: label and first-seen
@@ -358,13 +381,73 @@ function stamp(v: Verdict): void {
   saveFile.inspector.pay += day.pay_per_inspection;
   save(saveFile);
 
-  // No feedback. Just the stamp landing and the next car pulling up.
+  // No feedback. Just the stamp landing, then the drive to the next house.
+  // Kept short: the slide that follows is itself ~900ms, and back-to-back they
+  // read as one dead pause rather than two beats.
   filedBadge.classList.add('on');
   setTimeout(() => {
     filedBadge.classList.remove('on');
-    if (routeIndex + 1 < day.route.length) loadLot(routeIndex + 1);
+    if (routeIndex + 1 < day.route.length) slideToLot(routeIndex + 1);
     else endDay();
-  }, 850);
+  }, 550);
+}
+
+/**
+ * Drive to the next house.
+ *
+ * The whole street slides left and the next lot arrives from the right, so the
+ * route reads as a drive rather than a slideshow. Ground tiles are phased by
+ * world position (see renderLot's worldX), which is what lets two separately
+ * rendered lots meet without a seam down the middle of the pan.
+ */
+function slideToLot(index: number): void {
+  const sz = stageSize();
+  const next = renderToCanvas(LOTS[day.route[index]], index * sz.w);
+
+  // Respect a reduced-motion preference: the transition is decorative, and a
+  // full-screen horizontal pan is exactly the kind of thing that triggers
+  // vestibular discomfort.
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (reduced || !currentCanvas) {
+    loadLot(index);
+    return;
+  }
+
+  const from = currentCanvas;
+  const DURATION = 900;
+  const start = performance.now();
+  sliding = true;
+
+  const frame = (now: number) => {
+    const t = Math.min(1, (now - start) / DURATION);
+    // Ease in and out: a car pulling away and settling, not a linear wipe.
+    const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    const dx = Math.round(-e * sz.w);
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, sz.w, sz.h);
+    ctx.drawImage(from, dx, 0);
+    ctx.drawImage(next.cv, dx + sz.w, 0);
+    if (t < 1) {
+      requestAnimationFrame(frame);
+    } else {
+      sliding = false;
+      // Adopt the arrived lot without re-rendering it.
+      routeIndex = index;
+      current = LOTS[day.route[index]];
+      rendered = next.rl;
+      currentCanvas = next.cv;
+      flagged = new Set();
+      centroidCache.clear();
+      stamping = false;
+      const rec = recordFor(saveFile, current.lot_id, current.address);
+      for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
+      save(saveFile);
+      renderCaseFile(rec);
+      paint();
+      syncDesk();
+    }
+  };
+  requestAnimationFrame(frame);
 }
 
 // --- End of day: the audit ------------------------------------------------

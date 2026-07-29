@@ -120,13 +120,13 @@ function blitScaled(
  * the house reads as a patch pasted onto a different lawn. Ground tiles take
  * the same scale as the house so all grass in frame is one lawn.
  */
-function tile(r: Raster, src: Bitmap, y0: number, y1: number, scale = 1): void {
+function tile(r: Raster, src: Bitmap, y0: number, y1: number, scale = 1, phaseX = 0): void {
   const tw = Math.max(1, Math.round(src.w * scale));
   const th = Math.max(1, Math.round(src.h * scale));
   for (let y = Math.max(0, y0); y < Math.min(r.h, y1); y++) {
     const sy = Math.min(src.h - 1, Math.floor((((y % th) + th) % th) / scale));
     for (let x = 0; x < r.w; x++) {
-      const sx = Math.min(src.w - 1, Math.floor((((x % tw) + tw) % tw) / scale));
+      const sx = Math.min(src.w - 1, Math.floor(((((x + phaseX) % tw) + tw) % tw) / scale));
       const s = (sy * src.w + sx) << 2;
       if (src.rgba[s + 3] === 0) continue;
       r.px(x, y, [src.rgba[s], src.rgba[s + 1], src.rgba[s + 2]]);
@@ -135,9 +135,10 @@ function tile(r: Raster, src: Bitmap, y0: number, y1: number, scale = 1): void {
 }
 
 /** Tile horizontally only, at a fixed scale — for the sidewalk strip. */
-function tileStrip(r: Raster, src: Bitmap, y0: number, h: number): void {
+function tileStrip(r: Raster, src: Bitmap, y0: number, h: number, phaseX = 0): void {
   const w = Math.max(1, Math.round(src.w * (h / src.h)));
-  for (let x = 0; x < r.w; x += w) blitScaled(r, src, x, y0, w, h, true);
+  const start = -(((phaseX % w) + w) % w);
+  for (let x = start; x < r.w; x += w) blitScaled(r, src, x, y0, w, h, true);
 }
 
 function fill(r: Raster, y0: number, y1: number, c: Rgb): void {
@@ -152,6 +153,15 @@ export function renderLot(
   assets: SceneAssets,
   width: number,
   height: number,
+  /**
+   * Where this lot sits along the street, in pixels.
+   *
+   * Ground tiles are phased by it so that two lots rendered separately and slid
+   * past each other line up. Without this every lot starts its grass at phase 0
+   * and the join between them is a hard vertical seam in the middle of the
+   * transition — the one frame the player is guaranteed to be looking at.
+   */
+  worldX = 0,
 ): RenderedLot {
   const L = layout(width, height);
   const r = new Raster(L.w, L.h);
@@ -174,16 +184,16 @@ export function renderLot(
   // "Draw the ground last so nothing spills onto it" is exactly backwards —
   // spilling onto the ground is what objects resting on it are supposed to do.
   const grass = S.get('grass');
-  if (grass) tile(r, grass, 0, L.h, L.scale);
+  if (grass) tile(r, grass, 0, L.h, L.scale, worldX);
   else fill(r, 0, L.h, PALETTE.healthy_green[1] as Rgb);
 
   const walk = S.get('sidewalk');
   const walkH = L.roadTop - L.walkTop;
-  if (walk) tileStrip(r, walk, L.walkTop, walkH);
+  if (walk) tileStrip(r, walk, L.walkTop, walkH, worldX);
   else fill(r, L.walkTop, L.roadTop, PALETTE.concrete_weathered[2] as Rgb);
 
   const road = S.get('road');
-  if (road) tile(r, road, L.roadTop, L.h, L.scale);
+  if (road) tile(r, road, L.roadTop, L.h, L.scale, worldX);
   else fill(r, L.roadTop, L.h, PALETTE.asphalt[0] as Rgb);
 
   // House. Its own lawn is baked in and matches the tile closely enough that
