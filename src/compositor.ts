@@ -26,6 +26,7 @@ import * as V from './gen/vegetation.js';
 import * as S from './gen/site.js';
 import * as P from './gen/props.js';
 import { drawHouse, type HouseSpec } from './gen/house.js';
+import { drawHouseSprite, type PaintSpec, type SpriteRegistry } from './gen/sprite.js';
 import type { WallMaterial } from './gen/materials.js';
 
 // --- Anchors --------------------------------------------------------------
@@ -80,7 +81,24 @@ export type LotSpec = {
   lot_id: string;
   address: string;
   street: string;
+  /**
+   * The shell carries BOTH a sprite reference and generator parameters.
+   *
+   * If `sprite` names a registered sprite it wins; otherwise the generator
+   * renders a placeholder. That is deliberate: it means all twenty days of
+   * content can be authored, validated and playtested against generated houses
+   * and then have real art swapped in one shell at a time, without touching a
+   * single lot file or blocking content on the art pipeline.
+   */
   shell: {
+    /** Sprite id, resolved against the registry passed to renderLot. */
+    sprite?: string;
+    /** Ramp swaps applied to the sprite — this is the R-308 paint mechanic. */
+    paint?: PaintSpec;
+    /** True once a house-level rule (R-308 paint) is live, making it clickable. */
+    flaggable?: boolean;
+
+    // Placeholder generator parameters. Ignored when a sprite resolves.
     stories: 1 | 2;
     lower_mat: WallMaterial;
     upper_mat: WallMaterial;
@@ -165,7 +183,7 @@ const GENERATORS: Record<string, GenFn> = {
 
 // --- Render ---------------------------------------------------------------
 
-export function renderLot(spec: LotSpec): RenderedLot {
+export function renderLot(spec: LotSpec, sprites?: SpriteRegistry): RenderedLot {
   const r = new Raster(CANVAS_W, CANVAS_H);
   const objects: RenderedObject[] = [];
   const byKey = new Map<number, RenderedObject>();
@@ -210,8 +228,22 @@ export function renderLot(spec: LotSpec): RenderedLot {
   }
 
   // --- Layers 2-4: house -------------------------------------------------
-  const houseSpec: HouseSpec = { ...spec.shell, seed: spec.seed };
-  drawHouse(r, houseSpec);
+  // A sprite wins if one is registered; otherwise the generator stands in.
+  // The house is scenery unless a house-level rule is live this day — flagging
+  // a clean house has to stay possible-but-wrong, not impossible.
+  const sprite = spec.shell.sprite ? sprites?.get(spec.shell.sprite) : undefined;
+  if (spec.shell.flaggable) {
+    begin({ id: 'house', label: `Exterior — ${spec.address}`, flaggable: true });
+  } else {
+    scenery();
+  }
+  if (sprite) {
+    drawHouseSprite(r, sprite, spec.shell.paint);
+  } else {
+    const houseSpec: HouseSpec = { ...spec.shell, seed: spec.seed };
+    drawHouse(r, houseSpec);
+  }
+  scenery();
 
   // --- Layer 5: permanent landscaping ------------------------------------
   // Sorted back-to-front so canopies overlap correctly.

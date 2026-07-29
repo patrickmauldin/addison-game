@@ -17,10 +17,25 @@ automatically, so a missing logo never blocks the build or the game.
 It is close to square, so the title screen caps it on HEIGHT (54vh) rather than
 width — a width-only cap pushes the START GAME button off short screens.
 
+## houses/
+
+House shells. `raw/` holds source art at any palette; `npm run ingest` snaps it
+onto the locked 44 ramps and writes the conformant sprite plus an index.
+
+Each sprite needs a `<id>.json` beside it declaring `origin`, `garage_anchor`,
+`door_anchor`, `eave_line` and which ramp plays which role (`siding`, `trim`,
+`roof`, `masonry`). Without it the sprite cannot be placed and ingest says so.
+
+Target 278x259 (1-storey) or 278x317 (2-storey), 2:1 isometric at 26.57 degrees
+— NOT 30 degree true isometric — sun upper-left, true 1px pixels, transparent
+background.
+
 ## Note on the palette
 
 Everything under `src/gen/` obeys the locked Tier 0 palette and the validator
-enforces that per-pixel. Assets in this folder are UI chrome and are explicitly
-**exempt** — the validator only inspects compositor output. Keep it that way:
-if hand-authored art ever ends up inside the lot viewport it needs to be
-brought onto the palette first, or the whole point of locking it is lost.
+enforces that per-pixel.
+
+`addison-logo.png` is UI chrome — it never enters the compositor, so it is
+exempt. **House sprites are not exempt.** They render inside the lot viewport
+alongside procedural output, so ingest quantises them and the validator
+re-checks the result. A sprite hand-edited after ingest will fail the build.

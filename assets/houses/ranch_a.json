@@ -1,0 +1,28 @@
+{
+  "id": "ranch_a",
+  "stories": 1,
+  "origin": [
+    171,
+    131
+  ],
+  "garage_anchor": [
+    287,
+    344
+  ],
+  "door_anchor": [
+    256,
+    308
+  ],
+  "eave_line": [
+    176,
+    202,
+    271,
+    249
+  ],
+  "ramps": {
+    "siding": "khaki",
+    "masonry": "limestone_tan",
+    "trim": "trim_white",
+    "roof": "weathered_gray"
+  }
+}

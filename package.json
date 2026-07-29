@@ -10,13 +10,17 @@
     "simulate": "npx esbuild tools/simulate.ts --bundle --platform=node --outfile=dist/simulate.cjs --loader:.json=json --log-level=warning && node dist/simulate.cjs",
     "compare": "npx esbuild tools/compare.ts --bundle --platform=node --outfile=dist/compare.cjs --loader:.json=json --log-level=warning && node dist/compare.cjs",
     "typecheck": "tsc --noEmit",
-    "serve": "python3 -m http.server 8123"
+    "serve": "python3 -m http.server 8123",
+    "standin": "npx esbuild tools/make-standin.ts --bundle --platform=node --outfile=dist/standin.cjs --loader:.json=json --log-level=warning && node dist/standin.cjs",
+    "ingest": "npx esbuild tools/ingest.ts --bundle --platform=node --outfile=dist/ingest.cjs --loader:.json=json --log-level=warning && node dist/ingest.cjs",
+    "sprite-test": "npx esbuild tools/sprite-test.ts --bundle --platform=node --outfile=dist/sprite-test.cjs --loader:.json=json --log-level=warning && node dist/sprite-test.cjs"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/node": "^26.1.2",
     "esbuild": "^0.28.1",
     "typescript": "^7.0.2"
   }

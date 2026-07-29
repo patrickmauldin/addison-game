@@ -5,6 +5,8 @@
   "seed": 70418,
 
   "shell": {
+    "_note": "sprite wins when assets/houses/ranch_b.png is present; the generator params below are the placeholder fallback",
+    "sprite": "ranch_b",
     "stories": 1,
     "lower_mat": "stone",
     "upper_mat": "board_batten",

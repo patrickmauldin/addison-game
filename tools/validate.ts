@@ -16,9 +16,13 @@
  * Exit code is non-zero on any failure, so this can gate a build.
  */
 
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { renderLot, ANCHORS, type LotSpec } from '../src/compositor.js';
 import { PALETTE } from '../src/core/palette.js';
-import { CANVAS_H, CANVAS_W } from '../src/core/projection.js';
+import { CANVAS_H, CANVAS_W, iso } from '../src/core/projection.js';
+import { decodePng } from '../src/core/png.js';
+import { classify } from '../src/core/quantize.js';
+import { makeSprite, type HouseManifest, type SpriteRegistry } from '../src/gen/sprite.js';
 
 import day01 from '../src/data/day01.json';
 import rulesData from '../src/data/rules.json';
@@ -31,10 +35,65 @@ const LOTS: Record<string, LotSpec> = {
 };
 const DAYS = [day01];
 
+// --- Sprite registry ------------------------------------------------------
+// Validate the configuration that actually ships, not the fallback.
+const SPRITES: SpriteRegistry = new Map();
+const SPRITE_DIR = 'assets/houses';
+if (existsSync(SPRITE_DIR)) {
+  for (const f of readdirSync(SPRITE_DIR).filter((f) => f.endsWith('.json') && f !== 'index.json')) {
+    const id = f.replace(/\.json$/, '');
+    if (!existsSync(`${SPRITE_DIR}/${id}.png`)) continue;
+    const m = JSON.parse(readFileSync(`${SPRITE_DIR}/${f}`, 'utf8')) as HouseManifest;
+    const bmp = decodePng(readFileSync(`${SPRITE_DIR}/${id}.png`));
+    SPRITES.set(id, makeSprite(m, bmp.w, bmp.h, bmp.rgba));
+  }
+}
+
+// The driveway is generated and has to meet the garage door. Screen bounds of
+// the driveway where it abuts the house face, with a little tolerance.
+const DW = (() => {
+  const a = iso(12.0, 14.0, 0);
+  const b = iso(17.4, 14.0, 0);
+  return { x0: Math.min(a.x, b.x) - 12, x1: Math.max(a.x, b.x) + 12,
+           y0: Math.min(a.y, b.y) - 12, y1: Math.max(a.y, b.y) + 12 };
+})();
+
+
 const errors: string[] = [];
 const warnings: string[] = [];
 const fail = (m: string) => errors.push(m);
 const warn = (m: string) => warnings.push(m);
+
+// Sprite checks run HERE, not beside the registry construction above:
+// fail/warn are const arrow functions, so calling them earlier hits the
+// temporal dead zone and the validator dies before validating anything.
+// Found by deliberately corrupting a manifest to confirm the guard fires.
+for (const [id, sp] of SPRITES) {
+  // Ingest is supposed to guarantee this; verifying it here means a sprite
+  // hand-edited after ingest cannot quietly reintroduce off-palette colour.
+  let off = 0;
+  for (let i = 0; i < sp.rgba.length; i += 4) {
+    if (sp.rgba[i + 3] === 0) continue;
+    if (!classify(sp.rgba[i], sp.rgba[i + 1], sp.rgba[i + 2])) off++;
+  }
+  if (off) fail(`sprite "${id}": ${off} px off-palette. Re-run "npm run ingest".`);
+
+  const [gx, gy] = sp.manifest.garage_anchor;
+  if (gx < DW.x0 || gx > DW.x1 || gy < DW.y0 || gy > DW.y1)
+    fail(
+      `sprite "${id}": garage_anchor [${gx},${gy}] is outside the driveway ` +
+        `(x ${DW.x0.toFixed(0)}-${DW.x1.toFixed(0)}, y ${DW.y0.toFixed(0)}-${DW.y1.toFixed(0)}). ` +
+        `The generated concrete will visibly miss the garage.`,
+    );
+
+  const [ox, oy] = sp.manifest.origin;
+  if (ox < 0 || oy < 0 || ox + sp.w > CANVAS_W || oy + sp.h > CANVAS_H)
+    warn(`sprite "${id}": placed at [${ox},${oy}] size ${sp.w}x${sp.h} — extends past the canvas.`);
+
+  for (const [role, key] of Object.entries(sp.manifest.ramps)) {
+    if (key && !(key in PALETTE)) fail(`sprite "${id}": ramps.${role} = "${key}" is not a palette ramp.`);
+  }
+}
 
 // Every colour the palette permits, packed for O(1) lookup.
 const allowed = new Set<number>();
@@ -85,7 +144,18 @@ for (const day of DAYS) {
       );
 
     // 3 + 7 — render and inspect
-    const { raster, objects } = renderLot(lot);
+    // Declared-but-missing sprite is a warning, not a failure: the generator
+    // fallback is the whole point of the two-path shell.
+    if (lot.shell.sprite && !SPRITES.has(lot.shell.sprite))
+      warn(`${lotId}: shell.sprite "${lot.shell.sprite}" is not ingested; falling back to the generator.`);
+    if (lot.shell.paint) {
+      const sp = lot.shell.sprite ? SPRITES.get(lot.shell.sprite) : undefined;
+      for (const role of Object.keys(lot.shell.paint))
+        if (sp && !sp.manifest.ramps[role as keyof typeof sp.manifest.ramps])
+          fail(`${lotId}: paints "${role}" but sprite "${lot.shell.sprite}" declares no ${role} ramp — the repaint would do nothing.`);
+    }
+
+    const { raster, objects } = renderLot(lot, SPRITES);
     const counts = new Map<number, number>();
     for (let i = 0; i < raster.id.length; i++) {
       const k = raster.id[i];

@@ -23,6 +23,9 @@ Then open <http://localhost:8123>. `npm run watch` rebuilds on change.
 | `npm run compare` | Writes `out/r101-pair.png` — the weed patch and the decoy side by side. |
 | `npm run simulate` | Headless Day 1 under three player behaviours. |
 | `npm run typecheck` | `tsc --noEmit`. |
+| `npm run ingest` | Snap `assets/houses/raw/*.png` onto the palette, report, publish index. |
+| `npm run standin` | Regenerate placeholder house sprites from the house kit. |
+| `npm run sprite-test` | Prove drop-in equivalence, recolour, and quantisation. |
 
 ## The logo
 
@@ -56,6 +59,43 @@ separate greenbelt street.
 **Open:** Whistling Sparrow has no character yet — Whistling Sparrow is not on the
 map extract on hand, so its phase and position are unset rather than invented.
 
+## House sprites
+
+House shells are flat images, not composed geometry. The shell carries no
+gameplay state that varies at runtime — fence condition, weeds, bins, vehicles,
+pods and decor are all separate tiers — and the camera never moves, so a shell
+is a backdrop and should be the best image available. **This removes Tier 2 of
+the manifest, 14 of its 74 generators.**
+
+The ground around the house stays procedural, which is why a sprite needs a
+manifest. Pipeline:
+
+```
+assets/houses/raw/<id>.png     source art, any palette
+        │  npm run ingest      quantise to the 44 ramps, report, verify
+        ▼
+assets/houses/<id>.png         conformant sprite
+assets/houses/<id>.json        origin, garage/door anchors, eave line, ramp roles
+assets/houses/index.json       what the browser should load
+```
+
+**Target size** is 278 x 259 px for one storey, 278 x 317 for two. The
+**garage anchor must land at screen (287, 344)** or the generated driveway
+visibly misses the garage — the validator fails the build if it does not.
+
+**Both paths coexist.** `shell.sprite` wins when the sprite is ingested;
+otherwise the generator draws a placeholder. So all twenty days of content can
+be authored, validated and playtested before any art exists, then have real art
+swapped in one shell at a time without touching a lot file. `npm run sprite-test`
+asserts the two paths are **pixel-identical**, so the swap cannot change
+placement, occlusion, anchors or the id buffer.
+
+**Repainting is free.** Because ingest guarantees every pixel belongs to a known
+ramp, `shell.paint` swaps ramps tone-for-tone at runtime — shading and light
+direction survive because only the hue family moves. That is R-308 (exterior
+paint vs the approved swatch card) working from **one image per shell** instead
+of one per shell per colour.
+
 ## Layout
 
 ```
@@ -64,7 +104,7 @@ src/gen/        Tiers 1-6 — terrain, house kit, materials, site, vegetation, p
 src/compositor  Layer stack, anchors, generator dispatch, object-id registry
 src/game/       Persistence + adjudication
 src/data/       Day file, rules, streets, lot instances. All content lives here.
-assets/         Hand-authored art (logo). Exempt from the palette lock.
+assets/         Logo (UI chrome, exempt) and house sprites (palette-enforced).
 tools/          Headless render, validate, compare, simulate
 ```
 
