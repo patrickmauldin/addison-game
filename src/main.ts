@@ -6,7 +6,7 @@
  * removes all tension and turns the game into a quiz (gameplan section 5).
  */
 
-import { CANVAS_H, CANVAS_W } from './core/scene.js';
+
 import { renderLot, type LotSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
 
 import {
@@ -47,12 +47,6 @@ const overlay = $('overlay');
 const sheet = $('sheet');
 const filedBadge = $('filed');
 
-// Offscreen buffer holding the native-resolution lot.
-const off = document.createElement('canvas');
-off.width = CANVAS_W;
-off.height = CANVAS_H;
-const offCtx = off.getContext('2d')!;
-
 // --- Sprite loading -------------------------------------------------------
 
 /**
@@ -88,92 +82,95 @@ async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Ui
   }
 }
 
+const ASSET_FILES = [
+  'grass', 'road', 'sidewalk', 'house1',
+  'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
+];
+
 async function loadAssets(): Promise<SceneAssets> {
-  const [grass, road] = await Promise.all([
-    loadBitmap('assets/grass.png'),
-    loadBitmap('assets/road.png'),
-  ]);
-  const houses = new Map<string, { w: number; h: number; rgba: Uint8ClampedArray }>();
-  try {
-    const idx = (await (await fetch('assets/houses/index.json' + CB)).json()) as { sprites: string[] };
-    await Promise.all(
-      idx.sprites.map(async (id) => {
-        const b = await loadBitmap(`assets/houses/${id}.png`);
-        if (b) houses.set(id, b);
-      }),
-    );
-  } catch {
-    /* no house art yet */
-  }
-  return { tiles: { grass, road }, houses };
+  const sprites = new Map<string, { w: number; h: number; rgba: Uint8ClampedArray }>();
+  await Promise.all(
+    ASSET_FILES.map(async (name) => {
+      // house1 shipped as a JPEG; everything else is PNG. Try both rather than
+      // encoding the extension into content.
+      for (const ext of ['png', 'jpg']) {
+        const b = await loadBitmap(`assets/${name}.${ext}`);
+        if (b) { sprites.set(name, b); return; }
+      }
+    }),
+  );
+  return { sprites };
 }
 
 // --- Session state --------------------------------------------------------
-let assets: SceneAssets = { tiles: {} };
+let assets: SceneAssets = { sprites: new Map() };
 let saveFile: SaveFile = load();
 let routeIndex = 0;
 let current: LotSpec;
 let rendered: RenderedLot;
 let flagged = new Set<string>();
 let outcomes: LotOutcome[] = [];
-let scale = 1;
-let panX = 0;
-let panY = 0;
 let stamping = false;
 
 // --- Rendering ------------------------------------------------------------
 
+function stageSize(): { w: number; h: number } {
+  const r = frame.getBoundingClientRect();
+  return { w: Math.max(320, Math.round(r.width)), h: Math.max(320, Math.round(r.height)) };
+}
+
 function paint(): void {
-  canvas.width = CANVAS_W;
-  canvas.height = CANVAS_H;
-  canvas.style.width = `${CANVAS_W}px`;
-  canvas.style.height = `${CANVAS_H}px`;
+  const { w, h } = stageSize();
+  canvas.width = w;
+  canvas.height = h;
+  canvas.style.width = `${w}px`;
+  canvas.style.height = `${h}px`;
   ctx.imageSmoothingEnabled = false;
+  ctx.putImageData(rendered.raster.toImageData(), 0, 0);
 
-  offCtx.putImageData(rendered.raster.toImageData(), 0, 0);
-
-  ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
-  ctx.drawImage(
-    off,
-    panX, panY, CANVAS_W / scale, CANVAS_H / scale,
-    0, 0, CANVAS_W, CANVAS_H,
-  );
-
-  // Flag markers. Drawn in screen space over the scaled image so they stay
-  // legible at 1x — the marker is UI, not art, and should not pixel-double.
   for (const id of flagged) {
     const obj = rendered.objects.find((o) => o.id === id);
     if (!obj) continue;
     const c = centroid(obj.key);
     if (!c) continue;
-    const x = (c.x - panX) * scale;
-    const y = (c.y - panY) * scale;
     ctx.strokeStyle = '#e8452f';
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(x, y, 13, 0, Math.PI * 2);
+    ctx.arc(c.x, c.y, 15, 0, Math.PI * 2);
     ctx.stroke();
     ctx.beginPath();
-    ctx.moveTo(x - 4, y);
-    ctx.lineTo(x + 4, y);
-    ctx.moveTo(x, y - 4);
-    ctx.lineTo(x, y + 4);
+    ctx.moveTo(c.x - 5, c.y); ctx.lineTo(c.x + 5, c.y);
+    ctx.moveTo(c.x, c.y - 5); ctx.lineTo(c.x, c.y + 5);
     ctx.stroke();
   }
 }
+
+/** Re-render on resize: the layout, not just the canvas, depends on the size. */
+let resizeTimer = 0;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (!current) return;
+    const { w, h } = stageSize();
+    rendered = renderLot(current, assets, w, h);
+    centroidCache.clear();
+    paint();
+  }, 120) as unknown as number;
+});
 
 /** Average position of an object's pixels in the id buffer. */
 const centroidCache = new Map<number, { x: number; y: number } | null>();
 function centroid(key: number): { x: number; y: number } | null {
   if (centroidCache.has(key)) return centroidCache.get(key)!;
   const { id } = rendered.raster;
+  const W = rendered.raster.w;
   let sx = 0;
   let sy = 0;
   let n = 0;
   for (let i = 0; i < id.length; i++) {
     if (id[i] !== key) continue;
-    sx += i % CANVAS_W;
-    sy += (i / CANVAS_W) | 0;
+    sx += i % W;
+    sy += (i / W) | 0;
     n++;
   }
   const res = n ? { x: sx / n, y: sy / n } : null;
@@ -181,12 +178,10 @@ function centroid(key: number): { x: number; y: number } | null {
   return res;
 }
 
+/** Canvas is 1:1 with the stage now, so this is a plain offset. */
 function toLotPixel(ev: MouseEvent): { x: number; y: number } {
   const r = canvas.getBoundingClientRect();
-  return {
-    x: Math.floor((ev.clientX - r.left) / scale + panX),
-    y: Math.floor((ev.clientY - r.top) / scale + panY),
-  };
+  return { x: Math.floor(ev.clientX - r.left), y: Math.floor(ev.clientY - r.top) };
 }
 
 // --- Lot lifecycle --------------------------------------------------------
@@ -194,12 +189,10 @@ function toLotPixel(ev: MouseEvent): { x: number; y: number } {
 function loadLot(index: number): void {
   routeIndex = index;
   current = LOTS[day.route[index]];
-  rendered = renderLot(current, assets);
+  const sz = stageSize();
+  rendered = renderLot(current, assets, sz.w, sz.h);
   flagged = new Set();
   centroidCache.clear();
-  scale = 1;
-  panX = 0;
-  panY = 0;
   stamping = false;
 
   // Record what we saw today. This is the note that grace periods read from
@@ -318,34 +311,6 @@ frame.addEventListener('mousemove', (ev) => {
     : '';
 });
 
-$('btn-zoom').onclick = () => {
-  scale = scale === 1 ? 2 : 1;
-  panX = scale === 2 ? CANVAS_W / 4 : 0;
-  panY = scale === 2 ? CANVAS_H / 4 : 0;
-  $('btn-zoom').innerHTML = `ZOOM ${scale}&times;`;
-  paint();
-};
-
-// Drag to pan when zoomed.
-let dragging = false;
-let lastX = 0;
-let lastY = 0;
-frame.addEventListener('mousedown', (e) => {
-  if (scale === 1) return;
-  dragging = true;
-  lastX = e.clientX;
-  lastY = e.clientY;
-});
-window.addEventListener('mouseup', () => (dragging = false));
-window.addEventListener('mousemove', (e) => {
-  if (!dragging) return;
-  panX = clamp(panX - (e.clientX - lastX) / scale, 0, CANVAS_W - CANVAS_W / scale);
-  panY = clamp(panY - (e.clientY - lastY) / scale, 0, CANVAS_H - CANVAS_H / scale);
-  lastX = e.clientX;
-  lastY = e.clientY;
-  paint();
-});
-const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 $('btn-pass').onclick = () => stamp('PASS');
 $('btn-fail').onclick = () => stamp('FAIL');
@@ -370,7 +335,6 @@ $('mi-reset').onclick = () => {
   reset();
   location.reload();
 };
-$('mi-zoom').onclick = () => $('btn-zoom').click();
 $('mi-howto').onclick = () => briefing();
 
 function stamp(v: Verdict): void {

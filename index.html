@@ -66,24 +66,22 @@
       }
 
       /* --- Viewport ---------------------------------------------------- */
-      /* Just the lot. The address moved to the case file — naming the house
-         twice, once over the image and once in the record, was clutter. */
-      #stage {
-        display: flex; flex-direction: column; align-items: center;
-        justify-content: center; gap: 10px; padding: 16px; min-width: 0;
-      }
+      /* Full bleed. The lot is not a framed specimen on a card; grass runs to
+         every edge so it reads as part of a neighbourhood. No border, no
+         shadow, no letterboxing — the scene IS the stage. */
+      #stage { position: relative; min-width: 0; overflow: hidden; }
       #frame {
-        position: relative; overflow: hidden;
-        border: 3px solid #232019; background: #1a1814;
-        box-shadow: 0 6px 24px rgba(0,0,0,.5);
-        cursor: crosshair;
+        position: absolute; inset: 0; overflow: hidden; cursor: crosshair;
+        background: #1a1814;
       }
       #lot { display: block; image-rendering: pixelated; }
-      #tools { display: flex; gap: 8px; align-items: center; color: #b8ae96; font-size: 12px; }
-      #tools button { font: inherit; }
-      #hover {
-        min-height: 18px; color: #d8cfb4; font-size: 12px; font-style: italic;
+      /* Hover readout floats over the scene rather than reserving a row. */
+      #tools {
+        position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+        padding: 6px 12px; pointer-events: none;
+        background: linear-gradient(to top, rgba(20,18,15,.72), transparent);
       }
+      #hover { color: #f0e8d2; font-size: 12px; font-style: italic; }
 
       /* --- Desk -------------------------------------------------------- */
       /* The cards scroll; the stamps do not. By Day 15 the rule list alone is
@@ -278,8 +276,7 @@
       <div class="menu" data-menu>
         <button>Tools</button>
         <div class="drop">
-          <button id="mi-zoom">Loupe / Zoom<span class="when">Z</span></button>
-          <button disabled>Calendar<span class="when">Day 2</span></button>
+            <button disabled>Calendar<span class="when">Day 2</span></button>
           <button disabled>Permit Ledger<span class="when">Day 9</span></button>
           <button disabled>Paint Swatch Card<span class="when">Day 11</span></button>
           <button disabled>Minimap<span class="when">Day 1</span></button>
@@ -316,7 +313,6 @@
           <div class="filed" id="filed">FILED</div>
         </div>
         <div id="tools">
-          <button class="btn" id="btn-zoom">ZOOM 1&times;</button>
           <span id="hover"></span>
         </div>
       </div>

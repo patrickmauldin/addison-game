@@ -20,7 +20,8 @@
  */
 
 import { existsSync, readFileSync } from 'node:fs';
-import { renderLot, type LotSpec } from '../src/scene-compositor.js';
+import { execSync } from 'node:child_process';
+import { renderLot, type Bitmap, type LotSpec } from '../src/scene-compositor.js';
 import { ANCHORS } from '../src/core/scene.js';
 import { decodePng } from '../src/core/png.js';
 
@@ -44,7 +45,10 @@ const warn = (m: string) => warnings.push(m);
 // Grass is the background of every lot, so a seam in it is a seam in the whole
 // game. Measured by comparing the wrap-around edge against a typical adjacent
 // pair: if wrapping is much worse than neighbouring, it does not tile.
-function checkTile(path: string, name: string): void {
+/** `axes` says which directions this asset is actually repeated in. A strip
+ *  that only tiles horizontally must not be reported for its vertical edges —
+ *  a warning that is wrong trains you to ignore the ones that are not. */
+function checkTile(path: string, name: string, axes: 'both' | 'x' = 'both'): void {
   if (!existsSync(path)) {
     warn(`${name}: ${path} missing — the scene falls back to a flat band.`);
     return;
@@ -69,7 +73,7 @@ function checkTile(path: string, name: string): void {
   seamX /= b.h * 3; nbrX /= b.h * 3; seamY /= b.w * 3; nbrY /= b.w * 3;
   if (seamX > nbrX * 2.2)
     warn(`${name}: horizontal seam (edge ${seamX.toFixed(1)} vs neighbour ${nbrX.toFixed(1)}). Repeats visibly across x.`);
-  if (seamY > nbrY * 2.2)
+  if (axes === 'both' && seamY > nbrY * 2.2)
     warn(`${name}: vertical seam (edge ${seamY.toFixed(1)} vs neighbour ${nbrY.toFixed(1)}). Bands every ${b.h}px.`);
   let soft = 0;
   for (let i = 0; i < b.rgba.length; i += 4) if (b.rgba[i + 3] > 0 && b.rgba[i + 3] < 255) soft++;
@@ -78,6 +82,51 @@ function checkTile(path: string, name: string): void {
 
 checkTile('assets/grass.png', 'grass tile');
 checkTile('assets/road.png', 'road tile');
+checkTile('assets/sidewalk.png', 'sidewalk strip', 'x');
+
+// --- Delivered art --------------------------------------------------------
+// Load everything the lots can reference, so the click-target checks below
+// measure the real thing rather than an empty scene.
+const SPRITES = new Map<string, Bitmap>();
+for (const name of ['grass','road','sidewalk','house1','weed1','weed2','weed3','trash-green','trash-brown']) {
+  for (const ext of ['png','jpg']) {
+    const path = `assets/${name}.${ext}`;
+    if (!existsSync(path)) continue;
+    try {
+      if (ext === 'jpg') {
+        // No JPEG decoder here; macOS sips converts it for inspection only.
+        execSync(`sips -s format png "${path}" --out /tmp/_v_${name}.png`, { stdio: 'ignore' });
+        SPRITES.set(name, decodePng(readFileSync(`/tmp/_v_${name}.png`)));
+      } else {
+        SPRITES.set(name, decodePng(readFileSync(path)));
+      }
+    } catch { warn(`${name}: could not decode ${path}`); }
+    break;
+  }
+}
+for (const name of ['grass','road','sidewalk','house1'])
+  if (!SPRITES.has(name)) fail(`required asset "${name}" is missing from assets/`);
+
+// A house sprite with no alpha relies on its baked lawn matching the grass
+// tile. Measure that rather than trusting it — a drift here shows as a
+// rectangle of slightly-wrong green around every house in the game.
+const g = SPRITES.get('grass');
+const h1 = SPRITES.get('house1');
+if (g && h1) {
+  const px = (b: Bitmap, x: number, y: number) => { const i = (y * b.w + x) << 2; return [b.rgba[i], b.rgba[i+1], b.rgba[i+2]]; };
+  const counts = new Map<string, number>();
+  for (let y = 0; y < g.h; y += 3) for (let x = 0; x < g.w; x += 3) {
+    const k = px(g, x, y).join(','); counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  const dom = [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0].split(',').map(Number);
+  const corners = [[4,4],[h1.w-5,4],[4,h1.h-5],[h1.w-5,h1.h-5]];
+  const worst = Math.max(...corners.map(([x,y]) => {
+    const c = px(h1, x, y);
+    return (Math.abs(c[0]-dom[0]) + Math.abs(c[1]-dom[1]) + Math.abs(c[2]-dom[2])) / 3;
+  }));
+  if (worst > 12)
+    warn(`house1 lawn is ${worst.toFixed(0)}/255 off the grass tile at its corners — the join will show. Export the house with alpha instead.`);
+}
 
 // --- Days and lots --------------------------------------------------------
 for (const day of DAYS) {
@@ -113,7 +162,7 @@ for (const day of DAYS) {
     if (day.verdict_mode === 'binary' && lot.expected_verdict !== derived)
       fail(`${lotId}: expected_verdict is ${lot.expected_verdict} but truth implies ${derived}`);
 
-    const { raster, objects } = renderLot(lot, { tiles: {} });
+    const { raster, objects } = renderLot(lot, { sprites: SPRITES }, 1060, 860);
     const counts = new Map<number, number>();
     for (let i = 0; i < raster.id.length; i++) {
       const k = raster.id[i];
@@ -122,12 +171,12 @@ for (const day of DAYS) {
     for (const o of objects) {
       const px = counts.get(o.key) ?? 0;
       if (px === 0) fail(`${lotId}: flaggable object "${o.id}" renders 0 px — it cannot be clicked`);
-      else if (px < 400) warn(`${lotId}: "${o.id}" is only ${px} px. Verify it is not a pixel hunt.`);
+      else if (px < 500) warn(`${lotId}: "${o.id}" is only ${px} px. Verify it is not a pixel hunt.`);
     }
     for (const v of lot.truth.violations) {
       const o = objects.find((x) => x.id === v.object);
       const px = o ? (counts.get(o.key) ?? 0) : 0;
-      if (px > 0 && px < 200)
+      if (px > 0 && px < 250)
         fail(`${lotId}: violation "${v.object}" is only ${px} px. That is a pixel hunt, not a puzzle.`);
     }
   }

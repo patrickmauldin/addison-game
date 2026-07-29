@@ -3,33 +3,61 @@
   "address": "4412 Bonerville",
   "street": "Bonerville",
   "seed": 40412,
-  "_schema_note": "Three-quarter scene. Anchors are screen points from core/scene.ts, not grid coordinates. house.sprite resolves against assets/houses; a hatched placeholder draws until art lands.",
+  "_schema_note": "Full-bleed three-quarter scene. Props name delivered sprites; anchors are fractions of the house rect so they hold as the house scales to the window.",
   "house": {
-    "sprite": "ranch_a"
+    "sprite": "house1"
   },
   "props": [
     {
-      "id": "r101_yard",
-      "gen": "weed_patch",
+      "id": "weeds_a",
+      "sprite": "weed1",
       "anchor": "YARD_4",
       "label": "Weed growth, front turf",
-      "params": {
-        "density": 3,
-        "spread": 38
-      },
       "first_seen": "2025-03-03"
+    },
+    {
+      "id": "weeds_b",
+      "sprite": "weed2",
+      "anchor": "YARD_2",
+      "label": "Weed growth, by the walk",
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bins_apron",
+      "sprite": "trash-green",
+      "anchor": "CURB_1",
+      "label": "Refuse container, green",
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bins_apron_b",
+      "sprite": "trash-brown",
+      "anchor": "CURB_2",
+      "label": "Refuse container, brown",
+      "first_seen": "2025-03-03",
+      "flaggable": false
     }
   ],
   "truth": {
     "violations": [
       {
-        "object": "r101_yard",
+        "object": "weeds_a",
         "article": "R-101",
-        "why": "Unbordered weed mass in the front turf, visible from the street. No containment, no edging, bleeds into the surrounding lawn."
+        "why": "Unbordered weed growth in the front turf, visible from the street. No containment, no edging."
+      },
+      {
+        "object": "weeds_b",
+        "article": "R-101",
+        "why": "Second patch by the walk. Article VII 3(a) covers turf and paved joints alike."
       }
     ],
-    "decoys": []
+    "decoys": [
+      {
+        "object": "bins_apron",
+        "why": "Containers at the garage apron. R-104 is not active until Day 2, and screened storage is compliant in any case."
+      }
+    ]
   },
   "expected_verdict": "FAIL",
-  "notes_for_designer": "The teaching lot. One unmistakable finding while the house art is pending."
+  "notes_for_designer": "The teaching lot. Two findings on the same article so the player learns R-101 covers the whole yard."
 }

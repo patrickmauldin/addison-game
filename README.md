@@ -57,41 +57,54 @@ map extract on hand, so its phase and position are unset rather than invented.
 
 ## Three-quarter scene
 
-The camera looks down at the lot from the street. There is **no skew**: screen x
-is world x, depth runs up the screen foreshortened, facades are face-on and
-roofs are seen from above. Draw order is simply screen y.
-
-Canvas is **440x640**, holding the reference image's 1254:1818 aspect so art
-drops in unreframed, at 1:1 beside the 380px desk.
+The camera looks down at the lot from the street. No skew: screen x is world x,
+depth runs up the screen. **Full bleed** — the scene fills the stage, grass runs
+to every edge, there is no frame. The canvas is sized to the window at runtime
+and re-lays out on resize.
 
 ```
- y=0    grass — a background pattern, not a bounded lot
- HOUSE  sprite, centred, base on the house band (hatched placeholder until art lands)
-        front yard · driveway · walk
- WALK   sidewalk band
- ROAD   road tile, bottom of frame
+grass ......... to all four edges
+HOUSE ......... centred, its baked lawn blending into the tile
+grass ......... front yard, props anchored here
+SIDEWALK ...... horizontal band
+ROAD .......... horizontal band, bottom of frame
 ```
 
-Anchors (`core/scene.ts`) are plain screen points. Drop art in
-`assets/houses/raw/`, run `npm run ingest`, reload.
+**Everything on screen is delivered art.** The only thing still generated is the
+layout: where the bands fall and how far the house scales.
 
-**Colour is no longer locked.** The 44-ramp palette was enforced per-pixel while
-every layer was generated and had to agree with every other. Hand-authored art
-carries its own colour — `grass.png` alone has 4,775 — so the lock was retired.
-`core/palette.ts` survives as the vocabulary for the few things still generated
-(the R-101 weed/bed pair, ground fallbacks) and for UI chrome.
+**One lawn, one scale.** `house1` carries its own lawn baked in, and the house is
+scaled to fit the window — so the ground tiles draw at that same scale. Tiling
+grass at 1:1 under a house drawn at 0.5 makes the tuft sizes disagree and the
+house reads as a patch pasted onto a different lawn.
 
-**Consequence worth knowing:** R-308 (exterior paint vs the swatch card, Day 11)
-used to be free — every pixel belonged to a known ramp, so repainting was a
-lookup. That no longer works on multi-thousand-colour art. When Day 11 arrives
-it needs either a paint variant per approved colour, or a 1-bit siding mask
-beside each house sprite so a hue shift can be confined to it.
+**House scale is snapped**, not continuous (1, ¾, ⅔, ½, ⅓, ¼). Arbitrary
+fractional scaling of pixel art degrades it differently at every window size — a
+tuft that survives at 0.62 turns to mush at 0.61, and the artist can never tell
+what they are looking at. Fixed steps degrade the same way every time.
 
-## Layout## Layout
+**Anchors are fractions of the house rect** (`core/scene.ts`), so props hold
+their position relative to the house as it scales. They mark where a prop *meets
+the ground*: sprites are bottom-centred on them.
+
+### Asset notes
+
+| Asset | Native | Note |
+|---|---|---|
+| `grass.png` | 722×614 | Tiles horizontally; **vertical seam**, bands every 614px |
+| `road.png` | 151×152 | Tiles both axes cleanly |
+| `sidewalk.png` | 1150×108 | Strip, tiles x only; **horizontal seam** |
+| `house1.jpg` | 1254×1254 | No alpha — relies on its baked lawn matching `grass.png`. It does, to within 1–2 channel values, so it blits opaque |
+| `weed1-3.png` | ~160×100 | RGBA |
+| `trash-green/brown.png` | 114×139 | RGBA |
+
+`npm run validate` measures tile seams and the house-lawn colour match on every
+run, so these do not have to be remembered.
+
+## Layout## Layout## Layout
 
 ```
 src/core/       scene (bands + anchors), palette, rasteriser, PNG codec
-src/gen/        ground — tiled grass, road band
 src/scene-compositor  Draw order, generator dispatch, object-id registry
 src/game/       Persistence + adjudication
 src/data/       Day file, rules, streets, lot instances. All content lives here.

@@ -3,31 +3,36 @@
   "address": "4418 Bonerville",
   "street": "Bonerville",
   "seed": 70418,
-  "_schema_note": "Three-quarter scene. Anchors are screen points from core/scene.ts, not grid coordinates. house.sprite resolves against assets/houses; a hatched placeholder draws until art lands.",
+  "_schema_note": "Full-bleed three-quarter scene. Props name delivered sprites; anchors are fractions of the house rect so they hold as the house scales to the window.",
   "house": {
-    "sprite": "ranch_a"
+    "sprite": "house1"
   },
   "props": [
     {
-      "id": "r101_yard",
-      "gen": "native_bed",
-      "anchor": "YARD_4",
-      "label": "Landscape bed, front turf",
-      "params": {
-        "spread": 38
-      },
+      "id": "bins_apron",
+      "sprite": "trash-green",
+      "anchor": "CURB_1",
+      "label": "Refuse container, green",
       "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bins_apron_b",
+      "sprite": "trash-brown",
+      "anchor": "CURB_2",
+      "label": "Refuse container, brown",
+      "first_seen": "2025-03-03",
+      "flaggable": false
     }
   ],
   "truth": {
     "violations": [],
     "decoys": [
       {
-        "object": "r101_yard",
-        "why": "Intentional native/xeriscape planting: stone border, decomposed granite field, plants on deliberate spacing. Chapter 202 Texas Property Code limits Association authority over drought-tolerant landscaping. Citing this loses on appeal."
+        "object": "bins_apron",
+        "why": "Containers at the garage apron, screened from the right-of-way."
       }
     ]
   },
   "expected_verdict": "PASS",
-  "notes_for_designer": "The decoy, at the SAME anchor as 4412 so the player cannot pattern-match on position."
+  "notes_for_designer": "The clean lot. Same house, same bins, no weeds \u2014 so the only difference the player can act on is the turf."
 }

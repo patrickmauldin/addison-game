@@ -1,101 +1,124 @@
 /**
- * THREE-QUARTER SCENE (replaces the isometric projection).
+ * THREE-QUARTER SCENE — full bleed.
  *
- * The camera looks down at the lot from the street. There is NO horizontal
- * skew: screen x is world x, one to one. Depth runs straight up the screen and
- * is foreshortened. Vertical surfaces — the facade, the garage door — are drawn
- * face-on; horizontal ones — the roof, the driveway — are seen from above and
- * squashed.
+ * The camera looks down at the lot from the street. No skew: screen x is world
+ * x, depth runs up the screen. The scene fills the whole stage rather than
+ * sitting in a framed box, so grass runs to every edge and the lot reads as
+ * part of a neighbourhood instead of a specimen on a card.
  *
- * This is dramatically simpler than the 2:1 isometric it replaces, and it makes
- * the whole dimetric-vs-true-isometric question moot: there is no projection
- * angle left to get wrong, so an asset either matches the band layout or it
- * does not.
+ *   grass ...................... to all four edges
+ *   HOUSE ...................... centred, its own lawn blending into the tile
+ *   grass (front yard)
+ *   SIDEWALK ................... horizontal band
+ *   ROAD ....................... horizontal band, bottom of frame
  *
- * The lot is not a bounded box any more. Grass is an infinite background
- * pattern, the road is a band across the bottom, and everything else sits on
- * top. Nothing is clipped to a diamond.
- *
- *   y=0    ─────────────────────────  top of frame
- *          grass (extends past frame)
- *   HOUSE  ┌───────────────────────┐  house sprite, roof seen from above
- *          └───────────────────────┘
- *          front yard  ·  driveway  ·  walk
- *   WALK   ─────────────────────────  sidewalk band
- *   CURB   ─────────────────────────
- *   ROAD   █████████████████████████  road band, bottom of frame
+ * The canvas is sized to the stage at runtime, so there is no fixed CANVAS_W /
+ * CANVAS_H any more. Everything downstream takes a Layout.
  */
+
+/** Native size of the delivered house art. Everything scales against this. */
+export const HOUSE_NATIVE = { w: 1254, h: 1254 };
+
+/** Native height of the sidewalk strip. */
+export const WALK_NATIVE_H = 108;
 
 /**
- * PROVISIONAL. Portrait, holding the reference image's 1254:1818 aspect
- * (0.690) so art authored against the reference drops in without reframing.
- * Sized to sit beside the 380px desk at 1:1 on a 1440x900 window.
+ * Scale steps the house is allowed to take.
  *
- * This is the one number that most wants confirming before assets are mass
- * produced — see the note in README under "Three-quarter scene".
+ * Snapped rather than continuous because arbitrary fractional scaling of pixel
+ * art destroys it differently on every window size — a lawn tuft that survives
+ * at 0.62 turns to mush at 0.61, and the artist can never predict what they are
+ * looking at. Fixed steps mean the art degrades the same way every time.
  */
-export const CANVAS_W = 440;
-export const CANVAS_H = 640;
+const SCALE_STEPS = [1, 0.75, 2 / 3, 0.5, 1 / 3, 0.25];
 
-/**
- * Band boundaries as fractions of canvas height, read off the reference image.
- * Fractions rather than pixels so the canvas can be resized once without
- * re-deriving the layout by hand.
- */
-export const BAND_F = {
-  houseTop: 0.033,
-  houseBase: 0.400, // where the facade meets the ground
-  yardBase: 0.685, // front yard ends, sidewalk begins
-  walkBase: 0.731, // sidewalk ends, curb
-  curbBase: 0.745, // curb ends, road begins
-} as const;
-
-export const BAND = {
-  houseTop: Math.round(CANVAS_H * BAND_F.houseTop),
-  houseBase: Math.round(CANVAS_H * BAND_F.houseBase),
-  yardBase: Math.round(CANVAS_H * BAND_F.yardBase),
-  walkBase: Math.round(CANVAS_H * BAND_F.walkBase),
-  curbBase: Math.round(CANVAS_H * BAND_F.curbBase),
-  roadBase: CANVAS_H,
-} as const;
-
-/**
- * Anchors are plain screen points now, not grid coordinates. A prop knows how
- * to sit at CURB_1 on any lot exactly as before; the abstraction survives the
- * projection change, only its units got simpler.
- *
- * x is a fraction of canvas width so anchors stay centred if the canvas is
- * ever rebalanced; y is absolute, because the bands are what y means.
- */
-export const ANCHORS: Record<string, { fx: number; y: number }> = {
-  DRIVEWAY_1: { fx: 0.72, y: BAND.houseBase + 20 }, // at the garage door
-  DRIVEWAY_2: { fx: 0.72, y: (BAND.houseBase + BAND.yardBase) / 2 },
-  DRIVEWAY_3: { fx: 0.72, y: BAND.yardBase - 26 },
-  APRON: { fx: 0.72, y: BAND.walkBase + 4 },
-  WALK_1: { fx: 0.47, y: (BAND.houseBase + BAND.yardBase) / 2 },
-  YARD_1: { fx: 0.14, y: BAND.houseBase + 34 },
-  YARD_2: { fx: 0.30, y: BAND.houseBase + 78 },
-  YARD_3: { fx: 0.16, y: BAND.yardBase - 40 },
-  YARD_4: { fx: 0.34, y: BAND.yardBase - 22 },
-  YARD_5: { fx: 0.88, y: BAND.houseBase + 40 },
-  YARD_6: { fx: 0.90, y: BAND.yardBase - 34 },
-  BED_FRONT: { fx: 0.24, y: BAND.houseBase - 6 },
-  CURB_1: { fx: 0.30, y: BAND.curbBase - 6 },
-  CURB_2: { fx: 0.55, y: BAND.curbBase - 6 },
-  PORCH_1: { fx: 0.47, y: BAND.houseBase - 4 },
+export type Layout = {
+  w: number;
+  h: number;
+  /** Top of the road band. */
+  roadTop: number;
+  /** Top of the sidewalk band. */
+  walkTop: number;
+  /** Scale applied to house art and the sidewalk strip. */
+  scale: number;
+  /** Where the house sprite lands, already scaled. */
+  house: { x: number; y: number; w: number; h: number };
 };
 
-export function anchor(name: string): { x: number; y: number } {
-  const a = ANCHORS[name];
-  if (!a) throw new Error(`scene: unknown anchor "${name}"`);
-  return { x: Math.round(a.fx * CANVAS_W), y: a.y };
+/**
+ * Compose a layout for a given stage size.
+ *
+ * Vertical budget, bottom up: road, sidewalk, then whatever is left is the
+ * house. The house is scaled to fit that remainder, so a short window shows a
+ * smaller house rather than a cropped roof — losing the roofline reads as a
+ * bug, losing resolution reads as a zoom.
+ */
+export function layout(w: number, h: number): Layout {
+  const roadH = Math.max(90, Math.round(h * 0.2));
+  const roadTop = h - roadH;
+
+  // Pick the largest step whose house plus sidewalk still fits above the road,
+  // leaving a little grass at the top so the roof never touches the frame.
+  const TOP_GAP = 12;
+  let scale = SCALE_STEPS[SCALE_STEPS.length - 1];
+  for (const s of SCALE_STEPS) {
+    const need = HOUSE_NATIVE.h * s + WALK_NATIVE_H * s + TOP_GAP;
+    if (need <= roadTop + WALK_NATIVE_H * s) {
+      scale = s;
+      break;
+    }
+  }
+
+  const walkH = Math.round(WALK_NATIVE_H * scale);
+  const walkTop = roadTop - walkH;
+  const houseW = Math.round(HOUSE_NATIVE.w * scale);
+  const houseH = Math.round(HOUSE_NATIVE.h * scale);
+
+  return {
+    w,
+    h,
+    roadTop,
+    walkTop,
+    scale,
+    house: {
+      x: Math.round((w - houseW) / 2),
+      // The delivered art already carries its own front lawn down to its bottom
+      // edge, so the sprite sits directly on the sidewalk with no gap.
+      y: walkTop - houseH,
+      w: houseW,
+      h: houseH,
+    },
+  };
 }
 
 /**
- * Painter's depth. Larger draws later. In three-quarter view this is simply
- * screen y — a thing lower on the screen is nearer the camera. That is the
- * entire sorting rule, replacing the isometric u+v key.
+ * Anchors, expressed relative to the house so props stay put as the house
+ * scales. `hx` and `hy` are fractions of the house rect; a prop at hy > 1 sits
+ * below the house, in the front yard.
  */
-export function depth(y: number): number {
-  return y;
+export const ANCHORS: Record<string, { hx: number; hy: number }> = {
+  DRIVEWAY_1: { hx: 0.74, hy: 0.70 },
+  DRIVEWAY_2: { hx: 0.74, hy: 0.82 },
+  DRIVEWAY_3: { hx: 0.74, hy: 0.95 },
+  WALK_1: { hx: 0.49, hy: 0.85 },
+  YARD_1: { hx: 0.12, hy: 0.76 },
+  YARD_2: { hx: 0.28, hy: 0.84 },
+  YARD_3: { hx: 0.14, hy: 0.95 },
+  YARD_4: { hx: 0.30, hy: 0.97 },
+  YARD_5: { hx: 0.92, hy: 0.80 },
+  YARD_6: { hx: 0.90, hy: 0.96 },
+  BED_FRONT: { hx: 0.22, hy: 0.64 },
+  PORCH_1: { hx: 0.47, hy: 0.62 },
+  /** On the apron, where bins go out. */
+  CURB_1: { hx: 0.66, hy: 1.02 },
+  CURB_2: { hx: 0.80, hy: 1.02 },
+};
+
+export function anchor(name: string, L: Layout): { x: number; y: number } {
+  const a = ANCHORS[name];
+  if (!a) throw new Error(`scene: unknown anchor "${name}"`);
+  return {
+    x: Math.round(L.house.x + a.hx * L.house.w),
+    y: Math.round(L.house.y + a.hy * L.house.h),
+  };
 }
