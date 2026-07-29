@@ -16,8 +16,13 @@
 
 export type BedName = 'ambiance' | 'office';
 
-const BED_VOLUME = 0.34;
-const ONESHOT_VOLUME = 0.7;
+const BED_VOLUME = 0.6;
+/**
+ * Kept clear of the beds. Raising the beds without raising this buries the
+ * stamp under them, and the stamp is feedback for an action the player just
+ * took — it has to cut through the room, not blend into it.
+ */
+const ONESHOT_VOLUME = 0.85;
 const FADE_MS = 700;
 
 export class Sound {
