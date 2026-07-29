@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>ADDISON — Compliance Inspector · vertical slice</title>
+    <title>Addison — Lawn &amp; Order</title>
     <style>
       /* The desk metaphor is half the feel. Tier 8 proper (rendered binder
          pages, stamp ink impressions) is deferred; this is DOM standing in,
@@ -129,6 +129,67 @@
         font: 700 26px/1 ui-monospace, monospace; letter-spacing: .3em;
       }
       .filed.on { display: flex; }
+
+      /* --- Title screen ------------------------------------------------ */
+      #title {
+        position: fixed; inset: 0; z-index: 40; display: none;
+        flex-direction: column; align-items: center; justify-content: center;
+        gap: 26px; padding: 32px;
+        background: radial-gradient(ellipse at 50% 38%, #4c4639 0%, #2a2722 72%);
+      }
+      #title.on { display: flex; }
+      #title-logo {
+        /* The logo is close to square (1210x979), so a width-only cap would
+           make it ~615px tall and shove START GAME off the bottom on any
+           laptop screen. Height is the binding constraint here, not width. */
+        max-width: min(680px, 84vw);
+        max-height: 54vh;
+        width: auto; height: auto; object-fit: contain;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.55));
+      }
+      /* Shown only if the logo file is missing, so the title screen still
+         reads rather than collapsing to an empty box. */
+      #title-fallback { display: none; text-align: center; }
+      #title-fallback .a {
+        font: 700 46px/1 ui-monospace, monospace; letter-spacing: .1em;
+        color: #f0dfa4; text-shadow: 0 3px 0 #6b5c3a, 0 5px 14px rgba(0,0,0,.6);
+      }
+      #title-fallback .b {
+        margin-top: 10px; padding: 6px 18px; display: inline-block;
+        background: var(--paper); color: #23401f; border: 2px solid #8a7d63;
+        font: 700 17px/1 ui-monospace, monospace; letter-spacing: .16em;
+      }
+      #menu { display: flex; flex-direction: column; gap: 10px; min-width: 268px; }
+      #menu button {
+        padding: 14px 0; cursor: pointer;
+        font: 700 15px/1 ui-monospace, monospace; letter-spacing: .2em;
+        color: #f2e9cf; background: #2f4a2c;
+        border: 2px solid #101a10;
+        box-shadow: 0 3px 0 #1b2c1a, 0 6px 16px rgba(0,0,0,.45);
+      }
+      #menu button:hover { background: #3b5c37; }
+      #menu button:active { transform: translateY(2px); box-shadow: 0 1px 0 #1b2c1a; }
+      #title .sub { color: #b9ac8c; font-size: 12px; letter-spacing: .1em; }
+
+      /* Boot guard. Visible by default; main.ts removes it once the module has
+         actually executed. If the script never runs — the usual cause is
+         opening index.html as file://, where the browser blocks ES modules —
+         this is what you see instead of an inert grey desk with no explanation. */
+      #boot {
+        position: fixed; inset: 0; z-index: 50; display: flex;
+        align-items: center; justify-content: center; padding: 24px;
+        background: #2a2722; color: var(--paper);
+      }
+      #boot .box {
+        background: var(--paper); color: var(--ink); max-width: 620px;
+        padding: 22px 26px; border: 1px solid #9d9075;
+      }
+      #boot h1 { margin: 0 0 10px; font-size: 15px; letter-spacing: .08em; }
+      #boot code {
+        display: block; background: var(--paper-2); padding: 8px 10px; margin: 8px 0;
+        border-left: 3px solid var(--rule); white-space: pre-wrap; word-break: break-word;
+      }
     </style>
   </head>
   <body>
@@ -181,7 +242,50 @@
       </div>
     </div>
 
+    <div id="title">
+      <img id="title-logo" src="./assets/addison-logo.png" alt="Addison — Lawn &amp; Order" />
+      <div id="title-fallback">
+        <div class="a">ADDISON</div>
+        <div class="b">LAWN &amp; ORDER</div>
+      </div>
+      <div id="menu">
+        <button id="btn-start-game">START GAME</button>
+      </div>
+      <div class="sub">Addison Master Community Association</div>
+    </div>
+
     <div id="overlay"><div id="sheet"></div></div>
+
+    <div id="boot">
+      <div class="box">
+        <h1>THE GAME DID NOT START</h1>
+        <p id="boot-why">
+          The script never executed. The usual cause is opening this file
+          directly from disk — browsers block ES modules over
+          <code style="display:inline;padding:1px 4px;border:0">file://</code>,
+          so nothing runs and you get an empty desk.
+        </p>
+        <p><b>Serve it over HTTP instead:</b></p>
+        <code>npm run build &amp;&amp; npm run serve</code>
+        <p>then open <b>http://localhost:8123</b></p>
+        <p id="boot-detail" style="display:none"></p>
+      </div>
+    </div>
+
+    <script>
+      // Surface runtime errors on screen rather than only in the console.
+      // A silent failure here looks identical to "the game is just broken".
+      window.addEventListener('error', function (e) {
+        var boot = document.getElementById('boot');
+        var why = document.getElementById('boot-why');
+        var detail = document.getElementById('boot-detail');
+        if (!boot || !why || !detail) return;
+        boot.style.display = 'flex';
+        why.textContent = 'The script loaded but threw an error while starting up:';
+        detail.style.display = 'block';
+        detail.innerHTML = '<code>' + String((e && e.message) || e) + '</code>';
+      });
+    </script>
     <script type="module" src="./dist/bundle.js"></script>
   </body>
 </html>

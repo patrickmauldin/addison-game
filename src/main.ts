@@ -402,5 +402,57 @@ function briefing(): void {
   };
 }
 
-saveFile.inspector.strikes_today = 0;
-briefing();
+/**
+ * Clearing the boot guard is the LAST thing that happens. If anything above
+ * threw, the guard stays up and explains itself instead of leaving an inert
+ * desk on screen with no indication of why.
+ */
+/**
+ * Title screen. Start Game leads into the morning briefing rather than
+ * straight to the route, because the briefing is a beat of the day loop
+ * (gameplan section 2) and not just a how-to-play panel.
+ */
+function titleScreen(): void {
+  const title = $('title');
+  const logo = $<HTMLImageElement>('title-logo');
+  const fallback = $('title-fallback');
+
+  // If assets/logo.png has not been dropped in yet, fall back to type rather
+  // than showing a broken-image box on the first screen of the game.
+  const showFallback = () => {
+    logo.style.display = 'none';
+    fallback.style.display = 'block';
+  };
+  logo.onerror = showFallback;
+  // Covers the case where the image already failed before this ran.
+  if (logo.complete && logo.naturalWidth === 0) showFallback();
+
+  title.classList.add('on');
+  $('btn-start-game').onclick = () => {
+    title.classList.remove('on');
+    briefing();
+  };
+}
+
+function boot(): void {
+  try {
+    saveFile.inspector.strikes_today = 0;
+    titleScreen();
+    // Hidden, not removed: the window error handler re-shows this element if
+    // something throws later (inside a click handler, say), which is otherwise
+    // another silent failure with an inert desk on screen.
+    const g = document.getElementById('boot');
+    if (g) g.style.display = 'none';
+  } catch (err) {
+    const detail = document.getElementById('boot-detail');
+    const why = document.getElementById('boot-why');
+    if (why) why.textContent = 'The script loaded but threw while starting up:';
+    if (detail) {
+      detail.style.display = 'block';
+      detail.innerHTML = `<code>${String(err instanceof Error ? err.stack ?? err.message : err)}</code>`;
+    }
+    throw err;
+  }
+}
+
+boot();

@@ -2,3 +2,6 @@ node_modules/
 dist/
 out/
 .claude/settings.local.json
+
+# assets/ is tracked; only generated output is ignored.
+.DS_Store

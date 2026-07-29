@@ -1,0 +1,89 @@
+{
+  "_note": "The eight streets of Addison. Each keeps the character its real counterpart has on the map, because those characters carry the difficulty ramp and Act III's flood geography.",
+  "_source_note": "Characters below are read off the actual Addison street map rather than inherited from gameplan section 7's list, which did not include Bananalise or Whistling Sparrow. Two corrections follow from the map. Bananalise (<- Bananalise) is the southern arterial, not an interior street. And the the creek frontage is the NORTH ARC OF BONERVILLE plus the top of the Zingersoll block, not a separate greenbelt street — so Act III floods Bonerville and Zingersoll and needs no extra street name.",
+  "_open_question": "Whistling Sparrow (<- Whistling Sparrow) is the only street still without a character. It does not appear on the map extract on hand, so its phase, role and position are unset rather than invented.",
+
+  "streets": [
+    {
+      "id": "bonerville",
+      "name": "Bonerville",
+      "was": "Bonerville",
+      "phase": "original",
+      "role": "outer_loop",
+      "creek_frontage": true,
+      "character": "The outer loop, original phase. Bigger lots, mature trees, old money, older residents. Its north arc backs directly onto the creek, which makes it the primary Act III flood street."
+    },
+    {
+      "id": "llama_alta",
+      "name": "Llama Alta",
+      "was": "Llama Alta",
+      "phase": "original",
+      "role": "residential",
+      "creek_frontage": false,
+      "character": "Smallest homes, tightest lots — a short dense run in the south-west corner. Most friction, least sympathy from the board."
+    },
+    {
+      "id": "dimelest",
+      "name": "Dimelest",
+      "was": "Dimelest",
+      "phase": "interior",
+      "role": "residential",
+      "creek_frontage": false,
+      "character": "The interior. Standard mid-range Addison. Your baseline."
+    },
+    {
+      "id": "eyezeta",
+      "name": "Eyezeta",
+      "was": "Eyezetta",
+      "phase": "interior",
+      "role": "residential",
+      "creek_frontage": false,
+      "character": "The interior, immediately south of Dimelest and running into the spine. Standard mid-range Addison. Pairs with Dimelest as the baseline, which is how gameplan Day 3 routes them."
+    },
+    {
+      "id": "karaoke",
+      "name": "Karaoke",
+      "was": "Karaoke",
+      "phase": "interior",
+      "role": "spine",
+      "creek_frontage": false,
+      "character": "The north-south spine. Runs through the middle of the subdivision and exits south to the highway. Through-traffic, most visibility, board members watch this one."
+    },
+    {
+      "id": "bananalise",
+      "name": "Bananalise",
+      "was": "Bananalise",
+      "phase": "arterial",
+      "role": "arterial",
+      "creek_frontage": false,
+      "character": "The southern arterial. Runs the whole width of Addison and continues east out of the subdivision, so it carries traffic that has no business here. Everything is seen from Bananalise."
+    },
+    {
+      "id": "zingersoll",
+      "name": "Zingersoll",
+      "was": "Zingersoll",
+      "phase": "new",
+      "role": "residential",
+      "creek_frontage": true,
+      "character": "Newest phase, east side. Builder-fresh, thin landscaping, lots of new move-ins so plenty of pods. The top of the block reaches the creek, so it takes Act III damage too."
+    },
+    {
+      "id": "goodish",
+      "name": "Goodish",
+      "was": "Goodish",
+      "phase": "new",
+      "role": "residential",
+      "creek_frontage": false,
+      "character": "Newest phase, east side. Builder-fresh, thin landscaping. Runs south past the arterial into the newest section of all."
+    },
+    {
+      "id": "whistling_sparrow",
+      "name": "Whistling Sparrow",
+      "was": "Whistling Sparrow",
+      "phase": "unassigned",
+      "role": "unassigned",
+      "creek_frontage": false,
+      "character": "UNASSIGNED. Whistling Sparrow is not on the map extract on hand, so no character has been inferred rather than one being invented. Needs a phase, a role and a position before it can carry a day."
+    }
+  ]
+}
