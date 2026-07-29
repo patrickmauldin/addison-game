@@ -166,17 +166,16 @@
         cursor: pointer; font: inherit; line-height: 1; padding: 1px 5px;
       }
       #stamps {
-        flex: 0 0 auto; display: flex; gap: 18px; justify-content: center;
+        flex: 0 0 auto; display: flex; gap: 16px; justify-content: center;
         padding: 12px; background: #413c34 url('assets/wood.png') repeat;
         image-rendering: pixelated;
-        box-shadow: inset 0 14px 18px -12px rgba(0,0,0,.6);
         border-top: 2px solid #262320;
       }
-      /* Physical plunger buttons. Half scale (214x168 -> 107x84) so the pixel
-         grid stays on integer boundaries. */
+      /* Physical plunger buttons, sized to nearly fill the panel: two at 168px
+         plus the gap comes to 352 of the 356 available. */
       #stamps button {
-        width: 107px; height: 84px; padding: 0; border: 0; cursor: pointer;
-        background: transparent no-repeat center / 107px 84px;
+        width: 168px; height: 132px; padding: 0; border: 0; cursor: pointer;
+        background: transparent no-repeat center / 168px 132px;
         image-rendering: pixelated;
         filter: drop-shadow(0 3px 3px rgba(0,0,0,.5));
         transition: transform .06s ease-out, filter .06s ease-out;
