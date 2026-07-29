@@ -613,16 +613,72 @@ function slideToLot(index: number): void {
   requestAnimationFrame(frame);
 }
 
+/**
+ * The Inspection Manager's header. `gif` picks which of her two talking loops
+ * plays — the briefing and the audit are different conversations, so they get
+ * different deliveries.
+ */
+let bossTimer = 0;
+
+/**
+ * Cycle her between the still portrait and her two talking loops.
+ *
+ * A face that mouths continuously for as long as a panel is open stops reading
+ * as speech and starts reading as a glitch. Talking in bursts with pauses
+ * between them is what makes it look like someone delivering something.
+ */
+function startBossIdle(): void {
+  clearTimeout(bossTimer);
+  const img = document.querySelector<HTMLImageElement>('.boss-photo img');
+  if (!img) return;
+  const talk = ['boss1.gif', 'boss2.gif'];
+  let n = 0;
+  const rest = () => {
+    img.src = 'assets/boss.jpg' + CB;
+    bossTimer = setTimeout(speak, 3200 + Math.random() * 3500) as unknown as number;
+  };
+  const speak = () => {
+    // Alternate the two loops rather than picking at random, so the same one
+    // never runs twice in a row.
+    img.src = 'assets/' + talk[n++ % talk.length] + CB;
+    bossTimer = setTimeout(rest, 2600 + Math.random() * 1800) as unknown as number;
+  };
+  speak();
+}
+
+function bossHeader(gif: 'boss1' | 'boss2'): string {
+  return `
+    <div class="boss">
+      <div class="boss-photo">
+        <img src="assets/${gif}.gif" alt="" />
+        <img class="paperclip" src="assets/paperclip.png" alt="" />
+      </div>
+      <div class="boss-id">
+        <div class="role">Inspection Manager</div>
+        <div class="who">${gif === 'boss1' ? 'Your morning briefing' : "Your day, reviewed"}</div>
+        <div class="org">She reports to the Board. You report to her.</div>
+      </div>
+    </div>`;
+}
+
 // --- End of day: the audit ------------------------------------------------
 
 function endDay(): void {
   let strikes = 0;
   for (const o of outcomes) {
     if (o.strike) strikes++;
-    bumpAccuracy(saveFile, 'R-101', o.verdictRight && o.falsePositives.length === 0);
+    /**
+     * ONE definition of a clean lot, used by the accuracy figure, the ruling
+     * record and the marks on the report. They had drifted: accuracy ignored
+     * missed findings, so a day could show a red mark on half its rows and
+     * still report 100%. A report that argues with itself is worse than no
+     * report — the player stops believing any of it.
+     */
+    const clean = o.verdictRight && !o.falsePositives.length && !o.missed.length;
+    bumpAccuracy(saveFile, 'R-101', clean);
     const rec = saveFile.addresses[o.lot_id];
     const last = rec.rulings[rec.rulings.length - 1];
-    if (last) last.correct = o.verdictRight && o.falsePositives.length === 0;
+    if (last) last.correct = clean;
     rec.state = o.missed.length ? 'UNCAUGHT' : o.hits.length ? 'FLAGGED' : 'CLEAN';
     if (o.falsePositives.length) rec.disposition -= 1;
   }
@@ -665,6 +721,7 @@ function endDay(): void {
   const cleanDay = outcomes.every((o) => o.verdictRight && !o.falsePositives.length && !o.missed.length);
   sheet.innerHTML = `
     <img class="day-mark" src="assets/${cleanDay ? 'good' : 'bad'}.png" alt="" />
+    ${bossHeader('boss2')}
     <h1>END OF DAY ${day.day_id}</h1>
     <div class="muted">${day.weekday}, ${shortDate(day.date)} · ${current.street}</div>
 
@@ -681,12 +738,14 @@ function endDay(): void {
     <p style="margin-top:18px"><button class="btn" onclick="location.reload()">Run the day again</button></p>
   `;
   overlay.classList.add('on');
+  startBossIdle();
 }
 
 // --- Boot -----------------------------------------------------------------
 
 function briefing(): void {
   sheet.innerHTML = `
+    ${bossHeader('boss1')}
     <h1>ADDISON MASTER COMMUNITY ASSOCIATION</h1>
     <div class="muted">Compliance Inspector · Day ${day.day_id} · ${day.weekday}, ${shortDate(day.date)}</div>
     <h3>Morning Briefing</h3>
@@ -702,7 +761,9 @@ function briefing(): void {
     <p style="margin-top:18px"><button class="btn" id="btn-start">Begin route</button></p>
   `;
   overlay.classList.add('on');
+  startBossIdle();
   $('btn-start').onclick = () => {
+    clearTimeout(bossTimer);
     overlay.classList.remove('on');
     loadLot(0);
   };
