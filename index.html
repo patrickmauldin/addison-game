@@ -32,7 +32,10 @@
       /* --- Menu bar ----------------------------------------------------- */
       #menubar {
         display: flex; align-items: stretch; gap: 2px;
-        background: #262320; border-bottom: 2px solid #17150f;
+        background: #262320 url('assets/wood.png') repeat;
+        image-rendering: pixelated;
+        box-shadow: inset 0 -14px 18px -10px rgba(0,0,0,.65);
+        border-bottom: 2px solid #17150f;
         padding: 0 10px; flex: 0 0 30px; font-size: 12px; user-select: none;
       }
       #menubar .brand {
@@ -87,8 +90,13 @@
       /* The cards scroll; the stamps do not. By Day 15 the rule list alone is
          meant to be intimidating, and a verdict button you have to scroll to
          find is a worse problem than a crowded desk. */
+      /* The desk is wood; the paperwork on it is paper. Textures tile at 1:1
+         and render pixelated, so they stay crisp beside the lot art rather
+         than smoothing into a gradient. */
       #desk {
-        background: #4a453c; border-left: 3px solid #232019;
+        background: #4a453c url('assets/wood.png') repeat;
+        image-rendering: pixelated;
+        border-left: 3px solid #232019;
         display: flex; flex-direction: column; min-height: 0;
       }
       #desk-scroll {
@@ -96,16 +104,20 @@
         padding: 12px; display: flex; flex-direction: column; gap: 10px;
       }
       .card {
-        background: var(--paper); border: 1px solid #9d9075;
-        box-shadow: 1px 2px 0 rgba(0,0,0,.28);
+        background: var(--paper) url('assets/paper.png') repeat;
+        image-rendering: pixelated;
+        border: 1px solid #9d9075;
+        box-shadow: 1px 2px 0 rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.2);
         padding: 9px 11px;
       }
+      /* Route sheet is the clipboard carbon; the case file is a ruled form. */
+      .clip { background: var(--manila) url('assets/paper-yellow.png') repeat; }
+      #casefile-card { background: var(--paper) url('assets/paper-lined.png') repeat; }
       .card h2 {
         margin: 0 0 6px; font-size: 11px; letter-spacing: .12em;
         text-transform: uppercase; color: var(--ink-soft);
         border-bottom: 1px solid var(--rule); padding-bottom: 4px;
       }
-      .clip { background: var(--manila); }
       .row { display: flex; justify-content: space-between; gap: 8px; }
       .row + .row { margin-top: 2px; }
       .muted { color: var(--ink-soft); }
@@ -154,17 +166,38 @@
         cursor: pointer; font: inherit; line-height: 1; padding: 1px 5px;
       }
       #stamps {
-        flex: 0 0 auto; display: flex; gap: 8px;
-        padding: 10px 12px; background: #413c34; border-top: 2px solid #262320;
+        flex: 0 0 auto; display: flex; gap: 18px; justify-content: center;
+        padding: 12px; background: #413c34 url('assets/wood.png') repeat;
+        image-rendering: pixelated;
+        box-shadow: inset 0 14px 18px -12px rgba(0,0,0,.6);
+        border-top: 2px solid #262320;
       }
+      /* Physical plunger buttons. Half scale (214x168 -> 107x84) so the pixel
+         grid stays on integer boundaries. */
       #stamps button {
-        flex: 1; padding: 14px 0; font: 700 15px/1 ui-monospace, monospace;
-        letter-spacing: .16em; cursor: pointer; color: #efe7d2;
-        border: 2px solid rgba(0,0,0,.35); border-radius: 2px;
+        width: 107px; height: 84px; padding: 0; border: 0; cursor: pointer;
+        background: transparent no-repeat center / 107px 84px;
+        image-rendering: pixelated;
+        filter: drop-shadow(0 3px 3px rgba(0,0,0,.5));
+        transition: transform .06s ease-out, filter .06s ease-out;
       }
-      #btn-pass { background: var(--stamp-green); }
-      #btn-fail { background: var(--stamp-red); }
-      #stamps button:disabled { opacity: .4; cursor: default; }
+      /* Selector must out-specify "#stamps button" above, which is (1,0,1) and
+         whose background shorthand resets background-image to none. A bare
+         "#btn-pass" is (1,0,0) and silently loses. */
+      #stamps button#btn-pass { background-image: url('assets/pass.png'); }
+      #stamps button#btn-fail { background-image: url('assets/fail.png'); }
+      /* The art carries the word; the text stays for screen readers only. */
+      #stamps button span {
+        position: absolute; width: 1px; height: 1px; overflow: hidden;
+        clip-path: inset(50%); white-space: nowrap;
+      }
+      #stamps button:hover:not(:disabled) { transform: translateY(-2px); }
+      /* Pressing drives the plunger down rather than just tinting it. */
+      #stamps button:active:not(:disabled) {
+        transform: translateY(4px) scaleY(.94);
+        filter: drop-shadow(0 1px 1px rgba(0,0,0,.6));
+      }
+      #stamps button:disabled { opacity: .45; cursor: default; filter: none; }
       .btn {
         background: var(--paper-2); border: 1px solid #8a7d63; color: var(--ink);
         padding: 5px 10px; cursor: pointer; font: inherit;
@@ -189,13 +222,28 @@
       .verdict-row { padding: 8px 10px; margin: 6px 0; background: var(--paper-2); }
       .bad { border-left: 4px solid var(--stamp-red); }
       .good { border-left: 4px solid var(--stamp-green); }
-      .filed {
-        position: absolute; inset: 0; display: none;
-        align-items: center; justify-content: center;
-        background: rgba(26,24,20,.72); color: #e8dfc6;
-        font: 700 26px/1 ui-monospace, monospace; letter-spacing: .3em;
+      /* The verdict lands on the case file as an ink impression. Absolutely
+         positioned over that card, so it reads as ink ON the paper rather than
+         as a floating notification. */
+      /* min-height reserves room for the impression. Without it the card is
+         ~128px, the stamp has to shrink below legibility to fit, and clipping
+         it instead looks like a rendering fault rather than like ink. */
+      #casefile-card { position: relative; overflow: hidden; min-height: 178px; }
+      #stamp-mark {
+        position: absolute; left: 50%; top: 50%;
+        width: 68%; max-width: none; pointer-events: none;
+        image-rendering: pixelated; display: none; z-index: 3;
+        transform-origin: center;
+        /* Ink sinks into paper rather than sitting on it. */
+        mix-blend-mode: multiply;
       }
-      .filed.on { display: flex; }
+      #stamp-mark.on { display: block; animation: slam .34s cubic-bezier(.2,1.4,.4,1) forwards; }
+      @keyframes slam {
+        0%   { transform: translate(-50%,-50%) rotate(-13deg) scale(1.9); opacity: 0; }
+        55%  { transform: translate(-50%,-50%) rotate(-7deg)   scale(.94); opacity: 1; }
+        100% { transform: translate(-50%,-50%) rotate(-7deg)   scale(1);   opacity: .95; }
+      }
+
 
       /* --- Title screen ------------------------------------------------ */
       #title {
@@ -310,7 +358,6 @@
       <div id="stage">
         <div id="frame">
           <canvas id="lot"></canvas>
-          <div class="filed" id="filed">FILED</div>
         </div>
         <div id="tools">
           <span id="hover"></span>
@@ -333,6 +380,7 @@
             <div id="cf-addr" class="art" style="font-size:15px">—</div>
             <div id="cf-lot" class="muted" style="font-size:11px">—</div>
             <div id="casefile" class="muted" style="margin-top:6px">—</div>
+            <img id="stamp-mark" alt="" />
           </div>
 
           <div class="card" id="binder">
@@ -347,8 +395,8 @@
         </div>
 
         <div id="stamps">
-          <button id="btn-pass">PASS</button>
-          <button id="btn-fail">FAIL</button>
+          <button id="btn-pass" aria-label="Stamp PASS"><span>PASS</span></button>
+          <button id="btn-fail" aria-label="Stamp FAIL"><span>FAIL</span></button>
         </div>
       </div>
     </div>

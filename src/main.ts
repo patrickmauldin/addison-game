@@ -54,7 +54,7 @@ const ctx = canvas.getContext('2d')!;
 const frame = $('frame');
 const overlay = $('overlay');
 const sheet = $('sheet');
-const filedBadge = $('filed');
+const stampMark = $<HTMLImageElement>('stamp-mark');
 
 // --- Sprite loading -------------------------------------------------------
 
@@ -259,6 +259,8 @@ function loadLot(index: number): void {
  * player is meant to reach for.
  */
 function renderCaseFile(rec: { address: string; lot_id: string; rulings: Ruling[] }): void {
+  // A new address means a fresh sheet — the previous verdict's ink goes with it.
+  stampMark.classList.remove('on');
   $('cf-addr').textContent = rec.address;
   $('cf-lot').textContent = `${rec.lot_id} · ${current.street}`;
   const el = $('casefile');
@@ -405,15 +407,21 @@ function stamp(v: Verdict): void {
   saveFile.inspector.pay += day.pay_per_inspection;
   save(saveFile);
 
-  // No feedback. Just the stamp landing, then the drive to the next house.
-  // Kept short: the slide that follows is itself ~900ms, and back-to-back they
-  // read as one dead pause rather than two beats.
-  filedBadge.classList.add('on');
+  // The verdict lands as ink on the case file. Still no feedback on whether it
+  // was RIGHT — that waits for the audit; this is only the physical act of
+  // stamping, which is what the player just did.
+  stampMark.src = v === 'PASS' ? 'assets/stamp-pass.png' : 'assets/stamp-fail.png';
+  stampMark.classList.remove('on');
+  // Force a reflow so re-stamping restarts the animation rather than skipping it.
+  void stampMark.offsetWidth;
+  stampMark.classList.add('on');
+
+  // Long enough to read the impression land, short enough that it does not
+  // become a wait. The drive that follows is the longer beat.
   setTimeout(() => {
-    filedBadge.classList.remove('on');
     if (routeIndex + 1 < day.route.length) slideToLot(routeIndex + 1);
     else endDay();
-  }, 550);
+  }, 820);
 }
 
 /**

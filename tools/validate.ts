@@ -80,9 +80,14 @@ function checkTile(path: string, name: string, axes: 'both' | 'x' = 'both'): voi
     nbrY += diff(at(x, cy), at(x, cy + 1));
   }
   seamX /= b.h * 3; nbrX /= b.h * 3; seamY /= b.w * 3; nbrY /= b.w * 3;
-  if (seamX > nbrX * 2.2)
+  // A pure ratio breaks down on near-uniform art: paper-lined's neighbouring
+  // pixels differ by 0.0, so ANY edge difference is infinitely worse than
+  // typical and the test screams about a seam nobody can see. Require the
+  // difference to be visible in absolute terms too.
+  const VISIBLE = 6;
+  if (seamX > VISIBLE && seamX > nbrX * 2.2)
     warn(`${name}: horizontal seam (edge ${seamX.toFixed(1)} vs neighbour ${nbrX.toFixed(1)}). Repeats visibly across x.`);
-  if (axes === 'both' && seamY > nbrY * 2.2)
+  if (axes === 'both' && seamY > VISIBLE && seamY > nbrY * 2.2)
     warn(`${name}: vertical seam (edge ${seamY.toFixed(1)} vs neighbour ${nbrY.toFixed(1)}). Bands every ${b.h}px.`);
   // Ground tiles are opaque by nature; any translucency in one is a mistake.
   // Sprites are a different matter and are checked separately below.
