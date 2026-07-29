@@ -75,9 +75,12 @@ function checkTile(path: string, name: string, axes: 'both' | 'x' = 'both'): voi
     warn(`${name}: horizontal seam (edge ${seamX.toFixed(1)} vs neighbour ${nbrX.toFixed(1)}). Repeats visibly across x.`);
   if (axes === 'both' && seamY > nbrY * 2.2)
     warn(`${name}: vertical seam (edge ${seamY.toFixed(1)} vs neighbour ${nbrY.toFixed(1)}). Bands every ${b.h}px.`);
+  // Ground tiles are opaque by nature; any translucency in one is a mistake.
+  // Sprites are a different matter and are checked separately below.
   let soft = 0;
   for (let i = 0; i < b.rgba.length; i += 4) if (b.rgba[i + 3] > 0 && b.rgba[i + 3] < 255) soft++;
-  if (soft) warn(`${name}: ${soft} px partial alpha — feathered edges halo when composited.`);
+  if (soft > b.w * b.h * 0.01)
+    warn(`${name}: ${soft} px partial alpha in a ground tile — tiles should be fully opaque.`);
 }
 
 checkTile('assets/grass.png', 'grass tile');

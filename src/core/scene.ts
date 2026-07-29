@@ -109,9 +109,22 @@ export const ANCHORS: Record<string, { hx: number; hy: number }> = {
   YARD_6: { hx: 0.90, hy: 0.96 },
   BED_FRONT: { hx: 0.22, hy: 0.64 },
   PORCH_1: { hx: 0.47, hy: 0.62 },
-  /** On the apron, where bins go out. */
-  CURB_1: { hx: 0.66, hy: 1.02 },
-  CURB_2: { hx: 0.80, hy: 1.02 },
+  /**
+   * Bin positions, and the difference between them IS rule R-104.
+   *
+   * APRON is up by the garage: screened from the right-of-way, compliant at any
+   * hour. CURB is out at the street: legal only Tue 6pm - Thu 9am. Same sprite,
+   * two anchors, opposite verdicts — which is the design pillar working, and
+   * why these are separate named anchors rather than one nudged by a few px.
+   */
+  APRON_1: { hx: 0.66, hy: 0.66 },
+  APRON_2: { hx: 0.79, hy: 0.66 },
+  // Curbside means IN THE ROAD, past the sidewalk, and clear of the driveway
+  // apron so the truck can reach them and the car can still get out. The
+  // sidewalk is WALK_NATIVE_H/HOUSE_NATIVE.h = 0.086 of the house tall, so the
+  // road starts at hy 1.086; these sit just into it.
+  CURB_1: { hx: 0.40, hy: 1.13 },
+  CURB_2: { hx: 0.51, hy: 1.13 },
 };
 
 export function anchor(name: string, L: Layout): { x: number; y: number } {

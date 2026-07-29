@@ -63,7 +63,8 @@ export type SceneAssets = {
 // --- Blitting --------------------------------------------------------------
 
 /**
- * Box-filter sample of a source bitmap. Used because the delivered art is
+ * Box-filter sample of a source bitmap, alpha-blended over the destination.
+ * Used because the delivered art is
  * ~1254px native and almost always drawn smaller: nearest-neighbour at a
  * fractional ratio drops whole grass tufts and picket lines unevenly, which
  * reads as damage rather than as scale.
@@ -98,9 +99,14 @@ function blitScaled(
           aa += src.rgba[s + 3]; n++;
         }
       const alpha = aa / n / 255;
-      // Hard alpha cut: a soft edge haloes against the grass tile.
-      if (!opaque && alpha < 0.5) continue;
-      r.px(tx, ty, [rr / n / Math.max(alpha, 0.001), gg / n / Math.max(alpha, 0.001), bb / n / Math.max(alpha, 0.001)] as Rgb);
+      if (alpha <= 0) continue;
+      // Un-premultiply to recover the source colour, then blend. Blending
+      // rather than cutting is what preserves the drop shadows the sprites
+      // carry at ~30% alpha; a hard cut deletes them and the props look pasted
+      // onto the lawn instead of standing on it.
+      const c: Rgb = [rr / n / alpha, gg / n / alpha, bb / n / alpha];
+      if (opaque) r.px(tx, ty, c);
+      else r.blendPx(tx, ty, c, alpha);
     }
   }
 }
@@ -161,10 +167,24 @@ export function renderLot(
 
   scenery();
 
-  // Grass, edge to edge. Everything else covers part of it.
+  // --- Ground, bottom of the stack -----------------------------------------
+  // ALL ground goes down before anything that stands on it. Drawing the
+  // sidewalk after the props painted over the bottom of every bin parked near
+  // it: a can standing ON the pavement had its base erased BY the pavement.
+  // "Draw the ground last so nothing spills onto it" is exactly backwards —
+  // spilling onto the ground is what objects resting on it are supposed to do.
   const grass = S.get('grass');
   if (grass) tile(r, grass, 0, L.h, L.scale);
   else fill(r, 0, L.h, PALETTE.healthy_green[1] as Rgb);
+
+  const walk = S.get('sidewalk');
+  const walkH = L.roadTop - L.walkTop;
+  if (walk) tileStrip(r, walk, L.walkTop, walkH);
+  else fill(r, L.walkTop, L.roadTop, PALETTE.concrete_weathered[2] as Rgb);
+
+  const road = S.get('road');
+  if (road) tile(r, road, L.roadTop, L.h, L.scale);
+  else fill(r, L.roadTop, L.h, PALETTE.asphalt[0] as Rgb);
 
   // House. Its own lawn is baked in and matches the tile closely enough that
   // the join is invisible, so it blits opaque with no keying.
@@ -193,17 +213,6 @@ export function renderLot(
     // Anchors mark where a prop MEETS THE GROUND, so sprites are bottom-centred.
     blitScaled(r, spr, Math.round(a.x - w / 2), Math.round(a.y - h), w, h, false);
   }
-
-  // Sidewalk, then road — drawn last so nothing spills onto them.
-  scenery();
-  const walk = S.get('sidewalk');
-  const walkH = L.roadTop - L.walkTop;
-  if (walk) tileStrip(r, walk, L.walkTop, walkH);
-  else fill(r, L.walkTop, L.roadTop, PALETTE.concrete_weathered[2] as Rgb);
-
-  const road = S.get('road');
-  if (road) tile(r, road, L.roadTop, L.h, L.scale);
-  else fill(r, L.roadTop, L.h, PALETTE.asphalt[0] as Rgb);
 
   return { raster: r, objects, byKey, layout: L };
 }

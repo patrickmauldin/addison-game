@@ -54,10 +54,10 @@
     "decoys": [
       {
         "object": "bins_apron",
-        "why": "Containers at the garage apron. R-104 is not active until Day 2, and screened storage is compliant in any case."
+        "why": "Containers are at the curb, which R-104 restricts to Tue 6pm - Thu 9am. R-104 is NOT ACTIVE on Day 1, so this is not a violation today. It is the same picture that becomes one on Day 3, which is the point of showing it now."
       }
     ]
   },
   "expected_verdict": "FAIL",
-  "notes_for_designer": "The teaching lot. Two findings on the same article so the player learns R-101 covers the whole yard."
+  "notes_for_designer": "The teaching lot. Two findings on the same article so the player learns R-101 covers the whole yard. Bins sit curbside deliberately: the object is established on Day 1 while it is harmless, so that when R-104 goes live the player recognises the sprite instead of meeting it cold."
 }

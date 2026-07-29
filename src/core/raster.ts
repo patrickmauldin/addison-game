@@ -73,6 +73,32 @@ export class Raster {
     this.id[p] = this.current;
   }
 
+  /**
+   * Alpha-blend a colour over what is already there.
+   *
+   * Needed because the delivered sprites carry their drop shadows as PARTIAL
+   * ALPHA — every one of them has a spike around 30% — so anything that
+   * hard-cuts alpha silently deletes the shadows and the props look pasted on.
+   *
+   * The id buffer is written only above `idCut`, so a faint shadow is drawn but
+   * does not become a click target. Shading an object should not enlarge it.
+   */
+  blendPx(x: number, y: number, c: Rgb, alpha: number, idCut = 0.5): void {
+    if (alpha <= 0) return;
+    x = Math.floor(x);
+    y = Math.floor(y);
+    if (x < 0 || y < 0 || x >= this.w || y >= this.h) return;
+    const p = y * this.w + x;
+    const i = p << 2;
+    const a = Math.min(1, alpha);
+    const inv = 1 - a;
+    this.color[i] = c[0] * a + this.color[i] * inv;
+    this.color[i + 1] = c[1] * a + this.color[i + 1] * inv;
+    this.color[i + 2] = c[2] * a + this.color[i + 2] * inv;
+    this.color[i + 3] = 255;
+    if (a >= idCut) this.id[p] = this.current;
+  }
+
   /** Read the object id under a pixel. */
   idAt(x: number, y: number): number {
     if (x < 0 || y < 0 || x >= this.w || y >= this.h) return 0;

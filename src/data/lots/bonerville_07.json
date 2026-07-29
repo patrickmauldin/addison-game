@@ -29,10 +29,10 @@
     "decoys": [
       {
         "object": "bins_apron",
-        "why": "Containers at the garage apron, screened from the right-of-way."
+        "why": "Containers are at the curb, which R-104 restricts to Tue 6pm - Thu 9am. R-104 is NOT ACTIVE on Day 1, so this is not a violation today. It is the same picture that becomes one on Day 3, which is the point of showing it now."
       }
     ]
   },
   "expected_verdict": "PASS",
-  "notes_for_designer": "The clean lot. Same house, same bins, no weeds \u2014 so the only difference the player can act on is the turf."
+  "notes_for_designer": "The clean lot. Same house, same bins, no weeds \u2014 so the only difference the player can act on is the turf. Bins sit curbside deliberately: the object is established on Day 1 while it is harmless, so that when R-104 goes live the player recognises the sprite instead of meeting it cold."
 }

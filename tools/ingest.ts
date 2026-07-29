@@ -48,9 +48,12 @@ for (const f of files) {
   console.log(`  ${bmp.w} x ${bmp.h} px   ${rep.opaque} opaque (${((rep.opaque / rep.pixels) * 100).toFixed(0)}%)`);
   console.log(`  distinct colours   : ${rep.colours}`);
 
-  if (rep.softAlpha > 0) {
-    console.log(`  !! ${rep.softAlpha} px partial alpha. Feathered edges halo against the grass`);
-    console.log(`     tile. Export with hard 1-bit alpha.`);
+  // Partial alpha is EXPECTED — it is how the sprites carry their drop
+  // shadows. Only flag art that is almost entirely translucent, which means an
+  // accidental layer-opacity export rather than a deliberate shadow.
+  if (rep.opaque > 0 && rep.softAlpha / rep.opaque > 0.7) {
+    console.log(`  !! ${rep.softAlpha} of ${rep.opaque} px are partially transparent.`);
+    console.log(`     That looks like a layer exported at reduced opacity, not a shadow.`);
     failures++;
   }
   if (bmp.w > MAX_W || bmp.h > MAX_H) {
