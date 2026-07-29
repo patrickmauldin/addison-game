@@ -414,11 +414,45 @@ function slideToLot(index: number): void {
   }
 
   const from = currentCanvas;
-  const DURATION = 900;
+  // Half the previous speed. A slower pan reads less like a UI transition and
+  // more like actually rolling down the block to the next address.
+  const DURATION = 1800;
   const start = performance.now();
   sliding = true;
 
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    sliding = false;
+    // Adopt the arrived lot without re-rendering it.
+    routeIndex = index;
+    current = LOTS[day.route[index]];
+    rendered = next.rl;
+    currentCanvas = next.cv;
+    flagged = new Set();
+    centroidCache.clear();
+    stamping = false;
+    const rec = recordFor(saveFile, current.lot_id, current.address);
+    for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
+    save(saveFile);
+    renderCaseFile(rec);
+    paint();
+    syncDesk();
+  };
+
+  /**
+   * Backstop. requestAnimationFrame is suspended when a page is not painting —
+   * a backgrounded tab, or an embedded view that only draws on demand. Measured
+   * zero callbacks in a full second inside one such viewer. The easing is
+   * wall-clock based so it cannot run slow, but it CAN sit unfinished, and an
+   * unfinished slide leaves the route stuck on a lot that has already been
+   * stamped. This guarantees arrival whether or not a frame ever lands.
+   */
+  const guard = setTimeout(finish, DURATION + 500);
+
   const frame = (now: number) => {
+    if (done) return;
     const t = Math.min(1, (now - start) / DURATION);
     // Ease in and out: a car pulling away and settling, not a linear wipe.
     const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -430,21 +464,8 @@ function slideToLot(index: number): void {
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
-      sliding = false;
-      // Adopt the arrived lot without re-rendering it.
-      routeIndex = index;
-      current = LOTS[day.route[index]];
-      rendered = next.rl;
-      currentCanvas = next.cv;
-      flagged = new Set();
-      centroidCache.clear();
-      stamping = false;
-      const rec = recordFor(saveFile, current.lot_id, current.address);
-      for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
-      save(saveFile);
-      renderCaseFile(rec);
-      paint();
-      syncDesk();
+      clearTimeout(guard);
+      finish();
     }
   };
   requestAnimationFrame(frame);
