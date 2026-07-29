@@ -56,6 +56,7 @@ const overlay = $('overlay');
 const sheet = $('sheet');
 const stampMark = $<HTMLImageElement>('stamp-mark');
 
+
 // --- Sprite loading -------------------------------------------------------
 
 /**
@@ -69,6 +70,15 @@ const stampMark = $<HTMLImageElement>('stamp-mark');
  *  sprite after the files on disk have changed — which looks exactly like the
  *  code ignoring your art. */
 const CB = `?v=${Math.floor(Date.now() / 1000)}`;
+
+/**
+ * Marker drawn over a flagged object. Loaded as an Image rather than through
+ * the sprite pipeline because it is UI, not world art: it sits on top of the
+ * finished scene and must not scale with the house. Declared after CB, which
+ * it uses — const is block-scoped, so referencing it earlier is a dead zone.
+ */
+const xMark = new Image();
+xMark.src = 'assets/x.png' + CB;
 
 async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Uint8ClampedArray } | undefined> {
   try {
@@ -171,20 +181,27 @@ function paint(): void {
   if (currentCanvas) ctx.drawImage(currentCanvas, 0, 0);
   else ctx.putImageData(rendered.raster.toImageData(), 0, 0);
 
+  // Flag markers, drawn over the finished scene. Half native size (104x117 ->
+  // 52x59), an exact halving so the pixel grid survives the downscale.
+  const MW = 52;
+  const MH = 59;
   for (const id of flagged) {
     const obj = rendered.objects.find((o) => o.id === id);
     if (!obj) continue;
     const c = centroid(obj.key);
     if (!c) continue;
-    ctx.strokeStyle = '#e8452f';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(c.x, c.y, 15, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(c.x - 5, c.y); ctx.lineTo(c.x + 5, c.y);
-    ctx.moveTo(c.x, c.y - 5); ctx.lineTo(c.x, c.y + 5);
-    ctx.stroke();
+    if (xMark.complete && xMark.naturalWidth) {
+      ctx.drawImage(xMark, Math.round(c.x - MW / 2), Math.round(c.y - MH / 2), MW, MH);
+    } else {
+      // The marker must never be invisible: a flagged object the player cannot
+      // see they flagged is worse than an ugly one.
+      ctx.strokeStyle = '#e8452f';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(c.x - 16, c.y - 16); ctx.lineTo(c.x + 16, c.y + 16);
+      ctx.moveTo(c.x + 16, c.y - 16); ctx.lineTo(c.x - 16, c.y + 16);
+      ctx.stroke();
+    }
   }
 }
 
