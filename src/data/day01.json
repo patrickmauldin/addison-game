@@ -4,16 +4,21 @@
   "weekday": "Monday",
   "weather": "clear",
   "_date_note": "The gameplan's calendar (Day 1 Mon Mar 3, Day 2 Wed Mar 5, Day 3 Fri Mar 7, Day 7 Wed Mar 19) resolves to 2025, not the 2026 used in the manifest's illustrative example. Every weekday in the 20-day schedule checks out against 2025. Using 2025.",
-
-  "active_rules": ["R-101"],
+  "active_rules": [
+    "R-101"
+  ],
   "quota": 6,
   "pay_per_inspection": 12,
   "verdict_mode": "binary",
-
-  "route": ["bonerville_04", "bonerville_07"],
-  "_route_note": "Day 1 is specced at 6 houses. This slice ships the two that matter: the R-101 violation and its decoy.",
-
-  "briefing": "First day. Bonerville, outer loop, original phase. Board wants a baseline on landscape maintenance before the spring inspection cycle. Article VII Section 3(a) only — nothing else is your business today.",
-
+  "route": [
+    "bonerville_01",
+    "bonerville_02",
+    "bonerville_03",
+    "bonerville_04",
+    "bonerville_05",
+    "bonerville_06"
+  ],
+  "_route_note": "All six houses. Three FAIL, three PASS, and every PASS carries something that looks citable but is not yet in the binder.",
+  "briefing": "First day. Bonerville, outer loop, original phase. Board wants a baseline on landscape maintenance before the spring inspection cycle. Article VII Section 3(a) only \u2014 whatever else you see out there is not your business today.",
   "events": []
 }

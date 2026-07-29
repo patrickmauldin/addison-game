@@ -2,62 +2,30 @@
   "lot_id": "bonerville_04",
   "address": "4412 Bonerville",
   "street": "Bonerville",
-  "seed": 40412,
-  "_schema_note": "Full-bleed three-quarter scene. Props name delivered sprites; anchors are fractions of the house rect so they hold as the house scales to the window.",
+  "seed": 40004,
+  "_schema_note": "Full-bleed three-quarter scene. Anchors resolve against this house's table in src/data/houses.json.",
   "house": {
-    "sprite": "house1"
+    "sprite": "house4"
   },
   "props": [
     {
-      "id": "weeds_a",
-      "sprite": "weed1",
-      "anchor": "YARD_4",
-      "label": "Weed growth, front turf",
+      "id": "fence",
+      "sprite": "fence3",
+      "anchor": "FENCE_1",
+      "align": "left",
+      "label": "Side-yard fence",
       "first_seen": "2025-03-03"
-    },
-    {
-      "id": "weeds_b",
-      "sprite": "weed2",
-      "anchor": "YARD_2",
-      "label": "Weed growth, by the walk",
-      "first_seen": "2025-03-03"
-    },
-    {
-      "id": "bins_apron",
-      "sprite": "trash-green",
-      "anchor": "CURB_1",
-      "label": "Refuse container, green",
-      "first_seen": "2025-03-03"
-    },
-    {
-      "id": "bins_apron_b",
-      "sprite": "trash-brown",
-      "anchor": "CURB_2",
-      "label": "Refuse container, brown",
-      "first_seen": "2025-03-03",
-      "flaggable": false
     }
   ],
   "truth": {
-    "violations": [
-      {
-        "object": "weeds_a",
-        "article": "R-101",
-        "why": "Unbordered weed growth in the front turf, visible from the street. No containment, no edging."
-      },
-      {
-        "object": "weeds_b",
-        "article": "R-101",
-        "why": "Second patch by the walk. Article VII 3(a) covers turf and paved joints alike."
-      }
-    ],
+    "violations": [],
     "decoys": [
       {
-        "object": "bins_apron",
-        "why": "Containers are at the curb, which R-104 restricts to Tue 6pm - Thu 9am. R-104 is NOT ACTIVE on Day 1, so this is not a violation today. It is the same picture that becomes one on Day 3, which is the point of showing it now."
+        "object": "fence",
+        "why": "The fence is visibly damaged, and R-305 covers fence condition \u2014 but R-305 is NOT ACTIVE on Day 1. The binder is the authority on what is citable, not how bad something looks."
       }
     ]
   },
-  "expected_verdict": "FAIL",
-  "notes_for_designer": "The teaching lot. Two findings on the same article so the player learns R-101 covers the whole yard. Bins sit curbside deliberately: the object is established on Day 1 while it is harmless, so that when R-104 goes live the player recognises the sprite instead of meeting it cold."
+  "expected_verdict": "PASS",
+  "notes_for_designer": "The hardest PASS of the day. The fence is collapsed into a debris pile \u2014 the most obviously wrong thing on the whole route \u2014 and it is not citable, because R-305 is not in the binder. If a player fails this lot they have stopped reading the rules."
 }

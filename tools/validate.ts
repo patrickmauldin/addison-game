@@ -28,12 +28,20 @@ import { decodePng } from '../src/core/png.js';
 import housesData from '../src/data/houses.json';
 import day01 from '../src/data/day01.json';
 import rulesData from '../src/data/rules.json';
+import lot01 from '../src/data/lots/bonerville_01.json';
+import lot02 from '../src/data/lots/bonerville_02.json';
+import lot03 from '../src/data/lots/bonerville_03.json';
 import lot04 from '../src/data/lots/bonerville_04.json';
-import lot07 from '../src/data/lots/bonerville_07.json';
+import lot05 from '../src/data/lots/bonerville_05.json';
+import lot06 from '../src/data/lots/bonerville_06.json';
 
 const LOTS: Record<string, LotSpec> = {
+  bonerville_01: lot01 as unknown as LotSpec,
+  bonerville_02: lot02 as unknown as LotSpec,
+  bonerville_03: lot03 as unknown as LotSpec,
   bonerville_04: lot04 as unknown as LotSpec,
-  bonerville_07: lot07 as unknown as LotSpec,
+  bonerville_05: lot05 as unknown as LotSpec,
+  bonerville_06: lot06 as unknown as LotSpec,
 };
 const DAYS = [day01];
 

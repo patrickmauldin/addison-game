@@ -1,0 +1,66 @@
+{
+  "lot_id": "bonerville_01",
+  "address": "4400 Bonerville",
+  "street": "Bonerville",
+  "seed": 40001,
+  "_schema_note": "Full-bleed three-quarter scene. Anchors resolve against this house's table in src/data/houses.json.",
+  "house": {
+    "sprite": "house1"
+  },
+  "props": [
+    {
+      "id": "weeds_1",
+      "sprite": "weed1",
+      "anchor": "YARD_4",
+      "label": "Weed growth, front turf",
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "weeds_2",
+      "sprite": "weed2",
+      "anchor": "YARD_2",
+      "label": "Weed growth, front turf",
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bin_green",
+      "sprite": "trash-green",
+      "anchor": "CURB_1",
+      "label": "Refuse container, green",
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "bin_brown",
+      "sprite": "trash-brown",
+      "anchor": "CURB_2",
+      "label": "Refuse container, brown",
+      "first_seen": "2025-03-03"
+    }
+  ],
+  "truth": {
+    "violations": [
+      {
+        "object": "weeds_1",
+        "article": "R-101",
+        "why": "Unbordered weed growth in the front turf, visible from the street."
+      },
+      {
+        "object": "weeds_2",
+        "article": "R-101",
+        "why": "Unbordered weed growth in the front turf, visible from the street."
+      }
+    ],
+    "decoys": [
+      {
+        "object": "bin_green",
+        "why": "Containers are at the curb, which R-104 restricts to Tue 6pm - Thu 9am. R-104 IS NOT ACTIVE on Day 1, so this is not a violation today. Citing it is a wrongful citation that wins on appeal."
+      },
+      {
+        "object": "bin_brown",
+        "why": "Containers are at the curb, which R-104 restricts to Tue 6pm - Thu 9am. R-104 IS NOT ACTIVE on Day 1, so this is not a violation today. Citing it is a wrongful citation that wins on appeal."
+      }
+    ]
+  },
+  "expected_verdict": "FAIL",
+  "notes_for_designer": "Opens the day. Two unmistakable weed patches on an otherwise tidy lot, so the first call the player ever makes is not a close one."
+}

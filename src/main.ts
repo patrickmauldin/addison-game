@@ -27,12 +27,20 @@ import {
 import day01 from './data/day01.json';
 import rulesData from './data/rules.json';
 import housesData from './data/houses.json';
+import lot01 from './data/lots/bonerville_01.json';
+import lot02 from './data/lots/bonerville_02.json';
+import lot03 from './data/lots/bonerville_03.json';
 import lot04 from './data/lots/bonerville_04.json';
-import lot07 from './data/lots/bonerville_07.json';
+import lot05 from './data/lots/bonerville_05.json';
+import lot06 from './data/lots/bonerville_06.json';
 
 const LOTS: Record<string, LotSpec> = {
+  bonerville_01: lot01 as unknown as LotSpec,
+  bonerville_02: lot02 as unknown as LotSpec,
+  bonerville_03: lot03 as unknown as LotSpec,
   bonerville_04: lot04 as unknown as LotSpec,
-  bonerville_07: lot07 as unknown as LotSpec,
+  bonerville_05: lot05 as unknown as LotSpec,
+  bonerville_06: lot06 as unknown as LotSpec,
 };
 
 const day = day01;

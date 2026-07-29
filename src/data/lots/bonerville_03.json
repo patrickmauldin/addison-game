@@ -1,0 +1,44 @@
+{
+  "lot_id": "bonerville_03",
+  "address": "4408 Bonerville",
+  "street": "Bonerville",
+  "seed": 40003,
+  "_schema_note": "Full-bleed three-quarter scene. Anchors resolve against this house's table in src/data/houses.json.",
+  "house": {
+    "sprite": "house3"
+  },
+  "props": [
+    {
+      "id": "weeds_1",
+      "sprite": "weed3",
+      "anchor": "YARD_2",
+      "label": "Weed growth, front turf",
+      "first_seen": "2025-03-03"
+    },
+    {
+      "id": "fence",
+      "sprite": "fence2",
+      "anchor": "FENCE_1",
+      "align": "left",
+      "label": "Side-yard fence",
+      "first_seen": "2025-03-03"
+    }
+  ],
+  "truth": {
+    "violations": [
+      {
+        "object": "weeds_1",
+        "article": "R-101",
+        "why": "Unbordered weed growth in the front turf, visible from the street."
+      }
+    ],
+    "decoys": [
+      {
+        "object": "fence",
+        "why": "The fence is visibly damaged, and R-305 covers fence condition \u2014 but R-305 is NOT ACTIVE on Day 1. The binder is the authority on what is citable, not how bad something looks."
+      }
+    ]
+  },
+  "expected_verdict": "FAIL",
+  "notes_for_designer": "MIRRORED PLAN \u2014 garage and driveway on the LEFT. A player who has learned where to look on the first two lots has to actually look again. Carries a damaged fence as a decoy alongside a real weed patch, so the lot is a FAIL but not for the reason that draws the eye first."
+}
