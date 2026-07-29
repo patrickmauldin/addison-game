@@ -27,6 +27,7 @@ import {
 import day01 from './data/day01.json';
 import rulesData from './data/rules.json';
 import housesData from './data/houses.json';
+import { FRAME_H, FRAME_W, PERSON_UPSCALE, seedFrom, Walker } from './game/walker.js';
 import lot01 from './data/lots/bonerville_01.json';
 import lot02 from './data/lots/bonerville_02.json';
 import lot03 from './data/lots/bonerville_03.json';
@@ -91,6 +92,16 @@ const CB = `?v=${Math.floor(Date.now() / 1000)}`;
  */
 const xMark = new Image();
 xMark.src = 'assets/x.png' + CB;
+
+const peopleSheet = new Image();
+/**
+ * The first lot can finish painting before this arrives, and the walk loop
+ * only repaints on animation frames — which a backgrounded or on-demand
+ * renderer may not deliver. Repaint once it lands so the resident is never
+ * simply absent because the image was slow.
+ */
+peopleSheet.onload = () => { if (currentCanvas) paint(); };
+peopleSheet.src = 'assets/Townspeople_Animations.png' + CB;
 
 async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Uint8ClampedArray } | undefined> {
   try {
@@ -157,6 +168,10 @@ async function loadAssets(): Promise<SceneAssets> {
 let assets: SceneAssets = { sprites: new Map() };
 let currentCanvas: HTMLCanvasElement | null = null;
 let sliding = false;
+/** The resident on this lot, if any. Null on lots that have nobody out. */
+let walker: Walker | null = null;
+let walkerLast = 0;
+let walkerRaf = 0;
 let saveFile: SaveFile = load();
 let routeIndex = 0;
 let current: LotSpec;
@@ -197,6 +212,7 @@ function paint(): void {
   ctx.imageSmoothingEnabled = false;
   if (currentCanvas) ctx.drawImage(currentCanvas, 0, 0);
   else ctx.putImageData(rendered.raster.toImageData(), 0, 0);
+  drawWalker();
 
   // Flag markers, drawn over the finished scene. Half native size (104x117 ->
   // 52x59), an exact halving so the pixel grid survives the downscale.
@@ -220,6 +236,62 @@ function paint(): void {
       ctx.stroke();
     }
   }
+}
+
+/**
+ * Give roughly every other lot somebody out front.
+ *
+ * Seeded from the lot id, so a given address always has the same resident
+ * doing the same thing — the street should feel populated, not randomised on
+ * every visit. Their patch is the front lawn between the house and the walk.
+ */
+function makeWalker(lot: LotSpec, rl: RenderedLot): Walker | null {
+  const rnd = seedFrom(lot.lot_id);
+  if (rnd() < 0.45) return null; // nobody home, or nobody outside
+  const L = rl.layout;
+  const top = L.house.y + L.house.h * 0.82;
+  const bottom = L.walkTop - 14;
+  if (bottom - top < 30) return null;
+  // Walking pace, derived rather than dialled in: a house frontage is roughly
+  // 50ft and a person walks about 4.5ft/s, so a shade under a tenth of the
+  // house's width per second. A flat pixel constant looked right at one window
+  // size and glacial at every other.
+  const speed = L.house.w * 0.085;
+  return new Walker(Math.floor(rnd() * 16), {
+    x0: L.w * 0.08, x1: L.w * 0.92, y0: top, y1: bottom,
+  }, rnd, speed);
+}
+
+/** Draw the resident over the finished scene. */
+function drawWalker(): void {
+  if (!walker || !peopleSheet.complete || !peopleSheet.naturalWidth) return;
+  const k = PERSON_UPSCALE * rendered.layout.scale;
+  const w = Math.round(FRAME_W * k);
+  const h = Math.round(FRAME_H * k);
+  const { sx, sy } = walker.frame();
+  ctx.drawImage(
+    peopleSheet, sx, sy, FRAME_W, FRAME_H,
+    Math.round(walker.x - w / 2), Math.round(walker.y - h), w, h,
+  );
+}
+
+/**
+ * The scene itself is a still image; only the resident moves, so the loop just
+ * repaints rather than recompositing. Stops when nobody is out.
+ */
+function startWalkerLoop(): void {
+  cancelAnimationFrame(walkerRaf);
+  if (!walker) return;
+  walkerLast = performance.now();
+  const step = (now: number) => {
+    if (!walker || sliding) { walkerRaf = requestAnimationFrame(step); return; }
+    const dt = Math.min(0.1, (now - walkerLast) / 1000);
+    walkerLast = now;
+    walker.update(dt);
+    paint();
+    walkerRaf = requestAnimationFrame(step);
+  };
+  walkerRaf = requestAnimationFrame(step);
 }
 
 /** Re-render on resize: the layout, not just the canvas, depends on the size. */
@@ -281,6 +353,8 @@ function loadLot(index: number): void {
   for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
   save(saveFile);
 
+  walker = makeWalker(current, rendered);
+  startWalkerLoop();
   renderCaseFile(rec);
   paint();
   syncDesk();
@@ -502,6 +576,8 @@ function slideToLot(index: number): void {
     const rec = recordFor(saveFile, current.lot_id, current.address);
     for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
     save(saveFile);
+    walker = makeWalker(current, rendered);
+    startWalkerLoop();
     renderCaseFile(rec);
     paint();
     syncDesk();
