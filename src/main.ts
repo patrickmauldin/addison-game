@@ -19,6 +19,7 @@ import {
   reset,
   save,
   type LotOutcome,
+  type Ruling,
   type SaveFile,
   type Verdict,
 } from './game/state.js';
@@ -196,47 +197,65 @@ function loadLot(index: number): void {
   for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
   save(saveFile);
 
-  $('addr-l').textContent = current.address;
-  $('addr-r').textContent = current.lot_id;
-  renderCaseFile(rec.rulings.length);
+  renderCaseFile(rec);
   paint();
   syncDesk();
 }
 
-function renderCaseFile(priorCount: number): void {
+/**
+ * The case file names the address now. It used to be captioned over the
+ * viewport as well, which said the same thing twice and pushed the lot off
+ * centre — and the address belongs with the record, since that is the tool the
+ * player is meant to reach for.
+ */
+function renderCaseFile(rec: { address: string; lot_id: string; rulings: Ruling[] }): void {
+  $('cf-addr').textContent = rec.address;
+  $('cf-lot').textContent = `${rec.lot_id} · ${current.street}`;
   const el = $('casefile');
-  if (!priorCount) {
+  if (!rec.rulings.length) {
     el.className = 'muted';
-    el.textContent = 'No prior rulings at this address. First inspection.';
+    el.textContent = 'No prior rulings. First inspection at this address.';
   } else {
     el.className = '';
-    el.textContent = `${priorCount} prior ruling(s) on file.`;
+    el.innerHTML = rec.rulings
+      .map((r) => `<div>${r.date} — stamped <b>${r.verdict}</b>, ${r.findings.length} finding(s)</div>`)
+      .join('');
   }
 }
 
 function syncDesk(): void {
-  $('c-day').textContent = String(day.day_id);
-  $('c-date').textContent = `${day.weekday} ${day.date}`;
-  $('c-street').textContent = current.street;
+  // Day and weekday on one line. The calendar date is deliberately absent —
+  // the weekday is what rules key off (trash day, decor windows) and the ISO
+  // date was noise. The Calendar tool carries the full date when it unlocks.
+  $('c-day').textContent = `${day.day_id} · ${day.weekday}`;
   $('c-prog').textContent = `${routeIndex + 1} of ${day.route.length}`;
-  $('c-quota').textContent = `${day.route.length} / ${day.quota} specced`;
-  $('c-strikes').textContent = String(saveFile.inspector.strikes_today);
+  $('c-quota').textContent = String(day.quota);
+  $('c-strikes').textContent = `${saveFile.inspector.strikes_today} / 3`;
   $('c-pay').textContent = `$${saveFile.inspector.pay}`;
+  $('m-day').textContent = `Day ${day.day_id}`;
+  $('m-pay').textContent = `$${saveFile.inspector.pay}`;
 
-  // Binder: only articles active today are physically in the binder.
+  // Only articles active today are in the book. One scannable line each,
+  // formal text and enforcement limits behind a click — this list has to stay
+  // legible when a dozen articles are live in Act III.
   const active = ARTICLES.filter((a) => day.active_rules.includes(a.id));
   $('binder-body').innerHTML = active
     .map(
       (a) => `
-      <div class="art">${a.id} — ${a.title}</div>
-      <div class="muted" style="font-size:11px">${a.section}</div>
-      <p style="margin:6px 0">${a.text}</p>
-      <details>
-        <summary>See also — enforcement limits</summary>
-        <div class="decoy">${a.decoy_note}</div>
+      <details class="rule">
+        <summary>
+          <span class="code">${a.id}</span>
+          <span class="tab">${a.tab}</span>
+          <span class="one">${a.short}</span>
+        </summary>
+        <div class="body">
+          <div class="muted" style="font-size:11px">${a.title} · ${a.section}</div>
+          <p class="formal">${a.text}</p>
+          <div class="decoy"><b>Enforcement limits.</b> ${a.decoy_note}</div>
+        </div>
       </details>`,
     )
-    .join('<hr style="border:0;border-top:1px solid var(--rule);margin:10px 0">');
+    .join('');
 
   const list = $('find-list');
   if (!flagged.size) {
@@ -319,10 +338,29 @@ const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
 $('btn-pass').onclick = () => stamp('PASS');
 $('btn-fail').onclick = () => stamp('FAIL');
-$('btn-reset').onclick = () => {
+// --- Menu bar -------------------------------------------------------------
+// Most items are inert on purpose and say when they unlock. A greyed row that
+// reads "Permit Ledger — Day 9" tells the player the job gets bigger, which is
+// worth more than hiding the tool until it appears.
+document.querySelectorAll<HTMLElement>('[data-menu]').forEach((m) => {
+  const btn = m.querySelector('button')!;
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    const wasOpen = m.classList.contains('open');
+    document.querySelectorAll('[data-menu]').forEach((o) => o.classList.remove('open'));
+    if (!wasOpen) m.classList.add('open');
+  };
+});
+window.addEventListener('click', () =>
+  document.querySelectorAll('[data-menu]').forEach((m) => m.classList.remove('open')),
+);
+
+$('mi-reset').onclick = () => {
   reset();
   location.reload();
 };
+$('mi-zoom').onclick = () => $('btn-zoom').click();
+$('mi-howto').onclick = () => briefing();
 
 function stamp(v: Verdict): void {
   if (stamping) return;
