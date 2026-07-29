@@ -169,8 +169,8 @@ function fill(r: Raster, y0: number, y1: number, c: Rgb): void {
  * touching the ground; the lid flaring wider than the wheels should not shift
  * where the bin stands.
  */
-const footprintCache = new WeakMap<Bitmap, { cx: number; baseY: number }>();
-function footprint(src: Bitmap): { cx: number; baseY: number } {
+const footprintCache = new WeakMap<Bitmap, { cx: number; baseY: number; x0: number; x1: number }>();
+function footprint(src: Bitmap): { cx: number; baseY: number; x0: number; x1: number } {
   const hit = footprintCache.get(src);
   if (hit) return hit;
   const SOLID = 128;
@@ -186,7 +186,21 @@ function footprint(src: Bitmap): { cx: number; baseY: number } {
   for (let y = Math.max(0, baseY - band); y <= baseY; y++)
     for (let x = 0; x < src.w; x++)
       if (src.rgba[((y * src.w + x) << 2) + 3] >= SOLID) { sum += x; n++; }
-  const res = { cx: n ? sum / n : src.w / 2, baseY };
+  // Solid horizontal extents, for props aligned by an edge rather than a
+  // centre. The fence art carries 6px of transparent padding on the left and
+  // 11px on the right; aligning by the canvas would stand it that far off the
+  // wall it is supposed to butt against.
+  let x0 = src.w;
+  let x1 = -1;
+  for (let y = 0; y < src.h; y++)
+    for (let x = 0; x < src.w; x++)
+      if (src.rgba[((y * src.w + x) << 2) + 3] >= SOLID) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+      }
+  if (x1 < 0) { x0 = 0; x1 = src.w - 1; }
+
+  const res = { cx: n ? sum / n : src.w / 2, baseY, x0, x1 };
   footprintCache.set(src, res);
   return res;
 }
@@ -273,8 +287,8 @@ export function renderLot(
     // by its contact point rather than by its canvas — see footprint().
     const fp = footprint(spr);
     const ax =
-      p.align === 'left' ? a.x
-      : p.align === 'right' ? a.x - w
+      p.align === 'left' ? a.x - fp.x0 * s
+      : p.align === 'right' ? a.x - (fp.x1 + 1) * s
       : a.x - fp.cx * s;
     const ay = a.y - (fp.baseY + 1) * s;
     blitScaled(r, spr, Math.round(ax), Math.round(ay), w, h, false);
