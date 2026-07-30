@@ -20,6 +20,14 @@ export class Walker {
   private ty: number;
   /** Public via `facing`. */
   private dir: Dir = 0;
+  /**
+   * Sign of horizontal travel, -1 / 0 / +1.
+   *
+   * Four facings cannot express "up and to the left" versus "up and to the
+   * right", and the cat sheet has no north walk — north is mirrored from
+   * north-east, so it needs to know which way to mirror.
+   */
+  hx = 0;
   private t = 0;
   /** Seconds left standing still before choosing a new destination. */
   private pause = 0;
@@ -70,6 +78,7 @@ export class Walker {
     // is proportionally more vertical turns the walker to face the street.
     const bw = Math.max(1, this.bounds.x1 - this.bounds.x0);
     const bh = Math.max(1, this.bounds.y1 - this.bounds.y0);
+    this.hx = Math.sign(dx);
     this.dir = Math.abs(dx) / bw > Math.abs(dy) / bh ? (dx < 0 ? 1 : 2) : dy > 0 ? 0 : 3;
   }
 

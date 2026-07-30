@@ -8,16 +8,22 @@
       /* Vendored rather than linked from Google, so the game has no runtime
          dependency on a third party and works with the network off. Two weights
          is all that gets used: headings and the barks. */
+      /* Vendored rather than linked from a CDN, so the game has no runtime
+         dependency on a third party and works with the network off.
+         
+         ONE FILE, ALL WEIGHTS. There is a single Minecraft.ttf, so the range is
+         declared 100-900 deliberately: without it the browser synthesises bold
+         by smearing the glyphs sideways, which on a pixel face reads as a
+         rendering fault rather than as emphasis.
+         
+         This replaced Pixelify Sans, whose 2, 5, S and Z were near-identical —
+         "$25" read as "$SS". That needed digits excluded via unicode-range so
+         they fell through to the monospace; Minecraft's digits are distinct, so
+         the whole workaround is gone and one face covers everything. */
       @font-face {
-        font-family: 'Pixelify Sans';
-        src: url('assets/fonts/pixelify-sans/PixelifySans-Regular.ttf') format('truetype');
-        font-weight: 400;
-        font-display: swap;
-      }
-      @font-face {
-        font-family: 'Pixelify Sans';
-        src: url('assets/fonts/pixelify-sans/PixelifySans-Bold.ttf') format('truetype');
-        font-weight: 700;
+        font-family: 'Minecraft';
+        src: url('assets/fonts/Minecraft.ttf') format('truetype');
+        font-weight: 100 900;
         font-display: swap;
       }
 
@@ -27,7 +33,7 @@
       :root {
         /* A display face. Fine at heading sizes, illegible at fine-print sizes,
            so it is deliberately NOT the body font — see the note on .card h2. */
-        --pixel-font: 'Pixelify Sans', ui-monospace, Menlo, monospace;
+        --pixel-font: 'Minecraft', ui-monospace, Menlo, monospace;
         --paper: #d9d2be;
         --paper-2: #cbc3ac;
         --manila: #c2a878;
@@ -94,13 +100,24 @@
       .menu.right:hover > #dev-btn, .menu.right.open > #dev-btn { color: #f0e8d2; background: none; }
       .drop .lvl-when { font-size: 11px; color: #9d9075; }
       #menubar .status {
-        margin-left: auto; display: flex; align-items: center; gap: 14px;
+        margin-left: auto; display: flex; align-items: baseline; gap: 14px;
         color: #b0a68c; letter-spacing: .06em;
+      }
+      /* The balance is the number the player is actually playing against once
+         bribes and fines land, so it gets the display face and real size —
+         12px dim monospace beside it read as a status field, not a wallet. */
+      #m-pay {
+        font-family: var(--pixel-font); font-size: 20px; line-height: 1;
+        letter-spacing: .04em; color: #e8c15a;
+        text-shadow: 0 2px 0 rgba(0,0,0,.55);
+      }
+      #menubar .status #m-day {
+        font-family: var(--pixel-font); font-size: 14px; color: #b0a68c;
       }
 
       /* --- Viewport ---------------------------------------------------- */
       /* Full bleed. The lot is not a framed specimen on a card; grass runs to
-         every edge so it reads as part of a neighbourhood. No border, no
+         every edge so it reads as part of a neighborhood. No border, no
          shadow, no letterboxing — the scene IS the stage. */
       #stage { position: relative; min-width: 0; overflow: hidden; }
       #frame {
@@ -115,6 +132,71 @@
         background: linear-gradient(to top, rgba(20,18,15,.72), transparent);
       }
       #hover { color: #f0e8d2; font-size: 12px; font-style: italic; }
+
+      /* --- Pinned notice ------------------------------------------------ */
+      /* Never intercepts a click: the thing you click is the cat in the yard,
+         and a notice that eats clicks over the scene would be a trap. */
+      #flyer {
+        position: absolute; top: 14px; left: 14px; z-index: 6;
+        pointer-events: none; user-select: none; width: 132px;
+      }
+      #flyer[hidden] { display: none; }
+      #flyer-paper {
+        background: var(--paper) url('assets/paper.png') repeat;
+        image-rendering: pixelated;
+        border: 1px solid #9d9075;
+        /* Tacked, so it hangs a little off true. */
+        transform: rotate(-2.5deg);
+        box-shadow: 2px 3px 0 rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.4);
+        padding: 16px 8px 8px; text-align: center; position: relative;
+      }
+      /* The pin sits ON the paper, so it rotates with it and reads as holding
+         it up rather than floating beside it. */
+      #flyer-pin {
+        position: absolute; top: -13px; left: 50%; z-index: 2;
+        width: 36px; height: auto; margin-left: -18px;
+        transform: rotate(-2.5deg);
+        filter: drop-shadow(1px 2px 1px rgba(0,0,0,.45));
+      }
+      .fl-head {
+        font-family: var(--pixel-font); font-size: 15px; letter-spacing: .16em;
+        text-transform: uppercase; color: var(--ink);
+        border-bottom: 1px solid var(--rule); padding-bottom: 3px; margin-bottom: 5px;
+      }
+      /* Drawn at EXACTLY 2x its 56px source, then the transparent padding is
+         pulled back in with negative margins. Scaling pixel art by 1.3 to get
+         a similar size would leave some source pixels one screen pixel wide and
+         others two, which on a 32px-wide subject is very visible. */
+      #flyer-pic {
+        width: 112px; height: 112px; image-rendering: pixelated;
+        display: block; margin: -26px auto -28px;
+      }
+      #flyer-pic[hidden], #flyer-face[hidden] { display: none; }
+      /* Cropped to the figure: the sheet frame is padded for a swung hoe. */
+      #flyer-face {
+        image-rendering: pixelated; display: block; margin: 0 auto;
+        background-repeat: no-repeat;
+        clip-path: inset(6px 18px 6px 18px);
+      }
+      .fl-name {
+        font-family: var(--pixel-font); font-size: 17px; letter-spacing: .08em;
+        text-transform: uppercase; margin-top: 2px;
+      }
+      .fl-reward {
+        font-family: var(--pixel-font); font-size: 14px; color: var(--stamp-red);
+        letter-spacing: .04em; margin-top: 1px;
+      }
+      .fl-owner { font-size: 10px; color: var(--ink-soft); margin-top: 4px; line-height: 1.3; }
+      /* Sized and offset to read as a stamp across the notice rather than an
+         obliteration of it — the name still has to be legible afterwards. */
+      #flyer-found {
+        position: absolute; left: 50%; top: 34px;
+        width: 50px; height: 50px; margin-left: -21px;
+        image-rendering: pixelated;
+        transform: rotate(-8deg);
+        filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
+      }
+      #flyer.found #flyer-paper { opacity: .82; }
 
       /* --- Desk -------------------------------------------------------- */
       /* The cards scroll; the stamps do not. By Level 15 the rule list alone is
@@ -144,7 +226,7 @@
       .clip { background: var(--manila) url('assets/paper-yellow.png') repeat; }
       #casefile-card { background: var(--paper) url('assets/paper-lined.png') repeat; }
       /* Findings is the legal pad — what the inspector writes, as opposed to
-         the forms they fill in. Fallback is the texture's own base colour so a
+         the forms they fill in. Fallback is the texture's own base color so a
          failed load does not flash a stock that isn't the one being drawn. */
       #findings { background: #e8dda2 url('assets/paper-lined-yellow.png') repeat; }
       /* The rulebook is a different document from the paperwork — blue stock
@@ -152,10 +234,10 @@
       #binder { background: #d1d9e4 url('assets/paper-blue.png') repeat; }
       #binder h2 { border-bottom-color: #9fadc0; }
       #binder .rule { border-bottom-color: #9fadc0; }
-      /* Section titles only. Pixelify is a display face — it breaks up below
-         about 13px, which is why the fine print underneath stays monospace.
-         Bumped from 11px and the tracking loosened: a pixel face needs the
-         extra room between letterforms that a monospace does not. */
+      /* Section titles only. A pixel display face breaks up below about 13px,
+         which is why the fine print underneath stays monospace. Bumped from
+         11px and the tracking loosened: a pixel face needs the extra room
+         between letterforms that a monospace does not. */
       .card h2 {
         margin: 0 0 6px; font-family: var(--pixel-font);
         font-size: 15px; font-weight: 400; letter-spacing: .1em;
@@ -169,7 +251,7 @@
       details { margin-top: 6px; }
       summary { cursor: pointer; color: var(--ink-soft); font-size: 12px; }
       details[open] summary { margin-bottom: 4px; }
-      /* Translucent rather than a fixed colour, so it darkens whatever stock
+      /* Translucent rather than a fixed color, so it darkens whatever stock
          it is printed on instead of fighting it. */
       .decoy {
         background: rgba(43, 39, 33, 0.09);
@@ -234,8 +316,9 @@
         /* Reads as a recess in the desk rather than a panel sitting on it. */
         box-shadow: inset 0 14px 18px -12px rgba(0, 0, 0, 0.6);
       }
-      /* Physical plunger buttons, sized to nearly fill the panel: two at 168px
-         plus the gap comes to 352 of the 356 available. */
+      /* Physical plunger buttons. Two at 168px plus the gap fills the 356px
+         panel; a third will not, so the panel drops to three narrower buttons
+         when the fine arrives rather than overflowing or scrolling. */
       #stamps button {
         width: 168px; height: 132px; padding: 0; border: 0; cursor: pointer;
         background: transparent no-repeat center / 168px 132px;
@@ -247,7 +330,13 @@
          whose background shorthand resets background-image to none. A bare
          "#btn-pass" is (1,0,0) and silently loses. */
       #stamps button#btn-pass { background-image: url('assets/pass.png'); }
-      #stamps button#btn-fail { background-image: url('assets/fail.png'); }
+      #stamps button#btn-warn { background-image: url('assets/warning.png'); }
+      #stamps button#btn-fine { background-image: url('assets/fine.png'); }
+      /* Three across: 3 x 110 plus two 10px gaps is 350 of the 356 available. */
+      #stamps.three { gap: 10px; }
+      #stamps.three button {
+        width: 110px; height: 87px; background-size: 110px 87px;
+      }
       /* The art carries the word; the text stays for screen readers only. */
       #stamps button span {
         position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -324,9 +413,16 @@
         text-transform: uppercase; color: var(--ink-soft);
         border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
       #sheet p { margin: 6px 0; }
+      /* Money on the stub, at a size you read rather than scan past. */
+      .money {
+        font-family: var(--pixel-font); font-size: 22px; line-height: 1.2;
+        letter-spacing: .03em; color: var(--ink);
+      }
+      .money.fee { color: var(--stamp-green); }
+      .money.total { font-size: 26px; }
 
       /* --- Briefing pages ------------------------------------------------ */
-      /* One idea per page. The old briefing was four paragraphs of grey text
+      /* One idea per page. The old briefing was four paragraphs of gray text
          and the rules it introduced were described rather than shown. */
       .pg { display: none; }
       .pg.on { display: block; }
@@ -341,8 +437,8 @@
       }
       .pg-dots i.on { background: var(--ink); }
       .story p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.6; }
-      /* No drop cap: Pixelify's capitals at 2.4em read as a rune rather than
-         a letter, which is the opposite of charming. The opening line carries
+      /* No drop cap: a pixel capital at 2.4em reads as a rune rather than a
+         letter, which is the opposite of charming. The opening line carries
          itself. */
       .story p:first-child { font-size: 14.5px; }
       /* A rule is introduced WITH the thing it is about. */
@@ -354,22 +450,34 @@
         letter-spacing: .08em; text-transform: uppercase; padding: 0 5px;
       }
       .exh-head .one { color: var(--ink-soft); font-size: 12px; }
-      .exh-row { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
-      .exh-col { flex: 1 1 190px; min-width: 0; }
-      .exh-col h4 {
-        margin: 0 0 4px; font-family: var(--pixel-font); font-weight: 400;
-        font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
-      }
-      .exh-col.cite h4 { color: var(--stamp-red); }
-      .exh-col.allow h4 { color: var(--stamp-green); }
+      /* One column, violating examples only. The near-miss is in the article's
+         enforcement-limits note rather than shown beside the violation — a
+         cite/leave pair breaks down the moment the same object is on both
+         sides, which is exactly what the bins do. */
+      .exh-body { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
       .exh-pics {
-        display: flex; gap: 6px; align-items: flex-end; min-height: 46px;
+        display: flex; gap: 8px; align-items: flex-end; flex: none;
         background: rgba(43,39,33,.07); border: 1px solid var(--rule);
-        padding: 5px 7px; margin-bottom: 4px;
+        padding: 6px 8px; min-height: 56px;
       }
-      .exh-pics img { height: 40px; width: auto; image-rendering: pixelated; }
+      .exh-pics img { height: 48px; width: auto; image-rendering: pixelated; }
       .exh-pics .none { color: var(--ink-soft); font-size: 11px; font-style: italic; }
-      .exh-col p { margin: 0; font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; }
+      .exh-body p { margin: 0; font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+      /* Found, not told. Handwriting on the legal pad rather than Association
+         letterhead, so it reads as somebody else's note and not as instruction. */
+      .artifact {
+        margin-top: 16px; padding: 9px 11px;
+        background: #e8dda2 url('assets/paper-lined-yellow.png') repeat;
+        image-rendering: pixelated;
+        border: 1px solid #9d9075;
+        box-shadow: 1px 2px 0 rgba(0,0,0,.2);
+      }
+      .artifact h4 {
+        margin: 0 0 3px; font-family: var(--pixel-font); font-weight: 400;
+        font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
+        color: var(--ink-soft);
+      }
+      .artifact p { margin: 0; font-size: 12.5px; font-style: italic; }
       .today-line {
         display: flex; justify-content: space-between; gap: 12px;
         border-bottom: 1px dotted var(--rule); padding: 4px 0;
@@ -420,7 +528,7 @@
 
       /* --- Title screen ------------------------------------------------ */
       /* Austin at dusk behind the title, shown as delivered — no wash over it.
-         The gradient stays UNDERNEATH as a fallback and as the colour the image
+         The gradient stays UNDERNEATH as a fallback and as the color the image
          is letterboxed against on aspect ratios it cannot cover. */
       #title {
         position: fixed; inset: 0; z-index: 40; display: none;
@@ -474,7 +582,7 @@
       /* Boot guard. Visible by default; main.ts removes it once the module has
          actually executed. If the script never runs — the usual cause is
          opening index.html as file://, where the browser blocks ES modules —
-         this is what you see instead of an inert grey desk with no explanation. */
+         this is what you see instead of an inert gray desk with no explanation. */
       #boot {
         position: fixed; inset: 0; z-index: 90; display: flex;
         align-items: center; justify-content: center; padding: 24px;
@@ -551,7 +659,26 @@
         <div id="frame">
           <canvas id="lot"></canvas>
         </div>
-        <div id="tools">
+        <!-- Tacked to the stage, not stood in a yard. A notice is read once and
+           carried for the round; a prop in one lot is walked away from. The
+           top-left corner is otherwise dead space. -->
+      <div id="flyer" hidden>
+        <img id="flyer-pin" src="assets/pin.png" alt="" />
+        <div id="flyer-paper">
+          <div class="fl-head" id="flyer-head">Missing</div>
+          <img id="flyer-pic" src="" alt="" />
+          <!-- A person is a window onto the resident sheet rather than its own
+               image: the face on the notice is then literally the sprite you
+               have to spot in the street, and cannot drift from it. -->
+          <div id="flyer-face" hidden></div>
+          <div class="fl-name" id="flyer-name">—</div>
+          <div class="fl-reward" id="flyer-reward">—</div>
+          <div class="fl-owner" id="flyer-note">—</div>
+          <img id="flyer-found" src="assets/checkmark.png" alt="Found" hidden />
+        </div>
+      </div>
+
+      <div id="tools">
           <span id="hover"></span>
         </div>
       </div>
@@ -591,9 +718,12 @@
           </div>
         </div>
 
+        <!-- Which of these is present depends on the level's verdict_mode.
+             Early on there is no fine to give, so there is no button for one. -->
         <div id="stamps">
           <button id="btn-pass" aria-label="Stamp PASS"><span>PASS</span></button>
-          <button id="btn-fail" aria-label="Stamp FAIL"><span>FAIL</span></button>
+          <button id="btn-warn" aria-label="Stamp WARNING"><span>WARNING</span></button>
+          <button id="btn-fine" aria-label="Stamp FINE" hidden><span>FINE</span></button>
         </div>
       </div>
     </div>

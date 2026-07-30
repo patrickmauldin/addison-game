@@ -1,0 +1,242 @@
+{
+  "level_id": 4,
+  "_date": "DERIVED — Sunday 7 March 2027. Two days past collection, so a bin at the kerb has been there a while.",
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-105",
+    "R-104",
+    "R-107"
+  ],
+  "quota": 5,
+  "pay_per_inspection": 12,
+  "verdict_mode": "notice",
+  "_teaching": "Clutter arrives (R-107) and the bins have LINGERED — Sunday is four days past the window, and one address has had them out since Wednesday. Also the first person bounty: a face on a notice you have to recognise in the street.",
+  "briefing": "Sunday. Article XII is live from today — accumulated junk and debris. Containers have been at the kerb on one of these since Wednesday, which the file will show you.",
+  "story": [
+    "Sunday round. Nobody expects you on a Sunday, which is presumably why the board schedules one.",
+    "Article XII joins the list today: clutter. Neatly stacked material for a live project is not an accumulation. A sofa is.",
+    "And there is a new notice up. Not a lost pet this time."
+  ],
+  "artifact": {
+    "title": "Clipped to the binder",
+    "text": "A board review memo. “Your predecessor’s accuracy was 94%. We mention it as a benchmark.”"
+  },
+  "bounty": {
+    "id": "bandit",
+    "kind": "person",
+    "headline": "Wanted",
+    "name": "Poop Bandit",
+    "note": "Hangs around the gym",
+    "label": "Person matching the notice",
+    "reward": 50,
+    "_placement": "The character is DRAWN AT RANDOM per level, not authored — the player is meant to recognise a face off a notice, and a fixed face gets memorised instead. Whichever lot is chosen always has a resident out, and it is always them.",
+    "eligible_lots": [
+      "bonerville_02",
+      "bonerville_03",
+      "bonerville_04",
+      "bonerville_05"
+    ]
+  },
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 40001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "Clutter introduced on a lot with nothing else wrong, so the new article is met on its own.",
+      "props": [
+        {
+          "id": "couch",
+          "sprite": "couch",
+          "anchor": "YARD_2",
+          "label": "Upholstered furniture, front lawn",
+          "first_seen": "2027-03-07"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "couch",
+            "article": "R-107",
+            "why": "Upholstered furniture accumulated on the front lawn."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 40002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "The lingering bins. Out since Wednesday, four days past the window — the first_seen date on the object is the evidence.",
+      "props": [
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "CURB_1",
+          "label": "Refuse container, green",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-03"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "bin_green",
+            "article": "R-104",
+            "why": "At the kerb since 3 March. Four days past the window."
+          },
+          {
+            "object": "bin_brown",
+            "article": "R-104",
+            "why": "Same."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 40003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "The clutter decoy: boxes stacked neatly for an active project are not an accumulation. The fence beside them is sound.",
+      "props": [
+        {
+          "id": "boxes",
+          "sprite": "boxes",
+          "anchor": "YARD_5",
+          "label": "Stacked materials, side yard",
+          "first_seen": "2027-03-07"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-07",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "boxes",
+            "why": "Neatly stacked in support of an active project — R-107 covers accumulation, not storage."
+          },
+          {
+            "object": "fence",
+            "why": "Intact."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 40004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "Weeds and a washer. Two live articles on one lot, both real.",
+      "props": [
+        {
+          "id": "washer",
+          "sprite": "washer",
+          "anchor": "YARD_2",
+          "label": "Appliance, front lawn",
+          "first_seen": "2027-03-07"
+        },
+        {
+          "id": "weeds_1",
+          "sprite": "weed2",
+          "anchor": "YARD_4",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-07"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "washer",
+            "article": "R-107",
+            "why": "A discarded appliance on the front lawn."
+          },
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 40005,
+      "house": {
+        "sprite": "house5",
+        "mirror": true
+      },
+      "_teaching": "Clean close. Screened bins on a non-collection day, which by now should be automatic.",
+      "props": [
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "BINS_SCREENED",
+          "label": "Refuse container, green — behind fence",
+          "first_seen": "2027-03-07"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-07",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Screened. Compliant on any day."
+          },
+          {
+            "object": "fence",
+            "why": "Intact."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    }
+  ]
+}

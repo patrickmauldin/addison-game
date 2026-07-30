@@ -15,7 +15,7 @@
  *
  * Note what is NOT checked any more: palette conformance. That lock existed to
  * keep procedurally generated layers consistent with each other. Art is now
- * hand-authored and carries its own colour, so the useful question became
+ * hand-authored and carries its own color, so the useful question became
  * "is this exportable" rather than "is this on my palette".
  */
 
@@ -29,16 +29,23 @@ import housesData from '../src/data/houses.json';
 import rulesData from '../src/data/rules.json';
 import level1 from '../src/data/levels/level1.json';
 import level2 from '../src/data/levels/level2.json';
+import level3 from '../src/data/levels/level3.json';
+import level4 from '../src/data/levels/level4.json';
 
-/** Levels carry their lots inline; an address recurs across levels. */
-const LEVELS = [level1, level2] as unknown as {
+/**
+ * Levels carry their lots inline, and an ADDRESS RECURS across levels with
+ * different props — that is the whole point of the return visits.
+ *
+ * So there is no global lot table: merging them keys every level's content on
+ * lot_id and lets a later level overwrite an earlier one, which had Level 2
+ * being checked against Level 4's props. Each level is validated against its
+ * own lots.
+ */
+const LEVELS = [level1, level2, level3, level4] as unknown as {
   level_id: number;
   active_rules: string[];
   lots: LotSpec[];
 }[];
-const LOTS: Record<string, LotSpec> = Object.fromEntries(
-  LEVELS.flatMap((l) => l.lots.map((lot) => [lot.lot_id, lot])),
-);
 
 
 const DAYS = LEVELS;
@@ -51,7 +58,7 @@ const warn = (m: string) => warnings.push(m);
 // --- Ground tiles ---------------------------------------------------------
 // Grass is the background of every lot, so a seam in it is a seam in the whole
 // game. Measured by comparing the wrap-around edge against a typical adjacent
-// pair: if wrapping is much worse than neighbouring, it does not tile.
+// pair: if wrapping is much worse than neighboring, it does not tile.
 /** `axes` says which directions this asset is actually repeated in. A strip
  *  that only tiles horizontally must not be reported for its vertical edges —
  *  a warning that is wrong trains you to ignore the ones that are not. */
@@ -78,15 +85,15 @@ function checkTile(path: string, name: string, axes: 'both' | 'x' = 'both'): voi
     nbrY += diff(at(x, cy), at(x, cy + 1));
   }
   seamX /= b.h * 3; nbrX /= b.h * 3; seamY /= b.w * 3; nbrY /= b.w * 3;
-  // A pure ratio breaks down on near-uniform art: paper-lined's neighbouring
+  // A pure ratio breaks down on near-uniform art: paper-lined's neighboring
   // pixels differ by 0.0, so ANY edge difference is infinitely worse than
   // typical and the test screams about a seam nobody can see. Require the
   // difference to be visible in absolute terms too.
   const VISIBLE = 6;
   if (seamX > VISIBLE && seamX > nbrX * 2.2)
-    warn(`${name}: horizontal seam (edge ${seamX.toFixed(1)} vs neighbour ${nbrX.toFixed(1)}). Repeats visibly across x.`);
+    warn(`${name}: horizontal seam (edge ${seamX.toFixed(1)} vs neighbor ${nbrX.toFixed(1)}). Repeats visibly across x.`);
   if (axes === 'both' && seamY > VISIBLE && seamY > nbrY * 2.2)
-    warn(`${name}: vertical seam (edge ${seamY.toFixed(1)} vs neighbour ${nbrY.toFixed(1)}). Bands every ${b.h}px.`);
+    warn(`${name}: vertical seam (edge ${seamY.toFixed(1)} vs neighbor ${nbrY.toFixed(1)}). Bands every ${b.h}px.`);
   // Ground tiles are opaque by nature; any translucency in one is a mistake.
   // Sprites are a different matter and are checked separately below.
   let soft = 0;
@@ -242,10 +249,11 @@ for (const day of DAYS) {
   const introduced = rulesData.articles.filter((a) => a.introduced_level === day.level_id);
   let anyDecoy = false;
 
+  const lotsHere: Record<string, LotSpec> = Object.fromEntries(day.lots.map((l) => [l.lot_id, l]));
   for (const lotId of day.lots.map((l) => l.lot_id)) {
-    const lot = LOTS[lotId];
+    const lot = lotsHere[lotId];
     if (!lot) {
-      fail(`day ${day.level_id}: route references unknown lot "${lotId}"`);
+      fail(`level ${day.level_id}: route references unknown lot "${lotId}"`);
       continue;
     }
     const objectIds = new Set(lot.props.map((p) => p.id));

@@ -105,7 +105,7 @@ const CAST: Outfit[] = [
   { name: 'sleeves-white',  skin: 'skin3', hair: 'style2_dark_brown',  tops: ['long_sleeve_white'],                 bottom: 'pants_blue',        feet: 'boots_brown' },
   { name: 'tshirt-green',   skin: 'skin4', hair: 'style3_red',         tops: ['tshirt_green'],                      bottom: 'short_skirt_white', feet: 'boots_grey' },
   { name: 'vest-red',       skin: 'skin5', hair: 'style4_med_brown',   tops: ['sleeveless_red'],                    bottom: 'shorts_brown',      feet: 'boots_brown' },
-  { name: 'sleeves-grey',   skin: 'skin3', hair: 'style1_light_brown', tops: ['long_sleeve_grey'],                  bottom: 'pants_grey',        feet: 'boots_grey' },
+  { name: 'sleeves-gray',   skin: 'skin3', hair: 'style1_light_brown', tops: ['long_sleeve_grey'],                  bottom: 'pants_grey',        feet: 'boots_grey' },
   { name: 'tshirt-purple',  skin: 'skin4', hair: 'style3_dark_brown',  tops: ['tshirt_purple'],                     bottom: 'pants_brown',       feet: 'boots_brown' },
   { name: 'skirt-blue',     skin: 'skin1', hair: 'style4_blonde',      tops: ['sleeveless_white'],                  bottom: 'long_skirt_blue',   feet: 'boots_grey'  },
   { name: 'overalls-blue',  skin: 'skin5', hair: 'style2_med_brown',   tops: ['overalls_blue', 'long_sleeve_red'],  bottom: 'pants_blue',        feet: 'boots_brown' },
@@ -113,7 +113,7 @@ const CAST: Outfit[] = [
   { name: 'skirt-purple',   skin: 'skin2', hair: 'style3_blonde',      tops: ['long_sleeve_purple'],                bottom: 'long_skirt_purple', feet: 'boots_brown' },
 ];
 
-/** Relative odds of each character turning up, normalised to RARE_SHARE. */
+/** Relative odds of each character turning up, normalized to RARE_SHARE. */
 const rareCount = CAST.filter((c) => RARE_SKINS.has(c.skin)).length;
 const commonCount = CAST.length - rareCount;
 const CAST_WEIGHTS = CAST.map((c) =>
@@ -220,7 +220,7 @@ function boxOf(sheets: (Bitmap | null)[], frames: (i: number) => number[]) {
 }
 
 // The PERSON's box, from walking and idling only. This is what fixes where the
-// figure sits — their centre line and the ground under their feet.
+// figure sits — their center line and the ground under their feet.
 const person = boxOf(plain, () => [0, 1, 2, 3].flatMap(moveFrames));
 // The full box, tools included. A swung hoe reaches well above the head and out
 // to one side, so the frame has to be bigger than the person — but it must not
@@ -306,7 +306,7 @@ writeFileSync(
       toolDirs: TOOL_DIRS.length,
       /** Tool rows, in row order after the four move directions. */
       tools: TOOL_NAMES.map((t) => ({ name: t, hold: [...TOOLS[t].hold] })),
-      /** Where the PERSON is in the frame; the tool sweep is not centred on them. */
+      /** Where the PERSON is in the frame; the tool sweep is not centerd on them. */
       centerX,
       ground,
       contentH: person.y1 - person.y0 + 1,

@@ -42,7 +42,7 @@
       "title": "Fences and Screening",
       "section": "Article VI, Section 2",
       "text": "Fencing visible from the street shall be maintained in sound condition, free of missing, broken, or displaced members and of significant lean.",
-      "decoy_note": "A fence in sound condition is not a finding merely because it is there, or because it is old. The article covers missing, broken and displaced members — not age, colour or style.",
+      "decoy_note": "A fence in sound condition is not a finding merely because it is there, or because it is old. The article covers missing, broken and displaced members — not age, color or style.",
       "introduced_level": 1,
       "tab": "Fences",
       "short": "Fences broken, missing members, or leaning.",
@@ -55,24 +55,24 @@
         "allow": [
           "fence1"
         ],
-        "allow_note": "Sound and complete. Age and colour are not disrepair."
+        "allow_note": "Sound and complete. Age and color are not disrepair."
       }
     },
     {
       "id": "R-104",
       "title": "Refuse Containers",
       "section": "Article IX, Section 1",
-      "text": "Refuse and recycling containers shall not be placed at the kerb or otherwise made visible from the street on any day other than Tuesday or Wednesday.",
+      "text": "Refuse and recycling containers shall not be placed at the curb or otherwise made visible from the street on any day other than Tuesday or Wednesday.",
       "decoy_note": "Containers screened from the right-of-way — stored behind a side-yard fence or at the garage face — are compliant on ANY day, and remain so whatever condition the screening itself is in.",
       "tab": "Bins",
-      "short": "Bins at the kerb on Tuesday or Wednesday only.",
+      "short": "Bins at the curb on Tuesday or Wednesday only.",
       "introduced_level": 2,
       "exhibit": {
         "cite": [
           "trash-green",
           "trash-brown"
         ],
-        "cite_note": "At the kerb on any day but Tuesday or Wednesday.",
+        "cite_note": "At the curb on any day but Tuesday or Wednesday.",
         "allow": [
           "trash-green"
         ],

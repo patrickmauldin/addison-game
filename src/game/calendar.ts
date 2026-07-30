@@ -42,7 +42,7 @@ export function dateForLevel(level: number): LevelDate {
 }
 
 /**
- * Bins may be at the kerb on Tuesday and Wednesday. Any other day is a finding.
+ * Bins may be at the curb on Tuesday and Wednesday. Any other day is a finding.
  *
  * Collection is Wednesday; the day either side is the window for putting them
  * out and taking them in. Deliberately a whole-day rule rather than the hour

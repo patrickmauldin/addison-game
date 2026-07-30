@@ -2,7 +2,7 @@
  * Sound.
  *
  * Two looping beds and a one-shot. The beds mark where you ARE: the office for
- * the briefing and the audit, the neighbourhood while you are out on the route.
+ * the briefing and the audit, the neighborhood while you are out on the route.
  * Crossfading between them does the scene-setting that no text has to.
  *
  * Everything here is defensive about two facts of browser audio:
@@ -15,8 +15,25 @@
  */
 
 export type BedName = 'ambiance' | 'office' | 'theme';
-/** stamp: a verdict. money: a bounty claimed, and the day's takings at the audit. */
-export type OneShot = 'stamp' | 'money';
+/**
+ * One-shots, and the file each comes from.
+ *
+ * The name is NOT the filename: the delivered effects are a mix of mp3 and
+ * wav, and encoding that into the call sites would mean every caller knowing
+ * which format an artist happened to export.
+ */
+export const ONESHOT_FILES = {
+  /** A verdict stamped. */
+  stamp: 'stamp.mp3',
+  /** A bounty claimed, and the day's takings at the audit. */
+  money: 'money.mp3',
+  /** A finding marked — the moment the red X lands. */
+  select: 'select.wav',
+  meow: 'meow.wav',
+  bark1: 'bark1.wav',
+  bark2: 'bark2.wav',
+} as const;
+export type OneShot = keyof typeof ONESHOT_FILES;
 
 const BED_VOLUME = 0.6;
 /**
@@ -44,8 +61,8 @@ export class Sound {
       a.volume = 0;
       this.beds.set(name, a);
     }
-    for (const name of ['stamp', 'money'] as OneShot[]) {
-      const a = new Audio(`assets/${name}.mp3${cacheBust}`);
+    for (const [name, file] of Object.entries(ONESHOT_FILES)) {
+      const a = new Audio(`assets/${file}${cacheBust}`);
       a.preload = 'auto';
       this.oneshots.set(name, a);
     }

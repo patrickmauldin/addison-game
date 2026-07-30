@@ -19,7 +19,7 @@ Then open <http://localhost:8123>. `npm run watch` rebuilds on change.
 | Command | What it does |
 |---|---|
 | `npm run validate` | Content validator (gameplan §11). Non-zero exit on failure. |
-| `npm run simulate` | Headless Day 1 under three player behaviours. |
+| `npm run simulate` | Headless Day 1 under three player behaviors. |
 | `npm run typecheck` | `tsc --noEmit`. |
 | `npm run ingest` | Check `assets/houses/raw/*.png` is exportable, publish index. |
 | `npm run map-houses` | Measure each house's art, regenerate `src/data/houses.json`. |
@@ -66,7 +66,7 @@ and re-lays out on resize.
 
 ```
 grass ......... to all four edges
-HOUSE ......... centred, its baked lawn blending into the tile
+HOUSE ......... centerd, its baked lawn blending into the tile
 grass ......... front yard, props anchored here
 SIDEWALK ...... horizontal band
 ROAD .......... horizontal band, bottom of frame
@@ -87,7 +87,7 @@ what they are looking at. Fixed steps degrade the same way every time.
 
 **Anchors are fractions of the house rect** (`core/scene.ts`), so props hold
 their position relative to the house as it scales. They mark where a prop *meets
-the ground*: sprites are bottom-centred on them.
+the ground*: sprites are bottom-centerd on them.
 
 ### Asset notes
 
@@ -101,7 +101,7 @@ the ground*: sprites are bottom-centred on them.
 | `trash-green/brown.png` | 114×139 | RGBA |
 | `residents.png` | 40×42 frames | Generated from `char-pack`. 10 characters × (4 move + 3 tools × 3 facings) = 130 rows. **4×** |
 
-`npm run validate` measures tile seams and the house-lawn colour match on every
+`npm run validate` measures tile seams and the house-lawn color match on every
 run, so these do not have to be remembered.
 
 ### People
@@ -265,11 +265,11 @@ No line repeats within a day — the used set is module-level, so hearing the sa
 joke from two people on one street cannot happen either.
 
 **The bubble is drawn, not blitted.** `assets/word bubble.png` is 130×75 with
-over 250 distinct colours — the outline reads as `1,1,1` and `0,1,0` and `2,4,6`
-rather than one black, with semi-transparent grey along the edges. It was
+over 250 distinct colors — the outline reads as `1,1,1` and `0,1,0` and `2,4,6`
+rather than one black, with semi-transparent gray along the edges. It was
 resampled from something smaller and is not on a pixel grid, so nine-slicing it
 would tile that mush into every bubble. `bubble.ts` reproduces its design in
-three colours instead, which also handles what an image cannot: text length is
+three colors instead, which also handles what an image cannot: text length is
 arbitrary so width *and* height vary, and the tail has to point at somebody who
 could be standing anywhere. Sized in **screen** pixels, not scene pixels — same
 reasoning as `x.png`, since text has a legibility floor a house does not.

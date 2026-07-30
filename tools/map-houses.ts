@@ -122,10 +122,21 @@ for (const r of rows) {
     APRON_2: { hx: r.drive[0] + (r.drive[1]-r.drive[0])*0.62, hy: r.garageY + 0.05 },
     WALK_1: { hx: r.walk ? (r.walk[0]+r.walk[1])/2 : 0.49, hy: 0.66 },
     FENCE_1: { hx: +(r.fenceX - 0.004).toFixed(3), hy: r.fenceY },
-    // Behind that fence, and derived from it so the two cannot drift apart.
-    // Up-screen by 0.03 puts the bins earlier in the anchor-y draw order, which
-    // is what makes the fence panel paint over their base.
-    BINS_SCREENED: { hx: +(r.fenceX - 0.05).toFixed(3), hy: +(r.fenceY - 0.03).toFixed(3) },
+    /**
+     * Behind that fence, derived from it so the two cannot drift apart.
+     *
+     * The fence is LEFT-ALIGNED on its anchor and 265px wide — 0.21 of the
+     * house rect — so it runs to the RIGHT of FENCE_1. Offsetting left put the
+     * bins beside the panel where nothing screened them. +0.05 sets them
+     * inside its span, and clear of the building — which is what then makes
+     * -0.03 safe, where before it stood them up the house wall.
+     *
+     * -0.03 rather than -0.01 on purpose. Tucked fully behind the panel the
+     * bins are invisible, and a decoy nobody can see teaches nothing: the
+     * player has to be able to tell there ARE bins here and that they are
+     * screened. Their lids clear the fence by about twenty pixels.
+     */
+    BINS_SCREENED: { hx: +(r.fenceX + 0.05).toFixed(3), hy: +(r.fenceY - 0.03).toFixed(3) },
   };
   const table: Record<string, {hx:number;hy:number}> = {};
   const unresolved: string[] = [];
@@ -163,7 +174,7 @@ console.log(`\nwrote src/data/houses.json for ${Object.keys(houses).length} hous
 
 const p3 = (v:number)=>v.toFixed(3);
 console.log('fractions of the house rect\n');
-console.log('id       driveway            centre  walk                centre  fence x  fence base  garage top');
+console.log('id       driveway            center  walk                center  fence x  fence base  garage top');
 for (const r of rows) {
   console.log(
     `${r.id}  ${p3(r.drive[0])}..${p3(r.drive[1])}       ${p3((r.drive[0]+r.drive[1])/2)}   ` +

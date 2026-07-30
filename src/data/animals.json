@@ -1,0 +1,30 @@
+{
+  "_generated": "tools/pack-cats.ts — do not hand-edit; run `npm run pack-cats`",
+  "sheet": "assets/animals.png",
+  "frameW": 32,
+  "frameH": 33,
+  "cols": 8,
+  "dirs": 4,
+  "animals": [
+    "pablo",
+    "gus"
+  ],
+  "kinds": [
+    "cat",
+    "dog"
+  ],
+  "boxes": [
+    {
+      "x0": 12,
+      "y0": 14,
+      "w": 32,
+      "h": 28
+    },
+    {
+      "x0": 15,
+      "y0": 13,
+      "w": 30,
+      "h": 33
+    }
+  ]
+}

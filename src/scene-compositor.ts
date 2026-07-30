@@ -88,7 +88,7 @@ export type SceneAssets = {
 /**
  * Box-filter sample of a source bitmap, alpha-blended over the destination.
  * Used because the delivered art is
- * ~1254px native and almost always drawn smaller: nearest-neighbour at a
+ * ~1254px native and almost always drawn smaller: nearest-neighbor at a
  * fractional ratio drops whole grass tufts and picket lines unevenly, which
  * reads as damage rather than as scale.
  */
@@ -125,7 +125,7 @@ function blitScaled(
         }
       const alpha = aa / n / 255;
       if (alpha <= 0) continue;
-      // Un-premultiply to recover the source colour, then blend. Blending
+      // Un-premultiply to recover the source color, then blend. Blending
       // rather than cutting is what preserves the drop shadows the sprites
       // carry at ~30% alpha; a hard cut deletes them and the props look pasted
       // onto the lawn instead of standing on it.
@@ -204,7 +204,7 @@ function footprint(src: Bitmap): Footprint {
     for (let x = 0; x < src.w; x++)
       if (src.rgba[((y * src.w + x) << 2) + 3] >= SOLID) { sum += x; n++; }
   // Solid horizontal extents, for props aligned by an edge rather than a
-  // centre. The fence art carries 6px of transparent padding on the left and
+  // center. The fence art carries 6px of transparent padding on the left and
   // 11px on the right; aligning by the canvas would stand it that far off the
   // wall it is supposed to butt against.
   let x0 = src.w;
@@ -294,7 +294,7 @@ export function renderLot(
   // Props, back to front by screen y. Anchors come from this house's table:
   // its own plan where it declares one, the defaults everywhere else.
   //
-  // On a mirrored lot every anchor reflects about the house's centre line, so
+  // On a mirrored lot every anchor reflects about the house's center line, so
   // one measured table serves both handednesses — there is no second set of
   // numbers to keep in step with the first.
   const base = mergeAnchors(

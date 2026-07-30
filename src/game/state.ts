@@ -196,10 +196,21 @@ export function adjudicate(
     }));
 
   const expected = lot.expected_verdict as Verdict;
-  const verdictRight = stamped === expected;
+  /**
+   * Correctness is about WHETHER the lot is clean, not how hard you hit it.
+   *
+   * Once there are three stamps, PASS / NOTICE / CITATION, a lot authored as
+   * FAIL is answered correctly by either adverse stamp — a warning and a fine
+   * are both "this lot is not compliant". Choosing the wrong SEVERITY is a
+   * separate axis, and it only becomes a mistake when the escalation rules
+   * arrive with the fines.
+   */
+  const adverse = (v: Verdict) => v !== 'PASS';
+  const verdictRight = adverse(stamped) === adverse(expected);
 
-  // A strike comes from a wrongful citation or from passing a violating lot.
-  const strike = (!verdictRight && stamped === 'FAIL') || falsePositives.length > 0 || (!verdictRight && stamped === 'PASS');
+  // A strike comes from an adverse verdict on a clean lot, from passing a
+  // violating one, or from any finding that would survive appeal.
+  const strike = !verdictRight || falsePositives.length > 0;
 
   return {
     lot_id: lot.lot_id,

@@ -4,10 +4,10 @@
  * The camera looks down at the lot from the street. No skew: screen x is world
  * x, depth runs up the screen. The scene fills the whole stage rather than
  * sitting in a framed box, so grass runs to every edge and the lot reads as
- * part of a neighbourhood instead of a specimen on a card.
+ * part of a neighborhood instead of a specimen on a card.
  *
  *   grass ...................... to all four edges
- *   HOUSE ...................... centred, its own lawn blending into the tile
+ *   HOUSE ...................... centerd, its own lawn blending into the tile
  *   grass (front yard)
  *   SIDEWALK ................... horizontal band
  *   ROAD ....................... horizontal band, bottom of frame
@@ -115,10 +115,11 @@ export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road' 
   // surface, so it is checked by position, not by the pixel under it. Requiring
   // grass here pushed it off the wall and left a gap.
   FENCE_1: 'attach',
-  // Bins stored BEHIND the side-yard fence. Positioned relative to the fence
-  // rather than standing on a named surface — what is under them is whatever
-  // that house's art puts in its side yard — so it is checked by position.
-  BINS_SCREENED: 'attach',
+  // Bins stored BEHIND the side-yard fence. They STAND ON THE SIDE YARD — they
+  // are not attached to the wall the way the fence is, which is what 'attach'
+  // means and why declaring it that way made the validator rightly complain
+  // that they were nowhere near it.
+  BINS_SCREENED: 'grass',
 };
 
 /**
@@ -166,7 +167,7 @@ export const DEFAULT_ANCHORS: AnchorTable = {
   CURB_2: { hx: 0.51, hy: 1.13 },
   /**
    * Side-yard fence, on the clean (right) side of every plan. Left-aligned
-   * rather than centred, so the panel's end post meets the wall instead of
+   * rather than centerd, so the panel's end post meets the wall instead of
    * straddling it — see PropSpec.align.
    */
   FENCE_1: { hx: 0.960, hy: 0.604 },

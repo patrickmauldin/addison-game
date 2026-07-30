@@ -1,0 +1,215 @@
+{
+  "level_id": 3,
+  "_date": "DERIVED — Friday 5 March 2027. NOT a collection day, which is the point.",
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-105",
+    "R-104"
+  ],
+  "quota": 5,
+  "pay_per_inspection": 12,
+  "verdict_mode": "notice",
+  "_teaching": "Friday. The same bins that were legal on Level 2 are now a finding — the object did not change, the day did. Also the first return visits: two addresses you have already ruled on, one fixed and one not.",
+  "briefing": "Friday. Not a collection day. Containers at the kerb are outside the window today. Two of these addresses you have seen before.",
+  "story": [
+    "Second week. People are starting to recognise the clipboard.",
+    "Two addresses on today's route you have already ruled on. The file will tell you which.",
+    "It is Friday. Article IX allows Tuesday and Wednesday. It is neither."
+  ],
+  "artifact": {
+    "title": "On the route sheet",
+    "text": "A name has been whited out beneath yours. The correction fluid is old and slightly yellow."
+  },
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 40001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "The turn. Same lot, same bins, different day — and now they are citable.",
+      "props": [
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "CURB_1",
+          "label": "Refuse container, green",
+          "first_seen": "2027-03-05"
+        },
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-05"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "bin_green",
+            "article": "R-104",
+            "why": "At the kerb on a Friday. The window is Tuesday and Wednesday."
+          },
+          {
+            "object": "bin_brown",
+            "article": "R-104",
+            "why": "Same."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 40002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "A return visit that FIXED it. They were cited for weeds on Level 2 and the turf is clear now — passing an address with a history is not the same as passing a clean one.",
+      "props": [
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "BINS_SCREENED",
+          "label": "Refuse container, green — behind fence",
+          "first_seen": "2027-03-05"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-05",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Screened from the right-of-way. Compliant on any day, Friday included."
+          },
+          {
+            "object": "fence",
+            "why": "Intact."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 40003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "A return visit that did NOT fix it. The fence they were warned about on Level 2 is still down. Under a notice-only level this is a second warning; from Level 5 it is a fine.",
+      "props": [
+        {
+          "id": "fence",
+          "sprite": "fence2",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-05",
+          "align": "left"
+        },
+        {
+          "id": "weeds_1",
+          "sprite": "weed1",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-05"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "fence",
+            "article": "R-105",
+            "why": "Still missing members. Warned on 3 March and unrepaired."
+          },
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 40004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "Clean, with a car on the drive. A car is clickable and citing one is a strike — nothing live covers a vehicle parked on its own paving.",
+      "props": [
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-05",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "Intact."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 40005,
+      "house": {
+        "sprite": "house5",
+        "mirror": true
+      },
+      "_teaching": "Close on the Friday lesson stated plainly: bins out, no screening, wrong day.",
+      "props": [
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-05"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "bin_brown",
+            "article": "R-104",
+            "why": "At the kerb on a Friday."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    }
+  ]
+}

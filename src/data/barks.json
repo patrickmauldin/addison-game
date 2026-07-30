@@ -6,7 +6,7 @@
     "needs": "ALL must hold. weeds/bins/fence/junk/vehicle = that prop is on the lot. violation = any citable prop. cited = a prior FAIL or CITATION at this address. passed = a prior PASS. hot = a summer month. trashday = the day's weekday is a collection day.",
     "tell": "true means the line leaks something actionable — a grace period exceeded, a decoy flagged. Weighted up on lots where it matters, per the design note in the source doc.",
     "wrong": "true means the line is a passer-by stating an opinion that may simply be FALSE. Deliberately ungated, so 'that needs mowing' fires on compliant lawns. A player who cites on social pressure instead of measuring takes the strike, which is the lesson.",
-    "_dormant": "shutters, rock, repainted, pampas, mailbox, decor, gnome, twotone are not modelled yet, so lines needing them are authored but never fire. The source doc is explicit that ungated cosmetic critique of a feature that is not there reads as a bug, so they stay gated until the feature data exists."
+    "_dormant": "shutters, rock, repainted, pampas, mailbox, decor, gnome, twotone are not modeled yet, so lines needing them are authored but never fire. The source doc is explicit that ungated cosmetic critique of a feature that is not there reads as a bug, so they stay gated until the feature data exists."
   },
   "lines": [
     { "id": "gen-01", "pool": "generic", "tone": "neutral", "who": "owner", "text": "Grass grows. Nothing to be done about it." },

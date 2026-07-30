@@ -10,11 +10,14 @@
   "pay_per_inspection": 12,
   "verdict_mode": "notice",
   "_teaching": "Two rules, four lots, and nothing you do can cost anybody money. The arc is: here is a violation - here is a thing you can click that is NOT one - here is the second rule - now tell them apart on one lot.",
-  "briefing": "First day out. Bonerville, outer loop, original phase. Two articles are live: weeds and fence condition. Nothing else on that street is your business today, however it looks. You are issuing notices only — nobody gets fined on a first pass.",
+  "briefing": "First day. Bonerville, outer loop. Two articles are live — weeds and fence condition. Nothing else on that street is your business, however it looks.",
   "story": [
-    "You are the new Compliance Inspector for the Addison Master Community Association. There was a previous one. Nobody at the office will say why there isn't one now.",
-    "Your manager reports to the Board. You report to her. The Board reports, as far as anyone can tell, to nobody at all.",
-    "Bonerville is the outer loop — the original phase, the oldest lawns, the longest memories. Start there. Start gently."
+    "Welcome to the Addison Master Community Association. You are the Compliance Inspector. There is one.",
+    "You're at 2118 Eyezeta, yes? Good. Short commute.",
+    "Your predecessor also lived in the community. We won't be discussing that.",
+    "Your street is on the Friday route. We don't consider that a conflict.",
+    "Three errors ends your day. Three reprimands ends the arrangement.",
+    "Questions are addressed in the binder."
   ],
   "lots": [
     {
@@ -159,11 +162,15 @@
         "decoys": [
           {
             "object": "fence",
-            "why": "Intact. The article covers missing, broken and displaced members — not age or colour."
+            "why": "Intact. The article covers missing, broken and displaced members — not age or color."
           }
         ]
       },
       "expected_verdict": "FAIL"
     }
-  ]
+  ],
+  "artifact": {
+    "title": "In the binder",
+    "text": "The tab dividers are hand-labeled in pen. Not yours. The initials are R.M."
+  }
 }

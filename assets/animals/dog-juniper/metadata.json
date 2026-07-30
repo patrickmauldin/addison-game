@@ -1,0 +1,430 @@
+{
+  "group_id": "b76d8cf3-6bb7-4ff6-9646-c969754e162c",
+  "states": [
+    {
+      "character": {
+        "id": "e2fd13af-b64d-42d6-9b66-be781c26d762",
+        "name": "\u00be top down perspective red Cavapoo dog",
+        "prompt": "\u00be top down perspective red Cavapoo dog",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "dog",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-07-29T22:28:20.709993+00:00"
+      },
+      "folder": "top_down_perspective_red_Cavapoo_dog",
+      "frames": {
+        "rotations": {
+          "south": "top_down_perspective_red_Cavapoo_dog/rotations/south.png",
+          "south-east": "top_down_perspective_red_Cavapoo_dog/rotations/south-east.png",
+          "east": "top_down_perspective_red_Cavapoo_dog/rotations/east.png",
+          "north-east": "top_down_perspective_red_Cavapoo_dog/rotations/north-east.png",
+          "north": "top_down_perspective_red_Cavapoo_dog/rotations/north.png",
+          "north-west": "top_down_perspective_red_Cavapoo_dog/rotations/north-west.png",
+          "west": "top_down_perspective_red_Cavapoo_dog/rotations/west.png",
+          "south-west": "top_down_perspective_red_Cavapoo_dog/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    },
+    {
+      "character": {
+        "id": "407f4072-0ced-460f-8992-2b5558cf24d8",
+        "name": "walking",
+        "prompt": "\u00be top down perspective red Cavapoo dog",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "dog",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-07-29T22:43:17.021643+00:00"
+      },
+      "folder": "walking",
+      "frames": {
+        "rotations": {
+          "south": "walking/rotations/south.png",
+          "south-east": "walking/rotations/south-east.png",
+          "east": "walking/rotations/east.png",
+          "north-east": "walking/rotations/north-east.png",
+          "north": "walking/rotations/north.png",
+          "north-west": "walking/rotations/north-west.png",
+          "west": "walking/rotations/west.png",
+          "south-west": "walking/rotations/south-west.png"
+        },
+        "animations": {
+          "Walking": {
+            "south-east": [
+              "walking/animations/Walking/south-east/frame_000.png",
+              "walking/animations/Walking/south-east/frame_001.png",
+              "walking/animations/Walking/south-east/frame_002.png",
+              "walking/animations/Walking/south-east/frame_003.png",
+              "walking/animations/Walking/south-east/frame_004.png",
+              "walking/animations/Walking/south-east/frame_005.png",
+              "walking/animations/Walking/south-east/frame_006.png",
+              "walking/animations/Walking/south-east/frame_007.png"
+            ],
+            "west": [
+              "walking/animations/Walking/west/frame_000.png",
+              "walking/animations/Walking/west/frame_001.png",
+              "walking/animations/Walking/west/frame_002.png",
+              "walking/animations/Walking/west/frame_003.png",
+              "walking/animations/Walking/west/frame_004.png",
+              "walking/animations/Walking/west/frame_005.png",
+              "walking/animations/Walking/west/frame_006.png",
+              "walking/animations/Walking/west/frame_007.png"
+            ],
+            "south": [
+              "walking/animations/Walking/south/frame_000.png",
+              "walking/animations/Walking/south/frame_001.png",
+              "walking/animations/Walking/south/frame_002.png",
+              "walking/animations/Walking/south/frame_003.png",
+              "walking/animations/Walking/south/frame_004.png",
+              "walking/animations/Walking/south/frame_005.png",
+              "walking/animations/Walking/south/frame_006.png",
+              "walking/animations/Walking/south/frame_007.png"
+            ],
+            "north-east": [
+              "walking/animations/Walking/north-east/frame_000.png",
+              "walking/animations/Walking/north-east/frame_001.png",
+              "walking/animations/Walking/north-east/frame_002.png",
+              "walking/animations/Walking/north-east/frame_003.png",
+              "walking/animations/Walking/north-east/frame_004.png",
+              "walking/animations/Walking/north-east/frame_005.png",
+              "walking/animations/Walking/north-east/frame_006.png",
+              "walking/animations/Walking/north-east/frame_007.png"
+            ],
+            "east": [
+              "walking/animations/Walking/east/frame_000.png",
+              "walking/animations/Walking/east/frame_001.png",
+              "walking/animations/Walking/east/frame_002.png",
+              "walking/animations/Walking/east/frame_003.png",
+              "walking/animations/Walking/east/frame_004.png",
+              "walking/animations/Walking/east/frame_005.png",
+              "walking/animations/Walking/east/frame_006.png",
+              "walking/animations/Walking/east/frame_007.png"
+            ],
+            "north-west": [
+              "walking/animations/Walking/north-west/frame_000.png",
+              "walking/animations/Walking/north-west/frame_001.png",
+              "walking/animations/Walking/north-west/frame_002.png",
+              "walking/animations/Walking/north-west/frame_003.png",
+              "walking/animations/Walking/north-west/frame_004.png",
+              "walking/animations/Walking/north-west/frame_005.png",
+              "walking/animations/Walking/north-west/frame_006.png",
+              "walking/animations/Walking/north-west/frame_007.png"
+            ],
+            "north": [
+              "walking/animations/Walking/north/frame_000.png",
+              "walking/animations/Walking/north/frame_001.png",
+              "walking/animations/Walking/north/frame_002.png",
+              "walking/animations/Walking/north/frame_003.png",
+              "walking/animations/Walking/north/frame_004.png",
+              "walking/animations/Walking/north/frame_005.png",
+              "walking/animations/Walking/north/frame_006.png",
+              "walking/animations/Walking/north/frame_007.png"
+            ],
+            "south-west": [
+              "walking/animations/Walking/south-west/frame_000.png",
+              "walking/animations/Walking/south-west/frame_001.png",
+              "walking/animations/Walking/south-west/frame_002.png",
+              "walking/animations/Walking/south-west/frame_003.png",
+              "walking/animations/Walking/south-west/frame_004.png",
+              "walking/animations/Walking/south-west/frame_005.png",
+              "walking/animations/Walking/south-west/frame_006.png",
+              "walking/animations/Walking/south-west/frame_007.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "505acf25-438f-40dc-ab71-67116c874321",
+        "name": "Running",
+        "prompt": "\u00be top down perspective red Cavapoo dog",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "dog",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-07-30T00:00:01.098661+00:00"
+      },
+      "folder": "Running",
+      "frames": {
+        "rotations": {
+          "south": "Running/rotations/south.png",
+          "south-east": "Running/rotations/south-east.png",
+          "east": "Running/rotations/east.png",
+          "north-east": "Running/rotations/north-east.png",
+          "north": "Running/rotations/north.png",
+          "north-west": "Running/rotations/north-west.png",
+          "west": "Running/rotations/west.png",
+          "south-west": "Running/rotations/south-west.png"
+        },
+        "animations": {
+          "Running": {
+            "south-west": [
+              "Running/animations/Running/south-west/frame_000.png",
+              "Running/animations/Running/south-west/frame_001.png",
+              "Running/animations/Running/south-west/frame_002.png",
+              "Running/animations/Running/south-west/frame_003.png",
+              "Running/animations/Running/south-west/frame_004.png",
+              "Running/animations/Running/south-west/frame_005.png",
+              "Running/animations/Running/south-west/frame_006.png",
+              "Running/animations/Running/south-west/frame_007.png"
+            ],
+            "east": [
+              "Running/animations/Running/east/frame_000.png",
+              "Running/animations/Running/east/frame_001.png",
+              "Running/animations/Running/east/frame_002.png",
+              "Running/animations/Running/east/frame_003.png",
+              "Running/animations/Running/east/frame_004.png",
+              "Running/animations/Running/east/frame_005.png",
+              "Running/animations/Running/east/frame_006.png",
+              "Running/animations/Running/east/frame_007.png"
+            ],
+            "north-east": [
+              "Running/animations/Running/north-east/frame_000.png",
+              "Running/animations/Running/north-east/frame_001.png",
+              "Running/animations/Running/north-east/frame_002.png",
+              "Running/animations/Running/north-east/frame_003.png",
+              "Running/animations/Running/north-east/frame_004.png",
+              "Running/animations/Running/north-east/frame_005.png",
+              "Running/animations/Running/north-east/frame_006.png",
+              "Running/animations/Running/north-east/frame_007.png"
+            ],
+            "south": [
+              "Running/animations/Running/south/frame_000.png",
+              "Running/animations/Running/south/frame_001.png",
+              "Running/animations/Running/south/frame_002.png",
+              "Running/animations/Running/south/frame_003.png",
+              "Running/animations/Running/south/frame_004.png",
+              "Running/animations/Running/south/frame_005.png",
+              "Running/animations/Running/south/frame_006.png",
+              "Running/animations/Running/south/frame_007.png",
+              "Running/animations/Running/south/frame_008.png"
+            ],
+            "north-west": [
+              "Running/animations/Running/north-west/frame_000.png",
+              "Running/animations/Running/north-west/frame_001.png",
+              "Running/animations/Running/north-west/frame_002.png",
+              "Running/animations/Running/north-west/frame_003.png",
+              "Running/animations/Running/north-west/frame_004.png",
+              "Running/animations/Running/north-west/frame_005.png",
+              "Running/animations/Running/north-west/frame_006.png",
+              "Running/animations/Running/north-west/frame_007.png"
+            ],
+            "north": [
+              "Running/animations/Running/north/frame_000.png",
+              "Running/animations/Running/north/frame_001.png",
+              "Running/animations/Running/north/frame_002.png",
+              "Running/animations/Running/north/frame_003.png",
+              "Running/animations/Running/north/frame_004.png",
+              "Running/animations/Running/north/frame_005.png",
+              "Running/animations/Running/north/frame_006.png",
+              "Running/animations/Running/north/frame_007.png"
+            ],
+            "south-east": [
+              "Running/animations/Running/south-east/frame_000.png",
+              "Running/animations/Running/south-east/frame_001.png",
+              "Running/animations/Running/south-east/frame_002.png",
+              "Running/animations/Running/south-east/frame_003.png",
+              "Running/animations/Running/south-east/frame_004.png",
+              "Running/animations/Running/south-east/frame_005.png",
+              "Running/animations/Running/south-east/frame_006.png",
+              "Running/animations/Running/south-east/frame_007.png"
+            ],
+            "west": [
+              "Running/animations/Running/west/frame_000.png",
+              "Running/animations/Running/west/frame_001.png",
+              "Running/animations/Running/west/frame_002.png",
+              "Running/animations/Running/west/frame_003.png",
+              "Running/animations/Running/west/frame_004.png",
+              "Running/animations/Running/west/frame_005.png",
+              "Running/animations/Running/west/frame_006.png",
+              "Running/animations/Running/west/frame_007.png",
+              "Running/animations/Running/west/frame_008.png"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "character": {
+        "id": "1b56bf5f-d209-480c-87a8-9ac057359da1",
+        "name": "Standing on back leg",
+        "prompt": "\u00be top down perspective red Cavapoo dog",
+        "size": {
+          "width": 56,
+          "height": 56
+        },
+        "template_id": "dog",
+        "directions": 8,
+        "view": "high top-down",
+        "created_at": "2026-07-30T02:49:49.671965+00:00"
+      },
+      "folder": "Standing_on_back_leg",
+      "frames": {
+        "rotations": {
+          "south": "Standing_on_back_leg/rotations/south.png",
+          "south-east": "Standing_on_back_leg/rotations/south-east.png",
+          "east": "Standing_on_back_leg/rotations/east.png",
+          "north-east": "Standing_on_back_leg/rotations/north-east.png",
+          "north": "Standing_on_back_leg/rotations/north.png",
+          "north-west": "Standing_on_back_leg/rotations/north-west.png",
+          "west": "Standing_on_back_leg/rotations/west.png",
+          "south-west": "Standing_on_back_leg/rotations/south-west.png"
+        },
+        "animations": {
+          "The_dog_goes_from_idle_on_four_legs_to_standing_on": {
+            "south-west": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-west/frame_014.png"
+            ],
+            "north-east": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-east/frame_014.png"
+            ],
+            "north-west": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north-west/frame_014.png"
+            ],
+            "west": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/west/frame_014.png"
+            ],
+            "east": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/east/frame_014.png"
+            ],
+            "south-east": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south-east/frame_014.png"
+            ],
+            "south": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/south/frame_014.png"
+            ],
+            "north": [
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_000.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_001.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_002.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_003.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_004.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_005.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_006.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_007.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_008.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_009.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_010.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_011.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_012.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_013.png",
+              "Standing_on_back_leg/animations/The_dog_goes_from_idle_on_four_legs_to_standing_on/north/frame_014.png"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-07-30T05:44:24.905755"
+}

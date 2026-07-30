@@ -2,14 +2,14 @@
  * Pixel word bubble, drawn rather than blitted.
  *
  * WHY NOT THE PNG. assets/'word bubble.png' is 130x75 and carries over 250
- * distinct colours — the outline reads as 1,1,1 and 0,1,0 and 2,4,6 and 20,20,20
- * rather than one black, with semi-transparent grey smeared along the edges. It
+ * distinct colors — the outline reads as 1,1,1 and 0,1,0 and 2,4,6 and 20,20,20
+ * rather than one black, with semi-transparent gray smeared along the edges. It
  * has been resampled from something smaller; it is not authored on a pixel grid.
  * Nine-slicing it would tile that mush into every bubble, and the outline
  * thickness varies enough that the slices would not butt cleanly.
  *
- * So this reproduces its DESIGN in three colours: white fill, black outline,
- * and the light blue-grey inner shadow along the bottom that the original does
+ * So this reproduces its DESIGN in three colors: white fill, black outline,
+ * and the light blue-gray inner shadow along the bottom that the original does
  * have. Drawing it also solves what an image cannot — text length is arbitrary,
  * so width AND height vary, and the tail has to point at somebody who could be
  * standing anywhere.
@@ -21,7 +21,7 @@
  * size it was drawn for.
  */
 
-export const BUBBLE_FONT = '16px "Pixelify Sans", ui-monospace, monospace';
+export const BUBBLE_FONT = '16px Minecraft, ui-monospace, monospace';
 
 const FILL = '#ffffff';
 const INK = '#000000';
@@ -93,7 +93,7 @@ export function drawBubble(
   rect(ctx, left, top, bw, bh);
   ctx.fillStyle = FILL;
   rect(ctx, left + BORDER, top + BORDER, bw - BORDER * 2, bh - BORDER * 2);
-  // The original has a band of cool grey inside the bottom edge. It is what
+  // The original has a band of cool gray inside the bottom edge. It is what
   // stops the bubble reading as a plain white box.
   ctx.fillStyle = SHADOW;
   ctx.fillRect(left + BORDER + NOTCH, top + bh - BORDER - SHADOW_H, bw - (BORDER + NOTCH) * 2, SHADOW_H);

@@ -1,5 +1,5 @@
 /**
- * The neighbours.
+ * The neighbors.
  *
  * Ten people composited out of assets/char-pack's paper-doll layers by
  * tools/pack-residents.ts — different skin, hair, top, bottom and boots each.
@@ -65,6 +65,11 @@ export const RESIDENTS = {
   centerX: meta.centerX,
   ground: meta.ground,
   count: meta.characters.length,
+  /** For showing one character outside the game — a face on a notice. */
+  rowsPerCharacter: meta.rowsPerCharacter,
+  idleCol: meta.walkLen,
+  sheetW: meta.frameW * meta.cols,
+  sheetH: meta.frameH * meta.rowsPerCharacter * meta.characters.length,
 };
 
 /**

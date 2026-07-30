@@ -1,5 +1,5 @@
 /**
- * Headless playthrough of every level under three player behaviours.
+ * Headless playthrough of every level under three player behaviors.
  *
  * Verifies the mechanics without a browser: adjudication, the asymmetry
  * between false positives and false negatives, and whether the decoys actually
@@ -14,12 +14,14 @@ import { adjudicate, type Verdict } from '../src/game/state.js';
 import { renderLot, type LotSpec } from '../src/scene-compositor.js';
 import level1 from '../src/data/levels/level1.json';
 import level2 from '../src/data/levels/level2.json';
+import level3 from '../src/data/levels/level3.json';
+import level4 from '../src/data/levels/level4.json';
 
 type Truth = { violations?: { object: string }[]; decoys?: { object: string }[] };
 type Lot = LotSpec & { lot_id: string; truth?: Truth };
 type Level = { level_id: number; quota: number; pay_per_inspection: number; lots: Lot[] };
 
-const LEVELS = [level1, level2] as unknown as Level[];
+const LEVELS = [level1, level2, level3, level4] as unknown as Level[];
 
 type Play = { lot: string; flag: string[]; stamp: Verdict };
 

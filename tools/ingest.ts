@@ -11,13 +11,13 @@
  */
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { analyse, decodePng, encodePng } from '../src/core/png.js';
+import { analyze, decodePng, encodePng } from '../src/core/png.js';
 import { BAND, CANVAS_W } from '../src/core/scene.js';
 
 const RAW = 'assets/houses/raw';
 const OUT = 'assets/houses';
 
-// A house sits centred, its base on the house band. Anything wildly outside
+// A house sits centerd, its base on the house band. Anything wildly outside
 // that envelope will not land where the driveway and walk expect it.
 const MAX_W = CANVAS_W;
 const MAX_H = BAND.houseBase - BAND.houseTop + 40;
@@ -41,12 +41,12 @@ for (const f of files) {
     failures++;
     continue;
   }
-  const rep = analyse(bmp.rgba);
+  const rep = analyze(bmp.rgba);
   writeFileSync(`${OUT}/${id}.png`, encodePng(bmp.rgba, bmp.w, bmp.h));
 
   console.log(`\n${id}`);
   console.log(`  ${bmp.w} x ${bmp.h} px   ${rep.opaque} opaque (${((rep.opaque / rep.pixels) * 100).toFixed(0)}%)`);
-  console.log(`  distinct colours   : ${rep.colours}`);
+  console.log(`  distinct colors   : ${rep.colors}`);
 
   // Partial alpha is EXPECTED — it is how the sprites carry their drop
   // shadows. Only flag art that is almost entirely translucent, which means an

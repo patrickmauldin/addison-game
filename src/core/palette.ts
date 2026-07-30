@@ -1,12 +1,12 @@
 /**
- * COLOUR VOCABULARY.
+ * Color VOCABULARY.
  *
  * 44 ramps x 3 tones, each [shade, base, light].
  *
- * This was a LOCK: nothing could render a colour outside it, enforced per-pixel
+ * This was a LOCK: nothing could render a color outside it, enforced per-pixel
  * by the validator. That was the right contract while every layer was
  * procedurally generated and had to agree with every other. It was retired for
- * hand-authored art, which carries its own colour — grass.png alone has 4,775.
+ * hand-authored art, which carries its own color — grass.png alone has 4,775.
  *
  * What remains is a shared vocabulary for the few things still generated at
  * runtime (the R-101 weed/bed pair, ground fallbacks) and for UI chrome. Using

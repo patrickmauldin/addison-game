@@ -2,7 +2,7 @@
  * Minimal PNG codec.
  *
  * Decode exists because the ingest pipeline has to read whatever a generator
- * or an artist hands over — indexed, RGB, greyscale, with or without alpha —
+ * or an artist hands over — indexed, RGB, grayscale, with or without alpha —
  * and bring it onto the locked palette before it is allowed near the
  * compositor. Encode exists so tools can write renders and ingested sprites.
  *
@@ -49,7 +49,7 @@ export function encodePng(rgba: Uint8ClampedArray, w: number, h: number): Buffer
   ihdr.writeUInt32BE(w, 0);
   ihdr.writeUInt32BE(h, 4);
   ihdr[8] = 8; // bit depth
-  ihdr[9] = 6; // truecolour + alpha
+  ihdr[9] = 6; // truecolor + alpha
   const raw = Buffer.alloc(h * (w * 4 + 1));
   for (let y = 0; y < h; y++) {
     raw[y * (w * 4 + 1)] = 0; // filter: None
@@ -103,15 +103,15 @@ export function decodePng(buf: Buffer): Bitmap {
   }
 
   const ch = CHANNELS[colorType];
-  if (!ch) throw new Error(`png: unsupported colour type ${colorType}`);
+  if (!ch) throw new Error(`png: unsupported color type ${colorType}`);
   if (depth !== 8 && depth !== 4 && depth !== 2 && depth !== 1)
     throw new Error(`png: unsupported bit depth ${depth}`);
   if (depth !== 8 && colorType !== 3 && colorType !== 0)
-    throw new Error(`png: sub-8-bit depth is only supported for indexed and greyscale`);
+    throw new Error(`png: sub-8-bit depth is only supported for indexed and grayscale`);
 
   const raw = inflateSync(Buffer.concat(idat));
   // Sub-8-bit samples are packed several to a byte. Indexed PNGs from most
-  // pixel-art tools come out at 4-bit when the palette is 16 colours or fewer,
+  // pixel-art tools come out at 4-bit when the palette is 16 colors or fewer,
   // so this is a normal case, not an exotic one.
   const stride = Math.ceil((w * ch * depth) / 8);
   const filterBpp = Math.max(1, Math.ceil((ch * depth) / 8));
@@ -191,7 +191,7 @@ export function downscale(src: Bitmap, tw: number, th: number): Bitmap {
         for (let i = x0; i < x1 && i < src.w; i++) {
           const s = (j * src.w + i) << 2;
           const av = src.rgba[s + 3] / 255;
-          // Premultiply so transparent pixels do not bleed their colour in.
+          // Premultiply so transparent pixels do not bleed their color in.
           r += src.rgba[s] * av; g += src.rgba[s + 1] * av; b += src.rgba[s + 2] * av;
           a += src.rgba[s + 3]; n++;
         }
@@ -226,10 +226,10 @@ export function crop(src: Bitmap, x0: number, y0: number, w: number, h: number):
  *
  * This is what replaced quantise-on-ingest once art became hand-authored. The
  * useful question stopped being "how far is this from my palette" and became
- * "is this exportable": hard alpha, a sane colour count, actually opaque.
+ * "is this exportable": hard alpha, a sane color count, actually opaque.
  */
-export function analyse(rgba: Uint8ClampedArray): {
-  pixels: number; opaque: number; softAlpha: number; colours: number;
+export function analyze(rgba: Uint8ClampedArray): {
+  pixels: number; opaque: number; softAlpha: number; colors: number;
 } {
   const seen = new Set<number>();
   let opaque = 0;
@@ -241,5 +241,5 @@ export function analyse(rgba: Uint8ClampedArray): {
     opaque++;
     seen.add((rgba[i] << 16) | (rgba[i + 1] << 8) | rgba[i + 2]);
   }
-  return { pixels: rgba.length / 4, opaque, softAlpha, colours: seen.size };
+  return { pixels: rgba.length / 4, opaque, softAlpha, colors: seen.size };
 }

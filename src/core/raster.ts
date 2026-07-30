@@ -75,7 +75,7 @@ export class Raster {
   /**
    * Coordinates are floored here, not by callers. Generators work in projected
    * space and routinely hand over fractional pixels; a fractional index writes
-   * colour to a bit-shifted address but is SILENTLY DROPPED by the id typed
+   * color to a bit-shifted address but is SILENTLY DROPPED by the id typed
    * array, which produces an object that is visible and unclickable.
    */
   px(x: number, y: number, c: Rgb): void {
@@ -93,7 +93,7 @@ export class Raster {
   }
 
   /**
-   * Alpha-blend a colour over what is already there.
+   * Alpha-blend a color over what is already there.
    *
    * Needed because the delivered sprites carry their drop shadows as PARTIAL
    * ALPHA — every one of them has a spike around 30% — so anything that
