@@ -26,24 +26,22 @@ import { ANCHOR_SURFACE, DEFAULT_ANCHORS, mergeAnchors } from '../src/core/scene
 import { decodePng } from '../src/core/png.js';
 
 import housesData from '../src/data/houses.json';
-import day01 from '../src/data/day01.json';
 import rulesData from '../src/data/rules.json';
-import lot01 from '../src/data/lots/bonerville_01.json';
-import lot02 from '../src/data/lots/bonerville_02.json';
-import lot03 from '../src/data/lots/bonerville_03.json';
-import lot04 from '../src/data/lots/bonerville_04.json';
-import lot05 from '../src/data/lots/bonerville_05.json';
-import lot06 from '../src/data/lots/bonerville_06.json';
+import level1 from '../src/data/levels/level1.json';
+import level2 from '../src/data/levels/level2.json';
 
-const LOTS: Record<string, LotSpec> = {
-  bonerville_01: lot01 as unknown as LotSpec,
-  bonerville_02: lot02 as unknown as LotSpec,
-  bonerville_03: lot03 as unknown as LotSpec,
-  bonerville_04: lot04 as unknown as LotSpec,
-  bonerville_05: lot05 as unknown as LotSpec,
-  bonerville_06: lot06 as unknown as LotSpec,
-};
-const DAYS = [day01];
+/** Levels carry their lots inline; an address recurs across levels. */
+const LEVELS = [level1, level2] as unknown as {
+  level_id: number;
+  active_rules: string[];
+  lots: LotSpec[];
+}[];
+const LOTS: Record<string, LotSpec> = Object.fromEntries(
+  LEVELS.flatMap((l) => l.lots.map((lot) => [lot.lot_id, lot])),
+);
+
+
+const DAYS = LEVELS;
 
 const errors: string[] = [];
 const warnings: string[] = [];
@@ -239,15 +237,15 @@ for (const day of DAYS) {
   const active = new Set(day.active_rules);
   const known = new Set(rulesData.articles.map((a) => a.id));
   for (const id of day.active_rules)
-    if (!known.has(id)) fail(`day ${day.day_id}: active rule ${id} is not in rules.json`);
+    if (!known.has(id)) fail(`day ${day.level_id}: active rule ${id} is not in rules.json`);
 
-  const introduced = rulesData.articles.filter((a) => a.introduced_day === day.day_id);
+  const introduced = rulesData.articles.filter((a) => a.introduced_level === day.level_id);
   let anyDecoy = false;
 
-  for (const lotId of day.route) {
+  for (const lotId of day.lots.map((l) => l.lot_id)) {
     const lot = LOTS[lotId];
     if (!lot) {
-      fail(`day ${day.day_id}: route references unknown lot "${lotId}"`);
+      fail(`day ${day.level_id}: route references unknown lot "${lotId}"`);
       continue;
     }
     const objectIds = new Set(lot.props.map((p) => p.id));
@@ -258,7 +256,7 @@ for (const day of DAYS) {
     for (const v of lot.truth.violations) {
       if (!objectIds.has(v.object)) fail(`${lotId}: violation names missing object "${v.object}"`);
       if (!active.has(v.article))
-        fail(`${lotId}: violation cites ${v.article}, not active on day ${day.day_id}`);
+        fail(`${lotId}: violation cites ${v.article}, not active on day ${day.level_id}`);
     }
     for (const d of lot.truth.decoys)
       if (!objectIds.has(d.object)) fail(`${lotId}: decoy names missing object "${d.object}"`);
@@ -298,7 +296,7 @@ for (const day of DAYS) {
 
   for (const a of introduced)
     if (!anyDecoy)
-      fail(`day ${day.day_id}: rule ${a.id} is introduced with no decoy on the route. Every rule ships with a near-miss.`);
+      fail(`day ${day.level_id}: rule ${a.id} is introduced with no decoy on the route. Every rule ships with a near-miss.`);
 }
 
 for (const w of warnings) console.log(`  warn   ${w}`);

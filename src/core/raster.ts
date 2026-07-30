@@ -29,13 +29,31 @@ export class Raster {
   readonly h: number;
   readonly color: Uint8ClampedArray<ArrayBuffer>;
   readonly id: Int32Array;
+  /**
+   * How much of each pixel was painted while coverage tracking was on.
+   *
+   * The scene is opaque by construction — blendPx always writes alpha 255 —
+   * which leaves no way to lift a single prop back out of the finished image.
+   * The paint pass needs exactly that, to put a bin in front of somebody
+   * standing behind it, and copying the prop's bounding RECT instead drags the
+   * background inside the box along with it. A bin is only about 70% solid, so
+   * that is a lot of sidewalk landing on top of a pedestrian.
+   */
+  readonly cov: Uint8ClampedArray<ArrayBuffer>;
   private current = 0;
+  private tracking = false;
 
   constructor(w: number, h: number) {
     this.w = w;
     this.h = h;
     this.color = new Uint8ClampedArray(new ArrayBuffer(w * h * 4));
     this.id = new Int32Array(w * h);
+    this.cov = new Uint8ClampedArray(new ArrayBuffer(w * h));
+  }
+
+  /** Record what gets painted from here on, into `cov`. */
+  trackCoverage(on: boolean): void {
+    this.tracking = on;
   }
 
   /** Set the object id written by subsequent fills. 0 = unflaggable scenery. */
@@ -70,6 +88,7 @@ export class Raster {
     this.color[i + 1] = c[1];
     this.color[i + 2] = c[2];
     this.color[i + 3] = 255;
+    if (this.tracking) this.cov[p] = 255;
     this.id[p] = this.current;
   }
 
@@ -96,6 +115,9 @@ export class Raster {
     this.color[i + 1] = c[1] * a + this.color[i + 1] * inv;
     this.color[i + 2] = c[2] * a + this.color[i + 2] * inv;
     this.color[i + 3] = 255;
+    // Keep the strongest contribution: a prop drawn over its own drop shadow
+    // must not have the shadow's low alpha overwrite the body's full one.
+    if (this.tracking) this.cov[p] = Math.max(this.cov[p], a * 255);
     if (a >= idCut) this.id[p] = this.current;
   }
 

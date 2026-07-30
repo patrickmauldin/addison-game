@@ -5,3 +5,9 @@ out/
 
 # assets/ is tracked; only generated output is ignored.
 .DS_Store
+
+# The char-pack layout reference is 37MB — nearly 3x the whole repo — and the
+# build does not read it. The frame offsets were verified numerically against
+# the pack's premade sheets instead (see tools/pack-residents.ts). Its
+# instructions.txt IS tracked; only the huge image is skipped.
+assets/char-pack/Guides/guide.png

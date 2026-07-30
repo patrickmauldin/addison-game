@@ -1,0 +1,105 @@
+Thanks for downloading Pixel Lands - Characters! This pack contains 4 premade characters as well as layered sprites you can use to create your own characters or build character customization into your game. See below for further instructions on using the layered sprites.
+
+***************************
+~*~ GENERAL INFO ~*~
+***************************
+
+All animations (except pass out) have 4 directions (down, left, right, up). Characters are roughly 28px tall and are designed to work with environments that use a 16x16px tile size.
+
+All sprite sheets in this pack have the same layout which is described in the guide.png file. All frames in the sprite sheets are 48x48px to make slicing easy and provide some padding for larger animations.
+
+Included animations:
+
+idle - 2 frames
+walk - 4 frames
+run - 6 frames
+idle_carry - 2 frames
+walk_carry - 4 frames
+run_carry - 6 frames
+harvest/pick up - 5 frames
+axe - 4 frames
+hoe - 4 frames
+pickaxe - 4 frames
+fishing (cast, reel in, idle) - 8 frames total ** see below for instructions on using the fishing animations **
+watering - 7 frames
+sword attack - 4 frames
+hit/hurt - 3 frames
+pass out (only in down direction) - 8 frames
+
+***************************
+~*~ ANIMATION TIMINGS ~*~
+***************************
+
+Some animations will look better with different frames played at different speeds rather than all frames at the same speed. Below are some suggested frame timings (in ms) for each animation but feel free to experiment!
+
+idle & idle_carry 1000/500
+walk & walk_carry 200/200/200/200
+run & run_carry 133/133/133/133/133/133
+harvest 100/100/100/200/100
+axe 150/250/150/150
+hoe 150/250/150/150
+pickaxe 150/250/150/150
+fish_cast 500/500/200/200
+fish_reel 200/200
+fish_idle 1000/1000
+water 100/100/100/100/100/100/100
+attack 100/100/100/100
+hit 100/50/100
+pass_out 100/200/200/200/200/100/100/500
+
+***************************
+~*~ LAYERS ~*~
+***************************
+
+To create custom characters with this pack or implement a customization system within your game you will need to use the layered sprite sheets. These can be found in folders starting with a number (eg. 3_Hair). Layered sprite sheets need to be arranged in a specific order when building a character to ensure they overlap correctly. Sprite sheets are grouped into folders denoting the order they should be placed in. The sorting order for the folders is as follows:
+
+HIGHEST
+
+1_Tools
+2_Hats
+3_Hair
+4_Tops - see "Overalls & Dresses" below for more info on layering Tops
+5_Bottoms
+6_Feet
+7_Base
+8_Tools_Under
+
+LOWEST
+
+**NOTE: Tools have both a 1_Tools and 8_Tools_Under sprite sheet so make sure you use both to avoid missing tool sprites in certain frames.**
+
+***************************
+~*~ OVERALLS & DRESSES ~*~
+***************************
+
+To create overalls use the Tops_overalls_* layer with bottoms of the same colour (eg. Tops_overalls_blue and Bottoms_pants_blue). You can add a shirt under the overalls by using another top below the Tops_overalls layer and above the Bottoms layer. For example, one of the premade Farmer characters uses the following layers for his clothing:
+
+HIGHEST
+Tops_overalls_blue
+Tops_long_sleeve_red
+Bottoms_pants_blue
+LOWEST
+
+Dresses and jumpsuits can be created the same way by using a top and bottom with the same colour (eg. Tops_sleeveless_red and Bottoms_short_skirt_red).
+
+***************************
+~*~ FISHING ~*~
+***************************
+
+Character animations for fishing are detatched from the fishing bobber to allow better customization of fishing distance. This means each step of fishing has two parts (character and bobber). Below is an example of how to animate the steps of fishing in a game with the provided character and bobber animations. Feel free to experiment and tweak as needed for your use case!
+
+*Casting*
+Character - play fishing_cast animation
+Bobber - Move Frame 1 in an arc from above the character's head to in the water. At the end of the cast play Frames 2,3,4 for 100ms each to animate the bobber hitting the water.
+
+*Waiting for a bite*
+Character - loop fishing_idle animation
+Bobber - Alternate Frames 3,4 for 200ms each
+
+*Bite & Reeling in*
+Character - loop fishing_reel animation
+Bobber - Alternate Frames 2,3 for 100ms each
+
+Catch/End Fishing
+Character - play idle_carry animation to show off the catch or return to idle if nothing was caught
+Bobber - This is the reverse of casting. Move Frame 1 in an arc from the water to above the character's head. If an item was received place it on the bobber and move it as well.

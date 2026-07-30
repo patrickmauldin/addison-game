@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "serve": "python3 -m http.server 8123",
     "ingest": "npx esbuild tools/ingest.ts --bundle --platform=node --outfile=dist/ingest.cjs --loader:.json=json --log-level=warning && node dist/ingest.cjs",
-    "map-houses": "npx esbuild tools/map-houses.ts --bundle --platform=node --outfile=dist/map-houses.cjs --loader:.json=json --log-level=warning && node dist/map-houses.cjs"
+    "map-houses": "npx esbuild tools/map-houses.ts --bundle --platform=node --outfile=dist/map-houses.cjs --loader:.json=json --log-level=warning && node dist/map-houses.cjs",
+    "pack-residents": "npx esbuild tools/pack-residents.ts --bundle --platform=node --outfile=dist/pack-residents.cjs --loader:.json=json --log-level=warning && node dist/pack-residents.cjs"
   },
   "keywords": [],
   "author": "",

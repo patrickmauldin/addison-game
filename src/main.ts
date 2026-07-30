@@ -1,5 +1,5 @@
 /**
- * Vertical slice driver — Day 1, Bonerville.
+ * Level driver — Bonerville, Levels 1-2.
  *
  * Deliberately withholds feedback. You find out you were wrong when the audit
  * lands at the end of the day, never at the moment you stamp. Immediate red-X
@@ -7,7 +7,7 @@
  */
 
 
-import { renderLot, type LotSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
+import { renderLot, type LotSpec, type PropSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
 
 import {
   adjudicate,
@@ -24,28 +24,61 @@ import {
   type Verdict,
 } from './game/state.js';
 
-import day01 from './data/day01.json';
+import level1 from './data/levels/level1.json';
+import level2 from './data/levels/level2.json';
 import rulesData from './data/rules.json';
 import housesData from './data/houses.json';
-import { FRAME_H, FRAME_W, PERSON_UPSCALE, seedFrom, Walker } from './game/walker.js';
+import { BarkState, factsFromProps, resetBarkHistory, type BarkContext } from './game/barks.js';
+import { BUBBLE_FONT, drawBubble } from './game/bubble.js';
+import { dateForLevel } from './game/calendar.js';
+import { makePassersby, remapPassersby, stepPassersby, type Passerby, type Sidewalk } from './game/passerby.js';
+import { pickCharacter, RESIDENT_UPSCALE, RESIDENTS, residentFrame, TOOL_NAMES, ToolWork, walkFrame } from './game/residents.js';
+import { seedFrom, Walker } from './game/walker.js';
 import { Sound } from './game/audio.js';
-import lot01 from './data/lots/bonerville_01.json';
-import lot02 from './data/lots/bonerville_02.json';
-import lot03 from './data/lots/bonerville_03.json';
-import lot04 from './data/lots/bonerville_04.json';
-import lot05 from './data/lots/bonerville_05.json';
-import lot06 from './data/lots/bonerville_06.json';
+/**
+ * Levels carry their own lots inline.
+ *
+ * An ADDRESS recurs across levels with different props — that is the whole
+ * point of Level 3 onwards, where you come back and find out whether they fixed
+ * it. So the lot cannot be one static file per address; the level owns what is
+ * on each lot that day, and `lot_id` is the thread that ties an address to its
+ * history in the save.
+ */
+const LEVELS = [level1, level2] as unknown as LevelSpec[];
 
-const LOTS: Record<string, LotSpec> = {
-  bonerville_01: lot01 as unknown as LotSpec,
-  bonerville_02: lot02 as unknown as LotSpec,
-  bonerville_03: lot03 as unknown as LotSpec,
-  bonerville_04: lot04 as unknown as LotSpec,
-  bonerville_05: lot05 as unknown as LotSpec,
-  bonerville_06: lot06 as unknown as LotSpec,
+type Bounty = {
+  id: string;
+  sprite: string;
+  label: string;
+  reward: number;
+  eligible_lots: string[];
+};
+type LevelSpec = {
+  level_id: number;
+  weather: string;
+  active_rules: string[];
+  quota: number;
+  pay_per_inspection: number;
+  verdict_mode: string;
+  briefing: string;
+  bounty?: Bounty;
+  lots: LotSpec[];
 };
 
-const day = day01;
+let levelIndex = 0;
+let day: LevelSpec = LEVELS[0];
+let today = dateForLevel(day.level_id);
+/** This level's lots by id, so the route can stay a list of addresses. */
+let LOTS: Record<string, LotSpec> = {};
+
+function loadLevel(i: number): void {
+  levelIndex = i;
+  day = LEVELS[i];
+  today = dateForLevel(day.level_id);
+  LOTS = Object.fromEntries(day.lots.map((l) => [l.lot_id, l]));
+}
+loadLevel(0);
+
 const ARTICLES = rulesData.articles;
 
 /**
@@ -93,6 +126,9 @@ const CB = `?v=${Math.floor(Date.now() / 1000)}`;
  */
 const xMark = new Image();
 xMark.src = 'assets/x.png' + CB;
+/** Claimed bounty. Green tick where the red X marks a citation — found, not cited. */
+const checkMark = new Image();
+checkMark.src = 'assets/checkmark.png' + CB;
 
 /**
  * Beds follow where you are: the theme over the title and the briefing, the
@@ -100,15 +136,15 @@ xMark.src = 'assets/x.png' + CB;
  */
 const sound = new Sound(CB);
 
-const peopleSheet = new Image();
+const residentSheet = new Image();
 /**
  * The first lot can finish painting before this arrives, and the walk loop
  * only repaints on animation frames — which a backgrounded or on-demand
  * renderer may not deliver. Repaint once it lands so the resident is never
  * simply absent because the image was slow.
  */
-peopleSheet.onload = () => { if (currentCanvas) paint(); };
-peopleSheet.src = 'assets/Townspeople_Animations.png' + CB;
+residentSheet.onload = () => { if (currentCanvas) paint(); };
+residentSheet.src = RESIDENTS.sheet + CB;
 
 async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Uint8ClampedArray } | undefined> {
   try {
@@ -131,17 +167,105 @@ async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Ui
   }
 }
 
+/**
+ * Hide this level's bounty on one of its eligible lots.
+ *
+ * Never the first lot of the round: the notice is what tells the player there
+ * is anything to look for, so finding the cat before reading about it is not a
+ * discovery, it is a coincidence. The level data lists the eligible lots.
+ */
+function placeBounty(): void {
+  bountyLot = null;
+  const b = day.bounty;
+  if (!b?.eligible_lots?.length) return;
+  const pool = b.eligible_lots.filter((id) => id !== day.lots[0]?.lot_id && LOTS[id]);
+  if (!pool.length) return;
+  const rnd = seedFrom(`level${day.level_id}:bounty`);
+  bountyLot = pool[Math.floor(rnd() * pool.length)];
+}
+
+/** The bounty prop, if it is hiding on this lot and has not been claimed. */
+function bountyPropFor(lot: LotSpec): PropSpec | null {
+  const b = day.bounty;
+  if (!b || lot.lot_id !== bountyLot || claimed.has(b.id)) return null;
+  // Seeded off the lot so he is in the same place every time you visit it.
+  const rnd = seedFrom(`${lot.lot_id}:${b.id}`);
+  const spots = ['YARD_1', 'YARD_2', 'YARD_3', 'YARD_5', 'YARD_6', 'BED_FRONT'];
+  return {
+    id: b.id,
+    sprite: b.sprite,
+    anchor: spots[Math.floor(rnd() * spots.length)],
+    label: b.label,
+    flaggable: true,
+  };
+}
+
+/**
+ * Cars that can be parked on a driveway.
+ *
+ * Every one of these is roadworthy. `car1redbad` — rusted, rear window out — is
+ * deliberately NOT here: a derelict vehicle is a VIOLATION under R-204, and a
+ * violation that appears at random cannot be adjudicated, because the lot's
+ * truth data would not know about it. It wants authoring into a lot the way
+ * weeds and bins are, not sprinkling.
+ */
+const PARKED_CARS = [
+  'car1black', 'car1red', 'car1white',
+  'car2white', 'car3cyber', 'car4blue', 'car5yellow',
+];
+
 const ASSET_FILES = [
   'grass', 'road', 'sidewalk',
   'house1', 'house2', 'house3', 'house4', 'house5', 'house6',
   'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
+  ...PARKED_CARS,
   // Not yet placed by any lot, but loaded so content can reference them:
   // R-107 clutter (couch, washer, dryer, boxes) and R-204 recreational
   // vehicles. Missing sprites are skipped at render, so listing them early
   // costs nothing but a fetch.
   'couch', 'washer', 'dryer', 'boxes', 'rv1', 'rv2',
 ];
+
+/**
+ * Park a car on the driveway, or leave it empty. 0-1 per house.
+ *
+ * Returned as a COPY with the car appended, so `current` stays the authored lot:
+ * the car is scenery, and the case file, first-seen tracking and adjudication
+ * should all carry on seeing exactly the props the content declares.
+ *
+ * DRIVEWAY_2 rather than _1 or _3 because it is the only one every car clears.
+ * The anchor marks where a prop meets the ground, so a sprite hangs UP the
+ * screen from it: at _1 (hy 0.70) even the shortest car would reach the garage
+ * door, and the longest would sit inside the garage.
+ */
+function withParkedCar(lot: LotSpec): LotSpec {
+  const extra: PropSpec[] = [];
+  const rnd = seedFrom(`${lot.lot_id}:car`);
+  if (rnd() >= 0.4) {
+    const sprite = PARKED_CARS[Math.floor(rnd() * PARKED_CARS.length)];
+    extra.push({ id: `car_${sprite}`, sprite, anchor: 'DRIVEWAY_2', label: 'Vehicle, driveway', flaggable: false });
+  }
+  const bounty = bountyPropFor(lot);
+  if (bounty) extra.push(bounty);
+  return extra.length ? { ...lot, props: [...(lot.props ?? []), ...extra] } : lot;
+}
+
+/**
+ * Where this lot's driveway runs, as a fraction across the house rect.
+ *
+ * Read from the same generated table the compositor uses, and mirrored the same
+ * way, so it cannot drift from where the driveway is actually drawn. Undefined
+ * for a house with no driveway anchors.
+ */
+function drivewayFraction(lot: LotSpec): number | undefined {
+  const id = lot.house?.sprite;
+  if (!id) return undefined;
+  const a = (housesData as any).houses?.[id]?.anchors?.DRIVEWAY_2
+    ?? (housesData as any).houses?.[id]?.anchors?.DRIVEWAY_1;
+  if (!a || typeof a.hx !== 'number') return undefined;
+  return lot.house?.mirror ? 1 - a.hx : a.hx;
+}
 
 /** Strip the _-prefixed documentation keys out of the authored override data. */
 function houseAnchorTable(): Record<string, Record<string, { hx: number; hy: number }>> {
@@ -174,9 +298,21 @@ async function loadAssets(): Promise<SceneAssets> {
 // --- Session state --------------------------------------------------------
 let assets: SceneAssets = { sprites: new Map() };
 let currentCanvas: HTMLCanvasElement | null = null;
+/** The same scene with only the props kept, for depth-ordering against people. */
+let currentProps: HTMLCanvasElement | null = null;
 let sliding = false;
-/** The resident on this lot, if any. Null on lots that have nobody out. */
-let walker: Walker | null = null;
+/**
+ * The resident on this lot, if any. Null on lots that have nobody out.
+ *
+ * The tool travels WITH the walker rather than in a second global, so the two
+ * cannot end up disagreeing and animating a hoe stroke out of a walk row.
+ */
+type Resident = { walker: Walker; work: ToolWork | null; bark: BarkState | null };
+let resident: Resident | null = null;
+/** People passing along the sidewalk. Drains as they leave; never refills. */
+let passersby: Passerby[] = [];
+/** What the barks on this lot are allowed to gate on. Rebuilt per lot. */
+let barkCtx: BarkContext = { facts: new Set() };
 let walkerLast = 0;
 let walkerRaf = 0;
 let saveFile: SaveFile = load();
@@ -184,6 +320,19 @@ let routeIndex = 0;
 let current: LotSpec;
 let rendered: RenderedLot;
 let flagged = new Set<string>();
+/**
+ * Bounties claimed this round, and what they paid.
+ *
+ * Kept OUT of `flagged` on purpose. A bounty is not a finding: it must not
+ * reach adjudication, must not count toward accuracy, and must not turn a
+ * clean lot into a citation. Clicking the cat is noticing, not enforcing.
+ */
+let claimed = new Set<string>();
+let bountyPay = 0;
+/** Which lot this level hid the bounty on, if any. */
+let bountyLot: string | null = null;
+/** Where the tick goes once he is gone from the scene. */
+let bountyMark: { x: number; y: number } | null = null;
 let outcomes: LotOutcome[] = [];
 let stamping = false;
 
@@ -197,12 +346,43 @@ let stamping = false;
  */
 function renderToCanvas(lot: LotSpec, worldX: number): { rl: RenderedLot; cv: HTMLCanvasElement } {
   const { w, h } = stageSize();
-  const rl = renderLot(lot, assets, w, h, worldX);
+  const rl = renderLot(withParkedCar(lot), assets, w, h, worldX);
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;
   cv.getContext('2d')!.putImageData(rl.raster.toImageData(), 0, 0);
   return { rl, cv };
+}
+
+/**
+ * The props on their own, cut out of the finished scene by their coverage.
+ *
+ * Built once per lot so the paint pass can put a bin back over somebody
+ * standing behind it WITH ITS OWN SILHOUETTE. Re-blitting the bin's bounding
+ * rectangle instead drags along whatever is inside the box, and a bin is only
+ * about 70% solid — the other 30% is sidewalk, which then lands on the
+ * pedestrian's head.
+ *
+ * Colour comes from the composited scene rather than the source sprite, so the
+ * prop keeps the exact pixels it was drawn with; only the alpha is restored.
+ */
+function propLayerFor(rl: RenderedLot): HTMLCanvasElement {
+  const { w, h } = rl.raster;
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  const img = new ImageData(w, h);
+  const src = rl.raster.color;
+  const cov = rl.raster.cov;
+  for (let p = 0, i = 0; p < cov.length; p++, i += 4) {
+    if (!cov[p]) continue;
+    img.data[i] = src[i];
+    img.data[i + 1] = src[i + 1];
+    img.data[i + 2] = src[i + 2];
+    img.data[i + 3] = cov[p];
+  }
+  cv.getContext('2d')!.putImageData(img, 0, 0);
+  return cv;
 }
 
 function stageSize(): { w: number; h: number } {
@@ -225,6 +405,15 @@ function paint(): void {
   // 52x59), an exact halving so the pixel grid survives the downscale.
   const MW = 52;
   const MH = 59;
+
+  // Claimed bounty: a green tick where he was, held until the round ends. The
+  // cat himself is gone from the scene — the tick is the receipt.
+  const b = day.bounty;
+  if (b && claimed.has(b.id) && bountyLot === current?.lot_id && checkMark.complete && checkMark.naturalWidth) {
+    const spot = bountyMark;
+    if (spot) ctx.drawImage(checkMark, Math.round(spot.x - MW / 2), Math.round(spot.y - MH / 2), MW, MH);
+  }
+
   for (const id of flagged) {
     const obj = rendered.objects.find((o) => o.id === id);
     if (!obj) continue;
@@ -252,9 +441,13 @@ function paint(): void {
  * doing the same thing — the street should feel populated, not randomised on
  * every visit. Their patch is the front lawn between the house and the walk.
  */
-function makeWalker(lot: LotSpec, rl: RenderedLot): Walker | null {
+function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   const rnd = seedFrom(lot.lot_id);
   if (rnd() < 0.45) return null; // nobody home, or nobody outside
+  // Out working, and with what. Drawn from a SEPARATE seed rather than the next
+  // number in this stream, so adding tools did not reshuffle who stands where.
+  const trnd = seedFrom(`${lot.lot_id}:tool`);
+  const tool = trnd() < 0.4 ? Math.floor(trnd() * TOOL_NAMES.length) : null;
   const L = rl.layout;
   const top = L.house.y + L.house.h * 0.82;
   const bottom = L.walkTop - 14;
@@ -263,23 +456,151 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Walker | null {
   // 50ft and a person walks about 4.5ft/s, so a shade under a tenth of the
   // house's width per second. A flat pixel constant looked right at one window
   // size and glacial at every other.
+  // Somebody working is working on the LAWN. The driveway runs down one side of
+  // every house, so a worker goes on the wider grass side of it — a resident
+  // hoeing the concrete would be a strange thing to render. Wanderers are left
+  // alone: crossing your own driveway is a perfectly ordinary thing to do.
+  let x0 = L.w * 0.08;
+  let x1 = L.w * 0.92;
+  const dfrac = tool === null ? undefined : drivewayFraction(lot);
+  if (dfrac !== undefined) {
+    const edge = L.house.x + dfrac * L.house.w;
+    const margin = L.house.w * 0.1;
+    if (edge > L.house.x + L.house.w / 2) x1 = Math.max(x0 + 1, edge - margin);
+    else x0 = Math.min(x1 - 1, edge + margin);
+  }
   const speed = L.house.w * 0.085;
-  return new Walker(Math.floor(rnd() * 16), {
-    x0: L.w * 0.08, x1: L.w * 0.92, y0: top, y1: bottom,
-  }, rnd, speed);
+  // Weighted, not uniform — see pickCharacter for why the skin mix depends on it.
+  const character = pickCharacter(rnd);
+  // Somebody out with a hoe is working a patch of yard, not touring it. Speed
+  // zero rather than a separate stationary type: the walker still keeps time,
+  // which is what the tool animation cuts its frames from.
+  const walker = new Walker(character, { x0, x1, y0: top, y1: bottom }, rnd,
+    tool === null ? speed : 0);
+  const work = tool === null ? null : new ToolWork(tool, seedFrom(`${lot.lot_id}:work`));
+  // Not everybody has anything to say. Two thirds do; the rest just get on
+  // with it, which is what stops the street sounding like a chorus.
+  const brnd = seedFrom(`${lot.lot_id}:bark`);
+  const bark = brnd() < 0.66 ? new BarkState('owner', brnd, 1 + brnd() * 3) : null;
+  return { walker, work, bark };
+}
+
+/**
+ * What is true about this lot, for gating barks.
+ *
+ * Props come from the lot; the citation history comes from the save, so a
+ * resident who has been fined before can say so and one who has not cannot.
+ */
+function barkContextFor(lot: LotSpec): BarkContext {
+  const facts = factsFromProps((lot.props ?? []).map((p) => p.sprite));
+  const rec = saveFile.addresses[lot.lot_id];
+  for (const r of rec?.rulings ?? []) {
+    if (r.verdict === 'FAIL' || r.verdict === 'CITATION') facts.add('cited');
+    if (r.verdict === 'PASS') facts.add('passed');
+  }
+  const month = Number(today.iso.slice(5, 7));
+  if (month >= 6 && month <= 9) facts.add('hot');
+  if (today.weekday === 'Wednesday') facts.add('trashday');
+  return { facts };
+}
+
+/** The band a passerby's feet may land in. */
+function sidewalkOf(rl: RenderedLot): Sidewalk {
+  return { w: rl.layout.w, top: rl.layout.walkTop, bottom: rl.layout.roadTop };
+}
+
+/**
+ * 0-2 people on the walk, seeded off the lot so an address is consistent.
+ *
+ * A separate seed again, so adding foot traffic did not reshuffle the resident
+ * or their tool on any lot that already had one.
+ */
+function makeTraffic(lot: LotSpec, rl: RenderedLot, taken: number[] = []): Passerby[] {
+  const rnd = seedFrom(`${lot.lot_id}:walk`);
+  const r = rnd();
+  // Weighted rather than a flat third each: an always-empty sidewalk half the
+  // time reads as nobody living here.
+  const count = r < 0.3 ? 0 : r < 0.75 ? 1 : 2;
+  const out = makePassersby(sidewalkOf(rl), rnd, count, taken);
+  // Most of them are thinking about something. They draw only from the lines a
+  // stranger could say: no "my fence", no citations against them.
+  for (const p of out) p.bark = rnd() < 0.6 ? new BarkState('passer', rnd, 2 + rnd() * 4) : null;
+  return out;
+}
+
+/** Shared by everyone drawn from the resident sheet. */
+function drawPerson(x: number, y: number, sx: number, sy: number, k: number): void {
+  const { frameW: fw, frameH: fh } = RESIDENTS;
+  const w = Math.round(fw * k);
+  const h = Math.round(fh * k);
+  // The sheet carries no baked shadow, so without this they float. Sized off
+  // DRAWN HEIGHT rather than frame width, since height is the dimension that
+  // means "how tall this person is" whatever the frame pads around them.
+  // Half-width lands near shoulder width, about what a midday shadow pools to.
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(x, y, h * 0.12, h * 0.04, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Seat the sprite by the PERSON's centre line and ground line, not the
+  // frame's. The frame is bigger than the figure so a swung hoe fits, and
+  // centring on the frame would shove everyone sideways to leave room for a
+  // tool most of them are not carrying.
+  ctx.drawImage(
+    residentSheet, sx, sy, fw, fh,
+    Math.round(x - RESIDENTS.centerX * k), Math.round(y - RESIDENTS.ground * k), w, h,
+  );
 }
 
 /** Draw the resident over the finished scene. */
 function drawWalker(): void {
-  if (!walker || !peopleSheet.complete || !peopleSheet.naturalWidth) return;
-  const k = PERSON_UPSCALE * rendered.layout.scale;
-  const w = Math.round(FRAME_W * k);
-  const h = Math.round(FRAME_H * k);
-  const { sx, sy } = walker.frame();
-  ctx.drawImage(
-    peopleSheet, sx, sy, FRAME_W, FRAME_H,
-    Math.round(walker.x - w / 2), Math.round(walker.y - h), w, h,
-  );
+  if (!residentSheet.complete || !residentSheet.naturalWidth) return;
+  const k = RESIDENT_UPSCALE * rendered.layout.scale;
+
+  /**
+   * People and props, interleaved by depth.
+   *
+   * The scene is composited once into an image, so anything drawn afterwards
+   * lands on top of it — which had residents strolling over the tops of the
+   * bins. Props therefore go back into the ordering here: each one is re-blitted
+   * from the finished scene at its own ground line, which restores it over
+   * anybody standing further up the lot. Re-blitting is idempotent for the
+   * background, since that is the same image already on screen.
+   */
+  const queue: { y: number; draw: () => void }[] = [];
+
+  if (resident) {
+    const { walker, work } = resident;
+    const f = residentFrame(walker, work);
+    queue.push({ y: walker.y, draw: () => drawPerson(walker.x, walker.y, f.sx, f.sy, k) });
+  }
+  for (const p of passersby) {
+    const f = walkFrame(p.character, p.dir, p.t);
+    queue.push({ y: p.y, draw: () => drawPerson(p.x, p.y, f.sx, f.sy, k) });
+  }
+  if (currentProps) {
+    const layer = currentProps;
+    for (const pr of rendered.props) {
+      queue.push({
+        y: pr.baseY,
+        draw: () => ctx.drawImage(layer, pr.x, pr.y, pr.w, pr.h, pr.x, pr.y, pr.w, pr.h),
+      });
+    }
+  }
+  queue.sort((a, b) => a.y - b.y);
+  for (const item of queue) item.draw();
+
+  // Bubbles last, over everybody. A thought getting a walker's head drawn
+  // through it is worse than one overlapping a neighbour.
+  const headY = (footY: number) => footY - RESIDENTS.ground * k;
+  if (resident?.bark?.text) {
+    drawBubble(ctx, resident.bark.text, resident.walker.x, headY(resident.walker.y), canvas.width);
+  }
+  for (const p of passersby) {
+    if (p.bark?.text) drawBubble(ctx, p.bark.text, p.x, headY(p.y), canvas.width);
+  }
 }
 
 /**
@@ -288,14 +609,23 @@ function drawWalker(): void {
  */
 function startWalkerLoop(): void {
   cancelAnimationFrame(walkerRaf);
-  if (!walker) return;
+  // Traffic alone is reason enough to run: a lot can have an empty yard and
+  // still have somebody walking past it.
+  if (!resident && !passersby.length) return;
   walkerLast = performance.now();
   const step = (now: number) => {
-    if (!walker || sliding) { walkerRaf = requestAnimationFrame(step); return; }
+    if (sliding) { walkerRaf = requestAnimationFrame(step); return; }
     const dt = Math.min(0.1, (now - walkerLast) / 1000);
     walkerLast = now;
-    walker.update(dt);
+    resident?.walker.update(dt);
+    resident?.work?.update(dt);
+    resident?.bark?.update(dt, barkCtx);
+    passersby = stepPassersby(passersby, dt, sidewalkOf(rendered));
+    for (const p of passersby) p.bark?.update(dt, barkCtx);
     paint();
+    // Once the last of them has gone and there is nobody in the yard there is
+    // nothing left moving, so stop asking for frames.
+    if (!resident && !passersby.length) return;
     walkerRaf = requestAnimationFrame(step);
   };
   walkerRaf = requestAnimationFrame(step);
@@ -307,10 +637,21 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     if (!current) return;
+    const wasWalk = sidewalkOf(rendered);
     const built = renderToCanvas(current, routeIndex * stageSize().w);
     rendered = built.rl;
     currentCanvas = built.cv;
+    currentProps = propLayerFor(rendered);
     centroidCache.clear();
+    // Rebuild the resident too. Their patch of lawn is derived from the house
+    // rect, so a layout change invalidates it — and the walker keeps walking to
+    // coordinates from the OLD one, which after a shrink is somewhere up the
+    // roof. Seeded from the lot id, so this is the same person, just re-placed.
+    resident = makeWalker(current, rendered);
+    // Traffic is REMAPPED, not respawned: anyone who has already walked off has
+    // gone for good, and rebuilding from the seed would march them back on.
+    passersby = remapPassersby(passersby, wasWalk, sidewalkOf(rendered));
+    startWalkerLoop();
     paint();
   }, 120) as unknown as number;
 });
@@ -345,11 +686,12 @@ function toLotPixel(ev: MouseEvent): { x: number; y: number } {
 
 function loadLot(index: number): void {
   routeIndex = index;
-  current = LOTS[day.route[index]];
+  current = LOTS[day.lots[index].lot_id];
   const sz = stageSize();
   const built = renderToCanvas(current, index * sz.w);
   rendered = built.rl;
   currentCanvas = built.cv;
+  currentProps = propLayerFor(rendered);
   flagged = new Set();
   centroidCache.clear();
   stamping = false;
@@ -357,10 +699,12 @@ function loadLot(index: number): void {
   // Record what we saw today. This is the note that grace periods read from
   // on later days — the player's own observation, not an oracle.
   const rec = recordFor(saveFile, current.lot_id, current.address);
-  for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
+  for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? today.iso);
   save(saveFile);
 
-  walker = makeWalker(current, rendered);
+  barkCtx = barkContextFor(current);
+  resident = makeWalker(current, rendered);
+  passersby = makeTraffic(current, rendered, resident ? [resident.walker.character] : []);
   startWalkerLoop();
   renderCaseFile(rec);
   paint();
@@ -393,26 +737,32 @@ function syncDesk(): void {
   // Day number, weekday and date on one line. The weekday earns its place —
   // rules key off it (trash day, decor windows) — and the date is what makes a
   // grace period legible when the case file says an object was first seen on
-  // one and it is now another.
-  $('c-day').textContent = `${day.day_id} · ${day.weekday.slice(0, 3)} ${shortDate(day.date)}`;
-  $('c-prog').textContent = `${routeIndex + 1} of ${day.route.length}`;
+  // one and it is now another. Weekday bold, date not: the weekday is the part
+  // you check a rule against, the date is only there to be compared later.
+  $('c-day').textContent = String(day.level_id);
+  $('c-dow').textContent = today.weekday;
+  $('c-date').textContent = shortDate(today.iso);
+  $('c-prog').textContent = `${routeIndex + 1} of ${day.lots.length}`;
   $('c-quota').textContent = String(day.quota);
   $('c-strikes').textContent = `${saveFile.inspector.strikes_today} / 3`;
   $('c-pay').textContent = `$${saveFile.inspector.pay}`;
-  $('m-day').textContent = `Day ${day.day_id}`;
+  $('m-day').textContent = `Level ${day.level_id}`;
   $('m-pay').textContent = `$${saveFile.inspector.pay}`;
 
-  // Only articles active today are in the book. One scannable line each,
-  // formal text and enforcement limits behind a click — this list has to stay
-  // legible when a dozen articles are live in Act III.
+  // Only articles active today are in the book: code and tag on one line, the
+  // plain-language gist under it, formal text and enforcement limits behind a
+  // click. This list has to stay legible when a dozen articles are live in
+  // Act III, so the collapsed form stays two lines however long the rule is.
   const active = ARTICLES.filter((a) => day.active_rules.includes(a.id));
   $('binder-body').innerHTML = active
     .map(
       (a) => `
       <details class="rule">
         <summary>
-          <span class="code">${a.id}</span>
-          <span class="tab">${a.tab}</span>
+          <span class="head">
+            <span class="code">${a.id}</span>
+            <span class="tab">${a.tab}</span>
+          </span>
           <span class="one">${a.short}</span>
         </summary>
         <div class="body">
@@ -458,6 +808,23 @@ frame.addEventListener('click', (ev) => {
   if (!key) return;
   const obj = rendered.byKey.get(key);
   if (!obj?.flaggable) return;
+
+  // A bounty is claimed, not cited. It pays immediately, never enters `flagged`,
+  // and so never reaches adjudication or the accuracy figure.
+  const b = day.bounty;
+  if (b && obj.id === b.id) {
+    if (claimed.has(b.id)) return;
+    bountyMark = centroid(key) ?? { x: p.x, y: p.y };
+    claimed.add(b.id);
+    bountyPay += b.reward;
+    saveFile.inspector.pay += b.reward;
+    save(saveFile);
+    sound.play('money');
+    paint();
+    syncDesk();
+    return;
+  }
+
   if (flagged.has(obj.id)) flagged.delete(obj.id);
   else flagged.add(obj.id);
   paint();
@@ -495,6 +862,54 @@ window.addEventListener('click', () =>
   document.querySelectorAll('[data-menu]').forEach((m) => m.classList.remove('open')),
 );
 
+/**
+ * Dev level select.
+ *
+ * Pacing is the thing being tuned now, and tuning it by replaying from Level 1
+ * every time is how pacing goes untuned. Jumping lands on the level's briefing
+ * rather than mid-route, because the briefing is where the level explains
+ * itself and is exactly what needs reviewing.
+ */
+function buildDevMenu(): void {
+  const drop = $('dev-drop');
+  drop.innerHTML = LEVELS.map((l, i) => {
+    const d = dateForLevel(l.level_id);
+    return `<button data-level="${i}">Level ${l.level_id}` +
+      `<span class="lvl-when">${d.weekday.slice(0, 3)} ${d.label}</span></button>`;
+  }).join('') + '<hr><button data-wipe="1">Wipe save &amp; restart</button>';
+
+  drop.querySelectorAll<HTMLButtonElement>('button[data-level]').forEach((b) => {
+    b.onclick = () => {
+      document.querySelectorAll('[data-menu]').forEach((m) => m.classList.remove('open'));
+      gotoLevel(Number(b.dataset.level));
+    };
+  });
+  drop.querySelector<HTMLButtonElement>('button[data-wipe]')!.onclick = () => {
+    reset();
+    location.reload();
+  };
+}
+
+/** Start a level from its briefing, with the round's state wound back. */
+function gotoLevel(i: number): void {
+  if (i < 0 || i >= LEVELS.length) return;
+  cancelAnimationFrame(walkerRaf);
+  loadLevel(i);
+  routeIndex = 0;
+  outcomes = [];
+  flagged.clear();
+  claimed.clear();
+  bountyPay = 0;
+  bountyMark = null;
+  resident = null;
+  passersby = [];
+  saveFile.inspector.strikes_today = 0;
+  stamping = false;
+  sliding = false;
+  syncDesk();
+  briefing();
+}
+
 function syncMute(): void {
   $('mi-mute').innerHTML = `Sound<span class="when">${sound.muted ? 'off' : 'on'}</span>`;
 }
@@ -522,8 +937,8 @@ function stamp(v: Verdict): void {
   // Log the ruling with correctness UNRESOLVED. The audit fills it in later.
   const rec = recordFor(saveFile, current.lot_id, current.address);
   rec.rulings.push({
-    day_id: day.day_id,
-    date: day.date,
+    day_id: day.level_id,
+    date: today.iso,
     verdict: v,
     findings: [...flagged].map((object) => ({ object, article: 'R-101' })),
     correct: null,
@@ -544,7 +959,7 @@ function stamp(v: Verdict): void {
   // Long enough to read the impression land, short enough that it does not
   // become a wait. The drive that follows is the longer beat.
   setTimeout(() => {
-    if (routeIndex + 1 < day.route.length) slideToLot(routeIndex + 1);
+    if (routeIndex + 1 < day.lots.length) slideToLot(routeIndex + 1);
     else endDay();
   }, 820);
 }
@@ -559,7 +974,7 @@ function stamp(v: Verdict): void {
  */
 function slideToLot(index: number): void {
   const sz = stageSize();
-  const next = renderToCanvas(LOTS[day.route[index]], index * sz.w);
+  const next = renderToCanvas(LOTS[day.lots[index].lot_id], index * sz.w);
 
   // Respect a reduced-motion preference: the transition is decorative, and a
   // full-screen horizontal pan is exactly the kind of thing that triggers
@@ -584,16 +999,19 @@ function slideToLot(index: number): void {
     sliding = false;
     // Adopt the arrived lot without re-rendering it.
     routeIndex = index;
-    current = LOTS[day.route[index]];
+    current = LOTS[day.lots[index].lot_id];
     rendered = next.rl;
     currentCanvas = next.cv;
+    currentProps = propLayerFor(rendered);
     flagged = new Set();
     centroidCache.clear();
     stamping = false;
     const rec = recordFor(saveFile, current.lot_id, current.address);
-    for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? day.date);
+    for (const p of current.props) noteFirstSeen(rec, p.id, p.first_seen ?? today.iso);
     save(saveFile);
-    walker = makeWalker(current, rendered);
+    barkCtx = barkContextFor(current);
+    resident = makeWalker(current, rendered);
+    passersby = makeTraffic(current, rendered, resident ? [resident.walker.character] : []);
     startWalkerLoop();
     renderCaseFile(rec);
     paint();
@@ -702,6 +1120,7 @@ function endDay(): void {
   saveFile.inspector.strikes_today = strikes;
   save(saveFile);
   sound.bed('office');
+  sound.play('money');
 
   const pay = outcomes.length * day.pay_per_inspection;
   const shortfall = day.quota - outcomes.length;
@@ -740,8 +1159,8 @@ function endDay(): void {
   sheet.innerHTML = `
     <img class="day-mark" src="assets/${cleanDay ? 'good' : 'bad'}.png" alt="" />
     ${bossHeader('boss2')}
-    <h1>END OF DAY ${day.day_id}</h1>
-    <div class="muted">${day.weekday}, ${shortDate(day.date)} · ${current.street}</div>
+    <h1>END OF DAY ${day.level_id}</h1>
+    <div class="muted">${today.weekday}, ${shortDate(today.iso)} · ${current.street}</div>
 
     <h3>Board Audit</h3>
     <p class="muted">Findings are reviewed the following morning. You were not told at the time.</p>
@@ -761,31 +1180,115 @@ function endDay(): void {
 
 // --- Boot -----------------------------------------------------------------
 
+/**
+ * The morning briefing, paged.
+ *
+ * It used to be four paragraphs of grey text that DESCRIBED the rules coming
+ * into play. A rule introduced in prose is a rule the player meets for the
+ * first time on the lot; introduced with its own art, beside the near-miss it
+ * has to be told apart from, it is a rule they arrive already holding.
+ *
+ * Three pages: who you are and what today is, what is live and what it looks
+ * like, then the route. The how-to-play page only appears on Level 1.
+ */
 function briefing(): void {
-  sheet.innerHTML = `
-    ${bossHeader('boss1')}
-    <h1>ADDISON MASTER COMMUNITY ASSOCIATION</h1>
-    <div class="muted">Compliance Inspector · Day ${day.day_id} · ${day.weekday}, ${shortDate(day.date)}</div>
-    <h3>Morning Briefing</h3>
-    <p>${day.briefing}</p>
-    <h3>Today's Route</h3>
-    <p>${day.route.length} inspections on Bonerville. Paid $${day.pay_per_inspection} each.</p>
-    <h3>How this works</h3>
-    <p>Click anything on the lot to mark it as a finding. Click it again to unmark.
-       Read the binder before you stamp — the article has an enforcement-limits note
-       folded underneath it, and it is load-bearing.</p>
-    <p>Stamp <b>PASS</b> or <b>FAIL</b>. You will not be told whether you were right.
-       The board reviews your calls overnight.</p>
-    <p style="margin-top:18px"><button class="btn" id="btn-start">Begin route</button></p>
-  `;
+  const art = (key: string) => `assets/${key}.png`;
+  const pics = (keys: string[]) =>
+    keys.length
+      ? keys.map((k) => `<img src="${art(k)}" alt="${k}" />`).join('')
+      : '<span class="none">no example art yet</span>';
+
+  const live = ARTICLES.filter((a) => day.active_rules.includes(a.id));
+  const exhibits = live.map((a) => {
+    const e = (a as { exhibit?: { cite: string[]; cite_note: string; allow: string[]; allow_note: string } }).exhibit;
+    return `
+      <div class="exh">
+        <div class="exh-head">
+          <span class="code">${a.id}</span>
+          <span class="tab">${a.tab}</span>
+          <span class="one">${a.short}</span>
+        </div>
+        <div class="exh-row">
+          <div class="exh-col cite">
+            <h4>Cite this</h4>
+            <div class="exh-pics">${pics(e?.cite ?? [])}</div>
+            <p>${e?.cite_note ?? ''}</p>
+          </div>
+          <div class="exh-col allow">
+            <h4>Leave this</h4>
+            <div class="exh-pics">${pics(e?.allow ?? [])}</div>
+            <p>${e?.allow_note ?? ''}</p>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const storyBeats = ((day as { story?: string[] }).story ?? [day.briefing])
+    .map((t) => `<p>${t}</p>`).join('');
+
+  const pages: string[] = [
+    `<h3>${today.weekday} &middot; ${shortDate(today.iso)}</h3>
+     <div class="story">${storyBeats}</div>`,
+    `<h3>Live today</h3>
+     <p class="muted" style="margin-bottom:12px">Only these articles are enforceable.
+        Anything else on that street is not your business, however it looks.</p>
+     ${exhibits}`,
+    `<h3>Today's round</h3>
+     <div class="today-line"><span>Inspections</span><b>${day.lots.length} on Bonerville</b></div>
+     <div class="today-line"><span>Pay</span><b>$${day.pay_per_inspection} each</b></div>
+     <div class="today-line"><span>Verdicts</span><b>${day.verdict_mode === 'notice' ? 'Pass or Notice — no fines today' : 'Pass, Notice or Citation'}</b></div>
+     ${day.bounty ? `<div class="today-line"><span>Also</span><b>$${day.bounty.reward} finder's fee</b></div>` : ''}
+     <p style="margin-top:14px">Mark what you find, then stamp. You will not be told
+        whether you were right — the Board reviews your calls overnight.</p>`,
+  ];
+  // The how-to only earns its place the first time.
+  if (day.level_id === 1) {
+    pages.splice(2, 0,
+      `<h3>How this works</h3>
+       <p><b>Click anything on the lot</b> to mark it as a finding. Click it again to unmark.
+          Plenty of what you can click is perfectly compliant — being able to click a thing
+          is not the game telling you it is wrong.</p>
+       <p><b>Read the binder before you stamp.</b> Every article carries an enforcement-limits
+          note folded underneath it, and it is load-bearing.</p>
+       <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>`);
+  }
+
+  let page = 0;
+  const render = () => {
+    sheet.innerHTML = `
+      ${bossHeader('boss1')}
+      <h1>ADDISON MASTER COMMUNITY ASSOCIATION</h1>
+      <div class="muted">Compliance Inspector &middot; Level ${day.level_id}</div>
+      ${pages.map((p, i) => `<div class="pg${i === page ? ' on' : ''}">${p}</div>`).join('')}
+      <div class="pg-nav">
+        <div class="pg-dots">${pages.map((_, i) => `<i class="${i === page ? 'on' : ''}"></i>`).join('')}</div>
+        <button class="btn" id="pg-prev"${page === 0 ? ' disabled' : ''}>&larr; Back</button>
+        <button class="btn" id="pg-next">${page === pages.length - 1 ? 'Begin route' : 'Next &rarr;'}</button>
+      </div>`;
+    $('pg-prev').onclick = () => { if (page > 0) { page--; render(); } };
+    $('pg-next').onclick = () => {
+      if (page < pages.length - 1) { page++; render(); return; }
+      startRound();
+    };
+  };
+  render();
   overlay.classList.add('on');
   startBossIdle();
-  $('btn-start').onclick = () => {
-    clearTimeout(bossTimer);
-    sound.bed('ambiance');
-    overlay.classList.remove('on');
-    loadLot(0);
-  };
+}
+
+/** Leave the briefing and put the player on the first lot. */
+function startRound(): void {
+  clearTimeout(bossTimer);
+  sound.bed('ambiance');
+  overlay.classList.remove('on');
+  // A line heard twice in one round lands worse than a line written badly, so
+  // the used set is cleared per level rather than per lot.
+  resetBarkHistory();
+  claimed.clear();
+  bountyPay = 0;
+  bountyMark = null;
+  placeBounty();
+  loadLot(0);
 }
 
 /**
@@ -831,6 +1334,16 @@ async function boot(): Promise<void> {
     // Loaded before the title screen, so the first lot never renders a
     // placeholder that then pops to real art a frame later.
     assets = await loadAssets();
+    // The barks are drawn INTO the canvas, and canvas text silently falls back
+    // to the generic monospace if the face is not resident yet. Waiting here
+    // costs nothing — the title screen is next — and avoids the first bubble of
+    // a session rendering in the wrong font.
+    try {
+      await document.fonts.load(BUBBLE_FONT);
+    } catch {
+      /* a missing face is a cosmetic problem, never a fatal one */
+    }
+    buildDevMenu();
     titleScreen();
     // Hidden, not removed: the window error handler re-shows this element if
     // something throws later (inside a click handler, say), which is otherwise

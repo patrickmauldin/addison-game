@@ -1,0 +1,169 @@
+{
+  "level_id": 1,
+  "_date": "DERIVED, not stored — see game/calendar.ts. Level 1 is Monday 1 March 2027.",
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-105"
+  ],
+  "quota": 4,
+  "pay_per_inspection": 12,
+  "verdict_mode": "notice",
+  "_teaching": "Two rules, four lots, and nothing you do can cost anybody money. The arc is: here is a violation - here is a thing you can click that is NOT one - here is the second rule - now tell them apart on one lot.",
+  "briefing": "First day out. Bonerville, outer loop, original phase. Two articles are live: weeds and fence condition. Nothing else on that street is your business today, however it looks. You are issuing notices only — nobody gets fined on a first pass.",
+  "story": [
+    "You are the new Compliance Inspector for the Addison Master Community Association. There was a previous one. Nobody at the office will say why there isn't one now.",
+    "Your manager reports to the Board. You report to her. The Board reports, as far as anyone can tell, to nobody at all.",
+    "Bonerville is the outer loop — the original phase, the oldest lawns, the longest memories. Start there. Start gently."
+  ],
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 40001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "The unambiguous one. A single weed patch, nothing else on the lot to argue about. This is what a finding looks like.",
+      "props": [
+        {
+          "id": "weeds_1",
+          "sprite": "weed1",
+          "anchor": "YARD_4",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "weeds_2",
+          "sprite": "weed2",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-01"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf, visible from the street."
+          },
+          {
+            "object": "weeds_2",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf, visible from the street."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 40002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "The first LEAVE IT ALONE. A sound fence is a clickable object and not a finding — being able to click a thing has to stop meaning the thing is wrong.",
+      "props": [
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "align": "left",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-01"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "R-105 is live and this fence is intact — every member present, no lean. A fence is not a finding for being a fence."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 40003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "The second rule, made unmissable. A collapsed fence on a lot with no weeds, so the finding cannot be confused with the article they already know.",
+      "props": [
+        {
+          "id": "fence",
+          "sprite": "fence3",
+          "anchor": "FENCE_1",
+          "align": "left",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-01"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "fence",
+            "article": "R-105",
+            "why": "The panel has collapsed entirely — members down between the posts."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 40004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "Now discriminate. Two clickable objects, one finding. The fence draws the eye because they just learned it — and it is fine.",
+      "props": [
+        {
+          "id": "weeds_1",
+          "sprite": "weed3",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "align": "left",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-01"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "Intact. The article covers missing, broken and displaced members — not age or colour."
+          }
+        ]
+      },
+      "expected_verdict": "FAIL"
+    }
+  ]
+}

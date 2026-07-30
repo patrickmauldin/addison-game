@@ -5,10 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Addison — Lawn &amp; Order</title>
     <style>
+      /* Vendored rather than linked from Google, so the game has no runtime
+         dependency on a third party and works with the network off. Two weights
+         is all that gets used: headings and the barks. */
+      @font-face {
+        font-family: 'Pixelify Sans';
+        src: url('assets/fonts/pixelify-sans/PixelifySans-Regular.ttf') format('truetype');
+        font-weight: 400;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Pixelify Sans';
+        src: url('assets/fonts/pixelify-sans/PixelifySans-Bold.ttf') format('truetype');
+        font-weight: 700;
+        font-display: swap;
+      }
+
       /* The desk metaphor is half the feel. Tier 8 proper (rendered binder
          pages, stamp ink impressions) is deferred; this is DOM standing in,
          styled close enough to judge the flow. */
       :root {
+        /* A display face. Fine at heading sizes, illegible at fine-print sizes,
+           so it is deliberately NOT the body font — see the note on .card h2. */
+        --pixel-font: 'Pixelify Sans', ui-monospace, Menlo, monospace;
         --paper: #d9d2be;
         --paper-2: #cbc3ac;
         --manila: #c2a878;
@@ -38,9 +57,12 @@
         border-bottom: 2px solid #17150f;
         padding: 0 10px; flex: 0 0 30px; font-size: 12px; user-select: none;
       }
+      /* The wordmark, so it takes the display face. The menu buttons beside it
+         do not — those are controls, and controls want the monospace. */
       #menubar .brand {
         display: flex; align-items: center; padding-right: 14px;
-        color: #d8c88f; font-weight: 700; letter-spacing: .12em;
+        font-family: var(--pixel-font); font-size: 15px;
+        color: #d8c88f; font-weight: 400; letter-spacing: .12em;
       }
       .menu { position: relative; display: flex; align-items: center; }
       .menu > button {
@@ -63,6 +85,14 @@
       .menu .drop button:disabled { color: #9d9075; cursor: default; }
       .menu .drop button .when { font-size: 11px; color: #9d9075; }
       .menu .drop hr { border: 0; border-top: 1px solid var(--rule); margin: 4px 0; }
+      /* Anchored to the right edge, since this one lives in the status area. */
+      .menu.right .drop { left: auto; right: 0; min-width: 200px; }
+      #dev-btn {
+        background: none; border: 0; cursor: pointer;
+        font-size: 15px; line-height: 1; padding: 0 4px; color: #9a9075;
+      }
+      .menu.right:hover > #dev-btn, .menu.right.open > #dev-btn { color: #f0e8d2; background: none; }
+      .drop .lvl-when { font-size: 11px; color: #9d9075; }
       #menubar .status {
         margin-left: auto; display: flex; align-items: center; gap: 14px;
         color: #b0a68c; letter-spacing: .06em;
@@ -87,7 +117,7 @@
       #hover { color: #f0e8d2; font-size: 12px; font-style: italic; }
 
       /* --- Desk -------------------------------------------------------- */
-      /* The cards scroll; the stamps do not. By Day 15 the rule list alone is
+      /* The cards scroll; the stamps do not. By Level 15 the rule list alone is
          meant to be intimidating, and a verdict button you have to scroll to
          find is a worse problem than a crowded desk. */
       /* The desk is wood; the paperwork on it is paper. Textures tile at 1:1
@@ -113,20 +143,29 @@
       /* Route sheet is the clipboard carbon; the case file is a ruled form. */
       .clip { background: var(--manila) url('assets/paper-yellow.png') repeat; }
       #casefile-card { background: var(--paper) url('assets/paper-lined.png') repeat; }
+      /* Findings is the legal pad — what the inspector writes, as opposed to
+         the forms they fill in. Fallback is the texture's own base colour so a
+         failed load does not flash a stock that isn't the one being drawn. */
+      #findings { background: #e8dda2 url('assets/paper-lined-yellow.png') repeat; }
       /* The rulebook is a different document from the paperwork — blue stock
          separates reference material from the forms you fill in. */
       #binder { background: #d1d9e4 url('assets/paper-blue.png') repeat; }
       #binder h2 { border-bottom-color: #9fadc0; }
       #binder .rule { border-bottom-color: #9fadc0; }
+      /* Section titles only. Pixelify is a display face — it breaks up below
+         about 13px, which is why the fine print underneath stays monospace.
+         Bumped from 11px and the tracking loosened: a pixel face needs the
+         extra room between letterforms that a monospace does not. */
       .card h2 {
-        margin: 0 0 6px; font-size: 11px; letter-spacing: .12em;
+        margin: 0 0 6px; font-family: var(--pixel-font);
+        font-size: 15px; font-weight: 400; letter-spacing: .1em;
         text-transform: uppercase; color: var(--ink-soft);
         border-bottom: 1px solid var(--rule); padding-bottom: 4px;
       }
       .row { display: flex; justify-content: space-between; gap: 8px; }
       .row + .row { margin-top: 2px; }
       .muted { color: var(--ink-soft); }
-      .art { font-weight: 700; letter-spacing: .06em; }
+      .art { font-family: var(--pixel-font); font-size: 17px; letter-spacing: .04em; }
       details { margin-top: 6px; }
       summary { cursor: pointer; color: var(--ink-soft); font-size: 12px; }
       details[open] summary { margin-bottom: 4px; }
@@ -144,22 +183,33 @@
          as it grows. The formal text is one click away, not in your face. */
       .rule { border-bottom: 1px solid var(--rule); }
       .rule:last-child { border-bottom: 0; }
+      /* Two lines: marker, code and tag identify the article; the plain-language
+         line sits beneath them. Grid rather than a wrapping flex so the
+         description hangs off the CODE rather than the disclosure marker, and
+         so the marker keeps its own column however long the article runs. */
       .rule > summary {
-        list-style: none; cursor: pointer; padding: 5px 0;
-        display: flex; gap: 8px; align-items: baseline; color: var(--ink);
+        list-style: none; cursor: pointer; padding: 5px 0; color: var(--ink);
+        display: grid; grid-template-columns: 9px 1fr;
+        column-gap: 8px; row-gap: 2px;
       }
       .rule > summary::-webkit-details-marker { display: none; }
       .rule > summary::before {
-        content: '+'; color: var(--ink-soft); font-weight: 700; width: 9px; flex: none;
+        content: '+'; color: var(--ink-soft); font-weight: 700;
+        grid-column: 1; grid-row: 1; align-self: center;
       }
       .rule[open] > summary::before { content: '\2212'; }
+      .rule .head {
+        grid-column: 2; grid-row: 1;
+        display: flex; gap: 8px; align-items: center;
+      }
       .rule .code { font-weight: 700; letter-spacing: .04em; flex: none; }
       .rule .tab {
         flex: none; background: var(--manila); border: 1px solid #9d8b63;
         font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
-        padding: 0 5px; align-self: center;
+        padding: 0 5px;
       }
-      .rule .one { color: var(--ink-soft); font-size: 12px; }
+      /* Column 2 keeps it flush under the code; 9px + 8px gap matches .body. */
+      .rule .one { grid-column: 2; grid-row: 2; color: var(--ink-soft); font-size: 12px; }
       .rule .body { padding: 2px 0 8px 17px; font-size: 12px; }
       .rule .body .formal { margin: 0 0 6px; }
       #findings ul { margin: 0; padding: 0; list-style: none; }
@@ -265,11 +315,65 @@
       }
       .boss-id .org { font-size: 11px; color: var(--ink-soft); margin-top: 8px; }
 
-      #sheet h1 { margin: 0 0 2px; font-size: 17px; letter-spacing: .08em; }
-      #sheet h3 { margin: 16px 0 6px; font-size: 12px; letter-spacing: .1em;
+      /* Briefing and audit headings, same rule as the desk cards: titles get
+         the display face, the prose underneath stays monospace. */
+      #sheet h1 { margin: 0 0 2px; font-family: var(--pixel-font);
+        font-size: 22px; font-weight: 400; letter-spacing: .06em; }
+      #sheet h3 { margin: 16px 0 6px; font-family: var(--pixel-font);
+        font-size: 15px; font-weight: 400; letter-spacing: .08em;
         text-transform: uppercase; color: var(--ink-soft);
         border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
       #sheet p { margin: 6px 0; }
+
+      /* --- Briefing pages ------------------------------------------------ */
+      /* One idea per page. The old briefing was four paragraphs of grey text
+         and the rules it introduced were described rather than shown. */
+      .pg { display: none; }
+      .pg.on { display: block; }
+      .pg-nav {
+        display: flex; align-items: center; gap: 12px;
+        margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--rule);
+      }
+      .pg-dots { display: flex; gap: 6px; margin-right: auto; }
+      .pg-dots i {
+        width: 7px; height: 7px; background: var(--rule);
+        display: block; border-radius: 50%;
+      }
+      .pg-dots i.on { background: var(--ink); }
+      .story p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.6; }
+      /* No drop cap: Pixelify's capitals at 2.4em read as a rune rather than
+         a letter, which is the opposite of charming. The opening line carries
+         itself. */
+      .story p:first-child { font-size: 14.5px; }
+      /* A rule is introduced WITH the thing it is about. */
+      .exh { margin: 0 0 14px; border-left: 3px solid var(--rule); padding-left: 11px; }
+      .exh-head { display: flex; align-items: baseline; gap: 9px; }
+      .exh-head .code { font-weight: 700; letter-spacing: .04em; }
+      .exh-head .tab {
+        background: var(--manila); border: 1px solid #9d8b63; font-size: 10px;
+        letter-spacing: .08em; text-transform: uppercase; padding: 0 5px;
+      }
+      .exh-head .one { color: var(--ink-soft); font-size: 12px; }
+      .exh-row { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+      .exh-col { flex: 1 1 190px; min-width: 0; }
+      .exh-col h4 {
+        margin: 0 0 4px; font-family: var(--pixel-font); font-weight: 400;
+        font-size: 13px; letter-spacing: .06em; text-transform: uppercase;
+      }
+      .exh-col.cite h4 { color: var(--stamp-red); }
+      .exh-col.allow h4 { color: var(--stamp-green); }
+      .exh-pics {
+        display: flex; gap: 6px; align-items: flex-end; min-height: 46px;
+        background: rgba(43,39,33,.07); border: 1px solid var(--rule);
+        padding: 5px 7px; margin-bottom: 4px;
+      }
+      .exh-pics img { height: 40px; width: auto; image-rendering: pixelated; }
+      .exh-pics .none { color: var(--ink-soft); font-size: 11px; font-style: italic; }
+      .exh-col p { margin: 0; font-size: 11.5px; color: var(--ink-soft); line-height: 1.45; }
+      .today-line {
+        display: flex; justify-content: space-between; gap: 12px;
+        border-bottom: 1px dotted var(--rule); padding: 4px 0;
+      }
       /* Each line of the report card is marked, and the day carries one mark of
          its own in the corner. Sized in em so they track the sheet's type. */
       .verdict-row {
@@ -395,7 +499,7 @@
         <button>Inspection</button>
         <div class="drop">
           <button disabled>Next Lot<span class="when">stamp a verdict</span></button>
-          <button disabled>End Day Early<span class="when">Day 2</span></button>
+          <button disabled>End Round Early<span class="when">Level 2</span></button>
           <hr />
           <button id="mi-reset">Reset Save</button>
         </div>
@@ -404,10 +508,10 @@
       <div class="menu" data-menu>
         <button>Tools</button>
         <div class="drop">
-            <button disabled>Calendar<span class="when">Day 2</span></button>
-          <button disabled>Permit Ledger<span class="when">Day 9</span></button>
-          <button disabled>Paint Swatch Card<span class="when">Day 11</span></button>
-          <button disabled>Minimap<span class="when">Day 1</span></button>
+            <button disabled>Calendar<span class="when">Level 2</span></button>
+          <button disabled>Permit Ledger<span class="when">Level 9</span></button>
+          <button disabled>Paint Swatch Card<span class="when">Level 11</span></button>
+          <button disabled>Minimap<span class="when">Level 1</span></button>
           <hr />
           <button id="mi-mute">Sound<span class="when">on</span></button>
         </div>
@@ -417,8 +521,8 @@
         <button>Records</button>
         <div class="drop">
           <button disabled>Case File<span class="when">on the desk</span></button>
-          <button disabled>Board Memos<span class="when">Day 8</span></button>
-          <button disabled>My Record<span class="when">Day 5</span></button>
+          <button disabled>Board Memos<span class="when">Level 8</span></button>
+          <button disabled>My Record<span class="when">Level 5</span></button>
         </div>
       </div>
 
@@ -431,8 +535,14 @@
       </div>
 
       <div class="status">
-        <span id="m-day">Day 1</span>
+        <span id="m-day">Level 1</span>
         <span id="m-pay">$0</span>
+        <!-- Dev only. Jumping levels is how the pacing gets tuned without
+             replaying the whole campaign to reach the level under test. -->
+        <div class="menu right" id="dev-menu" data-menu>
+          <button id="dev-btn" title="Level select (dev)" aria-label="Level select">&#9881;</button>
+          <div class="drop" id="dev-drop"></div>
+        </div>
       </div>
     </div>
 
@@ -450,7 +560,13 @@
         <div id="desk-scroll">
           <div class="card clip">
             <h2>Route Sheet</h2>
-            <div class="row"><span>Day</span><span id="c-day">—</span></div>
+            <!-- The number belongs to the word: "Day 3" is the thing being
+                 named, so it reads as one label on the left rather than a value
+                 flung to the right margin. Weekday and date stay right. -->
+            <div class="row">
+              <span>Level <span id="c-day">—</span></span>
+              <span><b id="c-dow">—</b> <span id="c-date">—</span></span>
+            </div>
             <div class="row"><span>Inspection</span><span id="c-prog">—</span></div>
             <div class="row"><span>Quota</span><span id="c-quota">—</span></div>
             <div class="row"><span>Strikes</span><span id="c-strikes">0 / 3</span></div>

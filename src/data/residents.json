@@ -1,0 +1,93 @@
+{
+  "_generated": "tools/pack-residents.ts — do not hand-edit; run `npm run pack-residents`",
+  "sheet": "assets/residents.png",
+  "frameW": 40,
+  "frameH": 42,
+  "cols": 7,
+  "walkLen": 4,
+  "idleLen": 2,
+  "characters": [
+    "tshirt-blue",
+    "sleeves-white",
+    "tshirt-green",
+    "vest-red",
+    "sleeves-grey",
+    "tshirt-purple",
+    "skirt-blue",
+    "overalls-blue",
+    "tshirt-white",
+    "skirt-purple"
+  ],
+  "skins": [
+    "skin5",
+    "skin3",
+    "skin4",
+    "skin5",
+    "skin3",
+    "skin4",
+    "skin1",
+    "skin5",
+    "skin3",
+    "skin2"
+  ],
+  "pick": [
+    0.10625,
+    0.10625,
+    0.10625,
+    0.10625,
+    0.10625,
+    0.10625,
+    0.075,
+    0.10625,
+    0.10625,
+    0.075
+  ],
+  "rowsPerCharacter": 13,
+  "dirsPerCharacter": 4,
+  "toolDirs": 3,
+  "tools": [
+    {
+      "name": "hoe",
+      "hold": [
+        0.15,
+        0.25,
+        0.15,
+        0.15
+      ]
+    },
+    {
+      "name": "shovel",
+      "hold": [
+        0.15,
+        0.25,
+        0.15,
+        0.15
+      ]
+    },
+    {
+      "name": "watering",
+      "hold": [
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1,
+        0.1
+      ]
+    }
+  ],
+  "centerX": 20,
+  "ground": 34,
+  "contentH": 28,
+  "crop": {
+    "x": 4,
+    "y": 5,
+    "w": 40,
+    "h": 42,
+    "from": {
+      "w": 48,
+      "h": 48
+    }
+  }
+}

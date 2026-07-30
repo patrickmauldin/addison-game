@@ -115,6 +115,10 @@ export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road' 
   // surface, so it is checked by position, not by the pixel under it. Requiring
   // grass here pushed it off the wall and left a gap.
   FENCE_1: 'attach',
+  // Bins stored BEHIND the side-yard fence. Positioned relative to the fence
+  // rather than standing on a named surface — what is under them is whatever
+  // that house's art puts in its side yard — so it is checked by position.
+  BINS_SCREENED: 'attach',
 };
 
 /**
@@ -137,6 +141,12 @@ export const DEFAULT_ANCHORS: AnchorTable = {
   YARD_5: { hx: 0.92, hy: 0.80 },
   YARD_6: { hx: 0.90, hy: 0.96 },
   BED_FRONT: { hx: 0.22, hy: 0.64 },
+  /**
+   * Up-screen of FENCE_1, which is what puts the bins BEHIND it: props draw in
+   * anchor-y order, so a smaller y means the fence panel is painted over their
+   * base. Screened bins are compliant on any day — see R-104's decoy note.
+   */
+  BINS_SCREENED: { hx: 0.90, hy: 0.58 },
   PORCH_1: { hx: 0.47, hy: 0.62 },
   /**
    * Bin positions, and the difference between them IS rule R-104.

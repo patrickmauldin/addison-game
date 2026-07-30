@@ -1,50 +1,24 @@
 /**
  * A resident wandering the front yard.
  *
- * Sheet layout, derived from the PNG's alpha and confirmed against the Unity
- * package's clip list: 12 columns x 16 rows of 18x26 frames. Each row holds
- * FOUR characters of THREE frames; rows cycle S, W, E, N; every four rows is a
- * new set of four characters. Sixteen characters in total, matching
- * Townspeople_0..15 in the package.
- *
- *   character c -> row group floor(c/4), column block c%4
- *   direction  -> row within the group: 0 S, 1 W, 2 E, 3 N
- *   frame      -> column within the block: 0, 1, 2
- *
- * The walk cycle is 0-1-2-1 at 4fps, taken from the .anim keyframes (0, 0.25,
- * 0.5, 0.75s) rather than guessed.
+ * Steering only. This class owns WHERE somebody walks and which way they are
+ * facing; it knows nothing about sprite sheets. What they look like is
+ * game/residents.ts, which reads `facing`, `moving` and `phase` off this and
+ * picks its own frames — so swapping the art out never touches the movement.
  */
-
-export const FRAME_W = 18;
-export const FRAME_H = 26;
-const DIRS = 4;
-const WALK_CYCLE = [0, 1, 2, 1];
-const FPS = 4;
 
 export type Dir = 0 | 1 | 2 | 3; // S, W, E, N
-
-/**
- * How much bigger a person is than their sprite, in house-art pixels.
- *
- * The house art is far denser than this sheet: house1's garage door is about
- * 188px tall for roughly seven feet, so the art runs ~27px per foot, which puts
- * a five-foot-eight resident at ~153px. The sprite is 26px. Hence ~5.9x.
- *
- * That ratio is not a preference, it is what standing them next to the house
- * requires — and it is also why they read as much blockier than everything
- * around them. See the note in README.
- */
-export const PERSON_UPSCALE = 5.9;
 
 export type Bounds = { x0: number; x1: number; y0: number; y1: number };
 
 export class Walker {
-  /** 0..15 */
+  /** Index into whatever roster the caller drew it from. */
   readonly character: number;
   x: number;
   y: number;
   private tx: number;
   private ty: number;
+  /** Public via `facing`. */
   private dir: Dir = 0;
   private t = 0;
   /** Seconds left standing still before choosing a new destination. */
@@ -54,7 +28,7 @@ export class Walker {
   private readonly rnd: () => number;
 
   constructor(character: number, bounds: Bounds, rnd: () => number, speed: number) {
-    this.character = character % 16;
+    this.character = character;
     this.bounds = bounds;
     this.rnd = rnd;
     this.speed = speed;
@@ -99,17 +73,21 @@ export class Walker {
     this.dir = Math.abs(dx) / bw > Math.abs(dy) / bh ? (dx < 0 ? 1 : 2) : dy > 0 ? 0 : 3;
   }
 
-  /** Source rect in the sheet for the current pose. */
-  frame(): { sx: number; sy: number } {
-    const moving = this.pause <= 0;
-    const f = moving ? WALK_CYCLE[Math.floor(this.t * FPS) % WALK_CYCLE.length] : 1;
-    const group = Math.floor(this.character / 4);
-    const block = this.character % 4;
-    return {
-      sx: (block * 3 + f) * FRAME_W,
-      sy: (group * DIRS + this.dir) * FRAME_H,
-    };
+  /** False while standing about, which is most of the time. */
+  get moving(): boolean {
+    return this.pause <= 0;
   }
+
+  /** 0 S, 1 W, 2 E, 3 N — the same order the char-pack sheets are laid out in. */
+  get facing(): Dir {
+    return this.dir;
+  }
+
+  /** Seconds since spawn — the clock any sheet can cut its own cycle from. */
+  get phase(): number {
+    return this.t;
+  }
+
 }
 
 /** Deterministic per-lot RNG so a resident is the same person every visit. */

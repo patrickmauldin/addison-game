@@ -15,6 +15,8 @@
  */
 
 export type BedName = 'ambiance' | 'office' | 'theme';
+/** stamp: a verdict. money: a bounty claimed, and the day's takings at the audit. */
+export type OneShot = 'stamp' | 'money';
 
 const BED_VOLUME = 0.6;
 /**
@@ -42,9 +44,11 @@ export class Sound {
       a.volume = 0;
       this.beds.set(name, a);
     }
-    const s = new Audio(`assets/stamp.mp3${cacheBust}`);
-    s.preload = 'auto';
-    this.oneshots.set('stamp', s);
+    for (const name of ['stamp', 'money'] as OneShot[]) {
+      const a = new Audio(`assets/${name}.mp3${cacheBust}`);
+      a.preload = 'auto';
+      this.oneshots.set(name, a);
+    }
   }
 
   /** Call from a real click. Before this, play() is refused by the browser. */
@@ -127,7 +131,7 @@ export class Sound {
    * One-shot. Cloned so rapid repeats overlap instead of cutting each other
    * off — a stamp that restarts mid-thunk sounds broken.
    */
-  play(name: 'stamp'): void {
+  play(name: OneShot): void {
     if (this.muted || !this.unlocked) return;
     const src = this.oneshots.get(name);
     if (!src) return;

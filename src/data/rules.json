@@ -3,13 +3,23 @@
   "articles": [
     {
       "id": "R-101",
-      "title": "Landscape Maintenance \u2014 Weeds and Unmaintained Beds",
+      "title": "Landscape Maintenance — Weeds and Unmaintained Beds",
       "section": "Article VII, Section 3(a)",
       "text": "Each Owner shall keep all landscaped areas, planting beds, and paved joints free of weeds and volunteer growth. Weeds visible from the street in beds, turf, or pavement cracks constitute a violation of this Article.",
       "decoy_note": "A bed of native or drought-tolerant plantings, installed intentionally and maintained within a defined border, is NOT a violation of this Article. Chapter 202 of the Texas Property Code limits the Association's authority to prohibit drought-resistant landscaping. Enforcement against an intentional xeriscape bed will not survive appeal.",
-      "introduced_day": 1,
       "tab": "Weeds",
-      "short": "No weeds in beds, turf, or pavement cracks."
+      "short": "No weeds in beds, turf, or pavement cracks.",
+      "introduced_level": 1,
+      "exhibit": {
+        "cite": [
+          "weed1",
+          "weed2",
+          "weed3"
+        ],
+        "cite_note": "Unbordered growth in turf, beds or pavement cracks.",
+        "allow": [],
+        "allow_note": "A bordered bed of intentional plantings is landscaping, not weeds."
+      }
     },
     {
       "id": "R-102",
@@ -17,19 +27,57 @@
       "section": "Article VII, Section 3(b)",
       "text": "Turf grass shall not exceed six (6) inches in height at any point visible from a public right-of-way.",
       "decoy_note": "Dormant turf is not a violation. Bermuda grass is naturally tan from November through March and greens up in April. Dormancy is even; death is patchy and exposes bare soil.",
-      "introduced_day": 5,
       "tab": "Grass",
-      "short": "Turf over 6 inches."
+      "short": "Turf over 6 inches.",
+      "introduced_level": 5,
+      "exhibit": {
+        "cite": [],
+        "cite_note": "Turf over six inches.",
+        "allow": [],
+        "allow_note": "Dormant turf is not dead turf."
+      }
+    },
+    {
+      "id": "R-105",
+      "title": "Fences and Screening",
+      "section": "Article VI, Section 2",
+      "text": "Fencing visible from the street shall be maintained in sound condition, free of missing, broken, or displaced members and of significant lean.",
+      "decoy_note": "A fence in sound condition is not a finding merely because it is there, or because it is old. The article covers missing, broken and displaced members — not age, colour or style.",
+      "introduced_level": 1,
+      "tab": "Fences",
+      "short": "Fences broken, missing members, or leaning.",
+      "exhibit": {
+        "cite": [
+          "fence2",
+          "fence3"
+        ],
+        "cite_note": "Members missing, broken or displaced. A collapsed panel.",
+        "allow": [
+          "fence1"
+        ],
+        "allow_note": "Sound and complete. Age and colour are not disrepair."
+      }
     },
     {
       "id": "R-104",
       "title": "Refuse Containers",
       "section": "Article IX, Section 1",
-      "text": "Refuse and recycling containers shall not be visible from the street except between 6:00 PM Tuesday and 9:00 AM Thursday.",
-      "decoy_note": "Containers stored at the garage face, behind a fence gate, or otherwise screened from the right-of-way are compliant at all times.",
-      "introduced_day": 2,
+      "text": "Refuse and recycling containers shall not be placed at the kerb or otherwise made visible from the street on any day other than Tuesday or Wednesday.",
+      "decoy_note": "Containers screened from the right-of-way — stored behind a side-yard fence or at the garage face — are compliant on ANY day, and remain so whatever condition the screening itself is in.",
       "tab": "Bins",
-      "short": "Bins visible outside Tue 6pm - Thu 9am."
+      "short": "Bins at the kerb on Tuesday or Wednesday only.",
+      "introduced_level": 2,
+      "exhibit": {
+        "cite": [
+          "trash-green",
+          "trash-brown"
+        ],
+        "cite_note": "At the kerb on any day but Tuesday or Wednesday.",
+        "allow": [
+          "trash-green"
+        ],
+        "allow_note": "Screened behind a fence or at the garage face — compliant any day."
+      }
     },
     {
       "id": "R-107",
@@ -37,10 +85,21 @@
       "section": "Article VII, Section 5",
       "text": "No Owner shall permit the accumulation of junk, debris, or discarded materials upon any Lot.",
       "decoy_note": "Materials neatly stacked in support of an active, permitted project are not an accumulation. Children's equipment in use during daylight hours is not an accumulation.",
-      "introduced_day": 4,
       "tab": "Clutter",
-      "short": "Accumulated junk or debris on the lot."
+      "short": "Accumulated junk or debris on the lot.",
+      "introduced_level": 4,
+      "exhibit": {
+        "cite": [
+          "couch",
+          "washer",
+          "boxes"
+        ],
+        "cite_note": "Accumulated junk or debris left on the lot.",
+        "allow": [],
+        "allow_note": "Neatly stacked materials for an active project are not an accumulation."
+      }
     }
   ],
-  "_ui_note": "tab and short drive the compact rule list; title/text/decoy_note are the expanded view. Several rules are live at once from Day 5 on, so the scannable line is what matters."
+  "_ui_note": "tab and short drive the compact rule list; title/text/decoy_note are the expanded view. Several rules are live at once from Level 4 on, so the scannable line is what matters.",
+  "_exhibit_note": "exhibit drives the briefing: cite/allow are asset keys shown as thumbnails so a rule is introduced with the thing it is about, not a paragraph about the thing. An empty list is fine — the note still shows."
 }

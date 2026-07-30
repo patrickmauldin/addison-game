@@ -55,11 +55,25 @@ export type LotSpec = {
 export type RenderedObject = {
   id: string; label: string; key: number; flaggable: boolean; first_seen?: string;
 };
+/**
+ * Where a prop ended up, and the ground line it stands on.
+ *
+ * Exported so the paint pass can put a bin back in FRONT of somebody who is
+ * standing further up the lot than it is. The scene is composited once into an
+ * image for speed, which means anything drawn afterwards — the residents — lands
+ * on top of everything regardless of depth. Handing back the rects lets those
+ * few props be re-blitted in the right order without recompositing.
+ *
+ * The rect is tight to the sprite's solid pixels, not its canvas.
+ */
+export type PlacedProp = { x: number; y: number; w: number; h: number; baseY: number };
+
 export type RenderedLot = {
   raster: Raster;
   objects: RenderedObject[];
   byKey: Map<number, RenderedObject>;
   layout: Layout;
+  props: PlacedProp[];
 };
 
 export type SceneAssets = {
@@ -171,8 +185,9 @@ function fill(r: Raster, y0: number, y1: number, c: Rgb): void {
  * touching the ground; the lid flaring wider than the wheels should not shift
  * where the bin stands.
  */
-const footprintCache = new WeakMap<Bitmap, { cx: number; baseY: number; x0: number; x1: number }>();
-function footprint(src: Bitmap): { cx: number; baseY: number; x0: number; x1: number } {
+type Footprint = { cx: number; baseY: number; topY: number; x0: number; x1: number };
+const footprintCache = new WeakMap<Bitmap, Footprint>();
+function footprint(src: Bitmap): Footprint {
   const hit = footprintCache.get(src);
   if (hit) return hit;
   const SOLID = 128;
@@ -194,15 +209,20 @@ function footprint(src: Bitmap): { cx: number; baseY: number; x0: number; x1: nu
   // wall it is supposed to butt against.
   let x0 = src.w;
   let x1 = -1;
+  // Topmost solid row too, so the paint pass can re-blit a prop over somebody
+  // standing behind it using a TIGHT box. The full canvas rect would carry the
+  // sprite's transparent padding with it and rub out anyone standing in it.
+  let topY = src.h - 1;
   for (let y = 0; y < src.h; y++)
     for (let x = 0; x < src.w; x++)
       if (src.rgba[((y * src.w + x) << 2) + 3] >= SOLID) {
         if (x < x0) x0 = x;
         if (x > x1) x1 = x;
+        if (y < topY) topY = y;
       }
-  if (x1 < 0) { x0 = 0; x1 = src.w - 1; }
+  if (x1 < 0) { x0 = 0; x1 = src.w - 1; topY = 0; }
 
-  const res = { cx: n ? sum / n : src.w / 2, baseY, x0, x1 };
+  const res = { cx: n ? sum / n : src.w / 2, baseY, topY, x0, x1 };
   footprintCache.set(src, res);
   return res;
 }
@@ -283,8 +303,13 @@ export function renderLot(
   const anchors: AnchorTable = mirror
     ? Object.fromEntries(Object.entries(base).map(([k, a]) => [k, { hx: 1 - a.hx, hy: a.hy }]))
     : base;
+  const placedProps: PlacedProp[] = [];
   const placed = spec.props.map((p) => ({ p, a: anchor(p.anchor, L, anchors) }));
   placed.sort((a, b) => a.a.y - b.a.y);
+  // From here to the end of the loop, remember which pixels the props actually
+  // cover, so the paint pass can lift them back out with their real silhouette
+  // rather than as a rectangle full of sidewalk.
+  r.trackCoverage(true);
   for (const { p, a } of placed) {
     const spr = S.get(p.sprite);
     if (!spr) continue; // art not delivered yet; the lot still plays
@@ -325,9 +350,21 @@ export function renderLot(
       : a.x - cx * s;
     const ay = a.y - (fp.baseY + 1) * s;
     blitScaled(r, spr, Math.round(ax), Math.round(ay), w, h, false, flipSprite);
+    // Tight box, in the sprite's drawn orientation.
+    const sx0 = flipSprite ? spr.w - 1 - fp.x1 : fp.x0;
+    const sx1 = flipSprite ? spr.w - 1 - fp.x0 : fp.x1;
+    placedProps.push({
+      x: Math.round(ax + sx0 * s),
+      y: Math.round(ay + fp.topY * s),
+      w: Math.max(1, Math.round((sx1 - sx0 + 1) * s)),
+      h: Math.max(1, Math.round((fp.baseY - fp.topY + 1) * s)),
+      baseY: a.y,
+    });
   }
 
-  return { raster: r, objects, byKey, layout: L };
+  r.trackCoverage(false);
+
+  return { raster: r, objects, byKey, layout: L, props: placedProps };
 }
 
 export { WALK_NATIVE_H };

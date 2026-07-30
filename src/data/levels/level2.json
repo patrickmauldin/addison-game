@@ -1,0 +1,292 @@
+{
+  "level_id": 2,
+  "_date": "DERIVED — see game/calendar.ts. Level 2 is Wednesday 3 March 2027, which is collection day.",
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-105",
+    "R-104"
+  ],
+  "quota": 5,
+  "pay_per_inspection": 12,
+  "verdict_mode": "notice",
+  "_teaching": "Bins arrive on the one day they are legal. Every bin on this level is compliant — the player learns the object before they learn to cite it, and Level 3 (Friday) is where the same object becomes a finding. Also the first bounty: a missing-cat notice, with the cat somewhere on the round.",
+  "briefing": "Wednesday. Collection day on Bonerville, so containers at the kerb are within the window — Article IX allows Tuesday and Wednesday. Weeds and fence condition still live. And the Hendersons have lost a cat again; there are notices up. Board pays a finder's fee, oddly enough.",
+  "story": [
+    "Word travels. Two people waved at you this morning and one of them meant it.",
+    "It's collection day, so half the street has bins at the kerb. That is allowed today. Note the word today.",
+    "Also: the Hendersons have lost their cat again. There are notices up. The Board pays a finder's fee, which tells you something about the Board."
+  ],
+  "bounty": {
+    "id": "chaz",
+    "sprite": "chaz",
+    "label": "Cat, tortoiseshell — answers to Chaz",
+    "reward": 25,
+    "_placement": "Seeded per level across the lots listed below. Never the first lot of the round: the player needs to have read the notice before they can be expected to have found him.",
+    "eligible_lots": [
+      "bonerville_02",
+      "bonerville_03",
+      "bonerville_04",
+      "bonerville_05"
+    ]
+  },
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 40001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "Bins introduced on a lot with nothing else wrong. They are at the kerb, it is Wednesday, and that is allowed. First lot of the round, so Chaz is never here.",
+      "props": [
+        {
+          "id": "flyer",
+          "sprite": "pin",
+          "anchor": "YARD_1",
+          "scale": 1.6,
+          "label": "Notice — missing cat, 'Chaz'",
+          "first_seen": "2027-03-03",
+          "flaggable": false
+        },
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "CURB_1",
+          "label": "Refuse container, green",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-03"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "R-104 permits containers at the kerb on Tuesday and Wednesday. Today is Wednesday."
+          },
+          {
+            "object": "bin_brown",
+            "why": "Same window. The bins are the point of the lot and they are compliant."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 40002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "Compliant bins next to a real weed finding, so the new object sits beside a known one without becoming it.",
+      "props": [
+        {
+          "id": "flyer",
+          "sprite": "pin",
+          "anchor": "YARD_1",
+          "scale": 1.6,
+          "label": "Notice — missing cat, 'Chaz'",
+          "first_seen": "2027-03-03",
+          "flaggable": false
+        },
+        {
+          "id": "weeds_1",
+          "sprite": "weed1",
+          "anchor": "YARD_5",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "CURB_1",
+          "label": "Refuse container, green",
+          "first_seen": "2027-03-03"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Wednesday. Within the R-104 window."
+          }
+        ]
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 40003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "The screening decoy, and the sting in it: the bins are stored behind the fence, which makes them compliant on ANY day — and the fence they are hidden behind is itself a finding. Two objects, opposite answers, and the broken one does not contaminate the other.",
+      "props": [
+        {
+          "id": "flyer",
+          "sprite": "pin",
+          "anchor": "YARD_1",
+          "scale": 1.6,
+          "label": "Notice — missing cat, 'Chaz'",
+          "first_seen": "2027-03-03",
+          "flaggable": false
+        },
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "BINS_SCREENED",
+          "label": "Refuse container, green — behind fence",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence2",
+          "anchor": "FENCE_1",
+          "align": "left",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-03"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "fence",
+            "article": "R-105",
+            "why": "Members missing and displaced — gaps and uneven heights along the panel."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Screened from the right-of-way, which R-104 treats as compliant on any day — and the state of the screening is not part of that test."
+          }
+        ]
+      },
+      "expected_verdict": "FAIL"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 40004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "A clean lot with no bins at all. Absence is also information: not putting them out on collection day is not a violation of anything.",
+      "props": [
+        {
+          "id": "flyer",
+          "sprite": "pin",
+          "anchor": "YARD_1",
+          "scale": 1.6,
+          "label": "Notice — missing cat, 'Chaz'",
+          "first_seen": "2027-03-03",
+          "flaggable": false
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "align": "left",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-03"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "Intact."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 40005,
+      "house": {
+        "sprite": "house5",
+        "mirror": true
+      },
+      "_teaching": "Close on a straightforward weed finding with compliant bins, so the round ends on the discrimination rather than on a new idea.",
+      "props": [
+        {
+          "id": "flyer",
+          "sprite": "pin",
+          "anchor": "YARD_1",
+          "scale": 1.6,
+          "label": "Notice — missing cat, 'Chaz'",
+          "first_seen": "2027-03-03",
+          "flaggable": false
+        },
+        {
+          "id": "weeds_1",
+          "sprite": "weed2",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "weeds_2",
+          "sprite": "weed3",
+          "anchor": "YARD_4",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-03"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf."
+          },
+          {
+            "object": "weeds_2",
+            "article": "R-101",
+            "why": "Unbordered weed growth in the front turf."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "bin_brown",
+            "why": "Wednesday. Within the window."
+          }
+        ]
+      },
+      "expected_verdict": "FAIL"
+    }
+  ]
+}
