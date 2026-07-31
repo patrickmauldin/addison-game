@@ -24,6 +24,24 @@ export type PropSpec = {
   sprite: string;
   anchor: string;
   label: string;
+  /**
+   * What KIND of finding this is, when that is broader than the label.
+   *
+   * The pad counts findings by kind and adjudication lets one citation answer
+   * for the kind, and both need a key. The label is that key by default and is
+   * usually right: every weed on a lot is "Weed growth, front turf" and three
+   * of them are one finding, correctly.
+   *
+   * It breaks where the label distinguishes something the article does not. The
+   * green bin and the brown bin are two labels because the audit should say
+   * which one, but they are one violation — bins left at the curb — and a
+   * player who cites the pair has found one thing, not two.
+   *
+   * Only for props that genuinely share a finding. Giving the screened bin the
+   * same group as the curbside ones would fold a compliant object into a
+   * citation, which is the opposite mistake and a worse one.
+   */
+  group?: string;
   /** Draw scale relative to the house scale. 1 = same world scale. */
   scale?: number;
   /**
@@ -77,6 +95,8 @@ export type LotSpec = {
 
 export type RenderedObject = {
   id: string; label: string; key: number; flaggable: boolean; first_seen?: string;
+  /** See PropSpec.group. Absent means the label is the kind. */
+  group?: string;
 };
 /**
  * Where a prop ended up, and the ground line it stands on.
@@ -434,7 +454,7 @@ export function renderLot(
     const spr = S.get(p.sprite);
     if (!spr) continue; // art not delivered yet; the lot still plays
     if (p.flaggable === false) scenery();
-    else begin({ id: p.id, label: p.label, flaggable: true, first_seen: p.first_seen });
+    else begin({ id: p.id, label: p.label, group: p.group, flaggable: true, first_seen: p.first_seen });
     const s = L.scale * (p.scale ?? 1);
     const w = Math.max(1, Math.round(spr.w * s));
     const h = Math.max(1, Math.round(spr.h * s));

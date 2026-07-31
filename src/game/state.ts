@@ -168,12 +168,15 @@ export function adjudicate(
     };
   },
   labels: Map<string, string>,
+  /** Object id to finding KIND — `group ?? label`. See PropSpec.group. */
+  kinds: Map<string, string>,
   flagged: Set<string>,
   stamped: Verdict,
   payPerInspection: number,
 ): LotOutcome {
   const violationIds = new Set(lot.truth.violations.map((v) => v.object));
   const nameOf = (id: string) => labels.get(id) ?? id;
+  const kindOf = (id: string) => kinds.get(id) ?? nameOf(id);
 
   /**
    * ONE CITATION COVERS THE KIND.
@@ -183,15 +186,18 @@ export function adjudicate(
    * citing any one of them answers for the rest: what is being recorded is
    * "this lot has weeds", not an inventory.
    *
-   * Grouped by LABEL rather than by article, and deliberately. The label is
-   * what the player reads on the pad and what tells two objects apart — the
-   * green bin and the brown bin are both R-104 but they are visibly two things,
-   * and citing one should not silently answer for the other. Same key the
-   * Findings pad groups on, so what the player is shown and what they are
-   * marked against cannot disagree.
+   * Grouped by KIND rather than by article, and deliberately. An article is too
+   * coarse: R-107 covers a sofa and a washing machine alike, and finding one of
+   * those should not quietly answer for the other sitting in plain sight.
+   *
+   * Kind is the label unless a prop says otherwise. The green bin and the brown
+   * bin carry their colour in the label so the audit can say which one it means,
+   * but they share a group — bins at the curb are one finding however many
+   * wheels are involved. Same key the Findings pad counts on, so what the player
+   * is shown and what they are marked against cannot disagree.
    */
   const citedKinds = new Set(
-    lot.truth.violations.filter((v) => flagged.has(v.object)).map((v) => nameOf(v.object)),
+    lot.truth.violations.filter((v) => flagged.has(v.object)).map((v) => kindOf(v.object)),
   );
 
   // Hits stay the ones actually MARKED. The covered instances are not mistakes,
@@ -201,7 +207,7 @@ export function adjudicate(
     .map((v) => ({ object: v.object, label: nameOf(v.object), article: v.article }));
 
   const missed = lot.truth.violations
-    .filter((v) => !flagged.has(v.object) && !citedKinds.has(nameOf(v.object)))
+    .filter((v) => !flagged.has(v.object) && !citedKinds.has(kindOf(v.object)))
     .map((v) => ({
       object: v.object,
       label: nameOf(v.object),

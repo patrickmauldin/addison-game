@@ -66,7 +66,8 @@ for (const s of scenariosFor(level)) {
     const lot = LOTS[p.lot];
     const { objects } = renderLot(lot, { sprites: new Map() }, 1060, 860);
     const labels = new Map(objects.map((o) => [o.id, o.label]));
-    const o = adjudicate(lot, labels, new Set(p.flag), p.stamp, level.pay_per_inspection);
+    const kinds = new Map(objects.map((o) => [o.id, o.group ?? o.label]));
+    const o = adjudicate(lot, labels, kinds, new Set(p.flag), p.stamp, level.pay_per_inspection);
     if (o.strike) strikes++;
     if (o.verdictRight && !o.falsePositives.length) right++;
     console.log(`  ${o.address}  stamped ${o.stamped}, correct ${o.expected}`);

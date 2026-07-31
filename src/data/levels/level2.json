@@ -73,6 +73,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
+          "group": "Trash cans, at the curb",
           "first_seen": "2027-03-03"
         },
         {
@@ -80,6 +81,7 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
+          "group": "Trash cans, at the curb",
           "first_seen": "2027-03-03"
         }
       ],
@@ -121,6 +123,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
+          "group": "Trash cans, at the curb",
           "first_seen": "2027-03-03"
         }
       ],
@@ -245,6 +248,7 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
+          "group": "Trash cans, at the curb",
           "first_seen": "2027-03-03"
         }
       ],

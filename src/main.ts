@@ -1495,16 +1495,19 @@ function syncDesk(): void {
      * Six weeds is one thing wrong with the lot written six times. Listing them
      * separately buries the other findings under a wall of identical rows, and
      * it is the same reason adjudication treats one citation as covering the
-     * kind — see state.ts. Grouped on the label, the same key used there, so
-     * the pad and the scoring cannot disagree about what counts as "the same".
+     * kind — see state.ts. Keyed on `group ?? label`, the same key used there,
+     * so the pad and the scoring cannot disagree about what counts as "the
+     * same". The key is also what the row is CALLED, which is why a group is
+     * written as a finding would be read aloud and not as an internal tag.
      */
     const kinds = new Map<string, string[]>();
     for (const id of flagged) {
       const o = rendered.objects.find((x) => x.id === id);
       if (!o) continue;
-      const ids = kinds.get(o.label) ?? [];
+      const kind = o.group ?? o.label;
+      const ids = kinds.get(kind) ?? [];
       ids.push(id);
-      kinds.set(o.label, ids);
+      kinds.set(kind, ids);
     }
     list.innerHTML = [...kinds]
       .map(
@@ -1772,7 +1775,11 @@ function stamp(v: Verdict): void {
   syncDesk();
 
   const labels = new Map(rendered.objects.map((o) => [o.id, o.label]));
-  const outcome = adjudicate(current, labels, flagged, v, day.pay_per_inspection);
+  // What the audit calls each object, and what counts as the same finding. Two
+  // maps because they are two questions: the audit names the brown bin, the
+  // coverage rule does not care which bin it was.
+  const kinds = new Map(rendered.objects.map((o) => [o.id, o.group ?? o.label]));
+  const outcome = adjudicate(current, labels, kinds, flagged, v, day.pay_per_inspection);
   outcomes.push(outcome);
 
   // Log the ruling with correctness UNRESOLVED. The audit fills it in later.
