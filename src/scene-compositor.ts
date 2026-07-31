@@ -55,6 +55,15 @@ export type LotSpec = {
     variantLabel?: string;
     /** Object id for the changed part, so truth blocks can name it. */
     variantId?: string;
+    /**
+     * The repainted part is a LIGHT SOURCE, so the dark does not fall on it.
+     *
+     * True for Christmas lights, false for a broken window — glass does not
+     * glow. See paint(): the marked pixels are lifted back out and redrawn on
+     * top of the night wash, which is the whole reason the diff mask is worth
+     * keeping around after compositing.
+     */
+    variantGlows?: boolean;
   };
   props: PropSpec[];
   truth: {

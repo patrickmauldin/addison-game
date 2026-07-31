@@ -27,6 +27,8 @@ import { decodePng } from '../src/core/png.js';
 
 import housesData from '../src/data/houses.json';
 import rulesData from '../src/data/rules.json';
+import residentsData from '../src/data/residents.json';
+import animalsData from '../src/data/animals.json';
 import level1 from '../src/data/levels/level1.json';
 import level2 from '../src/data/levels/level2.json';
 import level3 from '../src/data/levels/level3.json';
@@ -44,6 +46,7 @@ import level4 from '../src/data/levels/level4.json';
 const LEVELS = [level1, level2, level3, level4] as unknown as {
   level_id: number;
   active_rules: string[];
+  cameos?: { lot_id: string; people?: string[]; dog?: string; animal?: string }[];
   lots: LotSpec[];
 }[];
 
@@ -240,6 +243,44 @@ function checkAnchorSurfaces(houseId: string, used: Set<string>): void {
 // anything — which is how a validator ends up silently passing.
 for (const hid of Object.keys((housesData as any).houses ?? {}))
   if (SPRITES.has(hid)) checkAnchorSurfaces(hid, new Set());
+
+/**
+ * PINNED CAST. A cameo names people and animals as strings, and both lookups
+ * throw at draw time — which means a typo in a level file is a crash halfway
+ * through a shift rather than an error here. Checked against the packed sheets,
+ * not against the packers, so renaming a row and forgetting to re-pack is
+ * caught too.
+ */
+for (const day of LEVELS) {
+  const lots = new Set(day.lots.map((l) => l.lot_id));
+  for (const c of day.cameos ?? []) {
+    if (!lots.has(c.lot_id)) fail(`day ${day.level_id}: cameo on ${c.lot_id}, which is not a lot on this level`);
+    for (const name of c.people ?? [])
+      if (!residentsData.characters.includes(name))
+        fail(`day ${day.level_id}: cameo person "${name}" is not in residents.json — re-run pack-residents?`);
+    for (const id of [c.dog, c.animal].filter(Boolean) as string[])
+      if (!animalsData.animals.includes(id))
+        fail(`day ${day.level_id}: cameo animal "${id}" is not in animals.json — re-run pack-animals?`);
+  }
+}
+
+/**
+ * NAMED PETS DO NOT ROAM ALONE. Anything non-ambient is somebody's, so it is
+ * only ever out with its owners (a cameo) or lost (a bounty). One that appears
+ * in neither is an animal packed and then forgotten, which reads in game as a
+ * dog that simply never exists.
+ */
+{
+  const owned = animalsData.animals.filter((_, i) => !animalsData.ambient[i]);
+  const placed = new Set(
+    LEVELS.flatMap((d) => [
+      ...(d.cameos ?? []).flatMap((c) => [c.dog, c.animal]),
+      (d as { bounty?: { animal?: string } }).bounty?.animal,
+    ]).filter(Boolean) as string[],
+  );
+  for (const id of owned)
+    if (!placed.has(id)) warn(`animal "${id}" belongs to somebody but is on no cameo and no notice — it never appears.`);
+}
 
 // --- Days and lots --------------------------------------------------------
 for (const day of DAYS) {

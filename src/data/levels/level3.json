@@ -14,6 +14,25 @@
   "verdict_mode": "notice",
   "_teaching": "Friday. The same bins that were legal on Level 2 are now a finding — the object did not change, the day did. Also the first return visits: two addresses you have already ruled on, one fixed and one not.",
   "briefing": "Friday. Not a collection day. Containers at the curb are outside the window today. Two of these addresses you have seen before.",
+  "_cameos": "Garret and Sonya with Lani, Scott and Rachel with Moxy. A night shift, so these are the only people crossing anything \u2014 the lawns are empty and the sidewalk is not.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "people": [
+        "garret",
+        "sonya"
+      ],
+      "dog": "lani"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "people": [
+        "scott",
+        "rachel"
+      ],
+      "dog": "moxy"
+    }
+  ],
   "story": [
     "Second week. People are starting to recognise the clipboard.",
     "Two addresses on today's route you have already ruled on. The file will tell you which.",

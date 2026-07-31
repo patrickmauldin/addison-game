@@ -13,6 +13,17 @@
   "verdict_mode": "notice",
   "_teaching": "Clutter arrives (R-107) and the bins have LINGERED — Sunday is four days past the window, and one address has had them out since Wednesday. Also the first person bounty: a face on a notice you have to recognise in the street.",
   "briefing": "Sunday. Article XII is live from today — accumulated junk and debris. Containers have been at the curb on one of these since Wednesday, which the file will show you.",
+  "_cameos": "CJ and Liz with Chaz, on the shift after the one where he was missing. Finding the cat on Shift 2 and then meeting the couple he belongs to is the payoff for having read the notice.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "people": [
+        "cj",
+        "liz"
+      ],
+      "dog": "chaz"
+    }
+  ],
   "story": [
     "Sunday round. Nobody expects you on a Sunday, which is presumably why the board schedules one.",
     "Article XII joins the list today: clutter. Neatly stacked material for a live project is not an accumulation. A sofa is.",

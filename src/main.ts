@@ -91,10 +91,18 @@ type LevelSpec = {
   level_id: number;
   weather: string;
   /**
-   * Named walkers who pass one lot on this level. Authored, not rolled — a
-   * cameo that might not happen is not a cameo. See makeCameo.
+   * Named residents pinned to an address on this level. Authored, not rolled —
+   * a cameo that might not happen is not a cameo.
+   *
+   * Two shapes, and a lot may use either:
+   *
+   *   people + dog   they walk past that lot on the sidewalk (see makeCameo)
+   *   animal         that animal is the one loose in the yard (see makeAnimal)
+   *
+   * Anything a level does not pin stays random, so the street is still mostly
+   * strangers and the named faces are the ones you come to know.
    */
-  cameo?: { lot_id: string; people: string[]; dog?: string };
+  cameos?: { lot_id: string; people?: string[]; dog?: string; animal?: string }[];
   /**
    * A night shift. Authored per level rather than derived from the number: the
    * intent is roughly every couple of shifts, but which ones is a pacing
@@ -445,6 +453,8 @@ let assets: SceneAssets = { sprites: new Map() };
 let currentCanvas: HTMLCanvasElement | null = null;
 /** The same scene with only the props kept, for depth-ordering against people. */
 let currentProps: HTMLCanvasElement | null = null;
+/** The lit part of this lot's house, drawn back over the night wash. */
+let currentGlow: HTMLCanvasElement | null = null;
 let sliding = false;
 /**
  * The resident on this lot, if any. Null on lots that have nobody out.
@@ -532,6 +542,38 @@ function renderToCanvas(lot: LotSpec, worldX: number): { rl: RenderedLot; cv: HT
  * Color comes from the composited scene rather than the source sprite, so the
  * prop keeps the exact pixels it was drawn with; only the alpha is restored.
  */
+/**
+ * The glowing part of a house variant, lifted back out of the finished scene.
+ *
+ * The night wash goes over everything, which is right for a lawn and wrong for
+ * a string of lights — the whole point of lights is that the dark does not
+ * land on them. Those pixels are already identified: stampVariant claimed them
+ * in the id buffer, so this is a lookup rather than a second diff.
+ *
+ * Returns null when the lot has no glowing variant, which is almost always.
+ */
+function glowLayerFor(rl: RenderedLot, lot: LotSpec): HTMLCanvasElement | null {
+  if (!lot.house?.variantGlows || !lot.house.variantId) return null;
+  const obj = rl.objects.find((o) => o.id === lot.house!.variantId);
+  if (!obj) return null;
+  const { w, h } = rl.raster;
+  const cv = document.createElement('canvas');
+  cv.width = w;
+  cv.height = h;
+  const img = new ImageData(w, h);
+  const src = rl.raster.color;
+  const id = rl.raster.id;
+  for (let p = 0, i = 0; p < id.length; p++, i += 4) {
+    if (id[p] !== obj.key) continue;
+    img.data[i] = src[i];
+    img.data[i + 1] = src[i + 1];
+    img.data[i + 2] = src[i + 2];
+    img.data[i + 3] = 255;
+  }
+  cv.getContext('2d')!.putImageData(img, 0, 0);
+  return cv;
+}
+
 function propLayerFor(rl: RenderedLot): HTMLCanvasElement {
   const { w, h } = rl.raster;
   const cv = document.createElement('canvas');
@@ -575,8 +617,20 @@ function stageSize(): { w: number; h: number } {
  */
 function washNight(w: number, h: number): void {
   if (!day.night) return;
-  ctx.fillStyle = 'rgba(5, 11, 25, .75)';
+  ctx.fillStyle = 'rgba(5, 11, 25, .7)';
   ctx.fillRect(0, 0, w, h);
+  /**
+   * ...and then take the dark back off anything that makes its own light.
+   *
+   * Drawn from the layer stampVariant's mask produced, so what shines is
+   * exactly what the artist painted onto the house and nothing else. This is
+   * why the diff is worth keeping after compositing: the same set of pixels
+   * that answers "what did you click" also answers "what is lit".
+   *
+   * Inside washNight rather than beside it, so the pan between lots gets it
+   * too — the wash and the glow are one effect and cannot come apart.
+   */
+  if (currentGlow) ctx.drawImage(currentGlow, 0, 0);
 }
 
 function paint(): void {
@@ -631,21 +685,39 @@ function paint(): void {
  * doing the same thing — the street should feel populated, not randomised on
  * every visit. Their patch is the front lawn between the house and the walk.
  */
+/**
+ * How often the thief is on a given lot at night.
+ *
+ * Rare enough to be an event. On every lawn he would be wallpaper; on none of
+ * them the night round is just a dark day.
+ */
+const THIEF_CHANCE = 0.35;
+
 function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   const rnd = seedFrom(lot.lot_id);
   // A wanted person has to be findable, so on their lot somebody is always out
   // and it is always them. Everywhere else the usual roll applies.
   const wanted = day.bounty?.kind === 'person' && lot.lot_id === bountyLot && bountyCharacter !== null;
-  // After dark almost nobody is out on their own lawn — the street is quiet,
-  // which is most of what makes a night round feel different from a day one.
-  // The roll is drawn either way, so the two sets of lots stay in step and a
-  // resident who is out at night is the same person who was out by day.
-  const stayIn = day.night ? 0.88 : 0.45;
+  /**
+   * AFTER DARK NOBODY IS OUT ON THEIR OWN LAWN.
+   *
+   * Not "almost nobody" — nobody. Residents are in for the night, and the only
+   * figure crossing a yard is somebody who has no business in it. That is what
+   * makes a night round read differently: a person on the grass stops being
+   * scenery and becomes the thing you noticed. The sidewalk still has traffic,
+   * so the street is quiet rather than abandoned.
+   *
+   * The bounty is the one exception. A wanted face has to be findable, so if a
+   * night level ever carries a person bounty they are still out.
+   */
+  const prowling = day.night && !wanted;
+  const stayIn = day.night ? 1 - THIEF_CHANCE : 0.45;
   if (!wanted && rnd() < stayIn) return null; // nobody home, or nobody outside
   // Out working, and with what. Drawn from a SEPARATE seed rather than the next
   // number in this stream, so adding tools did not reshuffle who stands where.
+  // A prowler carries nothing: he is not out doing yard work.
   const trnd = seedFrom(`${lot.lot_id}:tool`);
-  const tool = trnd() < 0.4 ? Math.floor(trnd() * TOOL_NAMES.length) : null;
+  const tool = prowling ? null : trnd() < 0.4 ? Math.floor(trnd() * TOOL_NAMES.length) : null;
   const L = rl.layout;
   const top = L.house.y + L.house.h * 0.82;
   const bottom = L.walkTop - 14;
@@ -669,7 +741,10 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   }
   const speed = L.house.w * 0.085;
   // Weighted, not uniform — see pickCharacter for why the skin mix depends on it.
-  const character = wanted ? bountyCharacter! : pickCharacter(rnd);
+  // At night it is always the same man, and he is not drawn from the street.
+  const character = wanted ? bountyCharacter!
+    : prowling ? characterNamed('thief')
+      : pickCharacter(rnd);
   // Somebody out with a hoe is working a patch of yard, not touring it. Speed
   // zero rather than a separate stationary type: the walker still keeps time,
   // which is what the tool animation cuts its frames from.
@@ -677,9 +752,11 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
     tool === null ? speed : 0);
   const work = tool === null ? null : new ToolWork(tool, seedFrom(`${lot.lot_id}:work`));
   // Not everybody has anything to say. Two thirds do; the rest just get on
-  // with it, which is what stops the street sounding like a chorus.
+  // with it, which is what stops the street sounding like a chorus. The prowler
+  // says nothing at all — the owner lines are all about MY fence, MY lawn.
   const brnd = seedFrom(`${lot.lot_id}:bark`);
-  const bark = brnd() < 0.66 ? new BarkState('owner', brnd, 1 + brnd() * 3) : null;
+  const bark = prowling ? null
+    : brnd() < 0.66 ? new BarkState('owner', brnd, 1 + brnd() * 3) : null;
   return { walker, work, bark };
 }
 
@@ -711,9 +788,14 @@ function barkContextFor(lot: LotSpec): BarkContext {
  */
 function makeAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Walker } | null {
   const rnd = seedFrom(`${lot.lot_id}:animal`);
+  // A level can name the animal on a lot, in which case it is there every time
+  // rather than a third of the time — the roll is still drawn so that pinning
+  // one lot does not shift the wander of any other.
+  const pinned = cameoOn(lot.lot_id)?.animal;
+  const rolled = rnd() < (day.night ? 0.6 : 0.35);
   // More of them after dark, not fewer: the lawns have emptied of people, and
   // wildlife on an empty street is the whole point of running a round at night.
-  if (rnd() >= (day.night ? 0.6 : 0.35)) return null;
+  if (!pinned && !rolled) return null;
   const L = rl.layout;
   const top = L.house.y + L.house.h * 0.8;
   const bottom = L.walkTop - 10;
@@ -722,8 +804,9 @@ function makeAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Wal
   // Drawing from the allowed list rather than rolling over every row keeps the
   // roll in the same place in the stream whichever set is in play.
   const abroad = animalsAbroad(day.night === true);
+  const pick = Math.floor(rnd() * abroad.length);
   return {
-    which: abroad[Math.floor(rnd() * abroad.length)],
+    which: pinned ? animalNamed(pinned) : abroad[pick],
     // Slower than a person and with the Walker's own habit of stopping, which
     // between them is most of what reads as "animal" rather than "small person".
     walker: new Walker(0, { x0: L.w * 0.06, x1: L.w * 0.94, y0: top, y1: bottom }, rnd, L.house.w * 0.05),
@@ -777,6 +860,11 @@ function makeTraffic(lot: LotSpec, rl: RenderedLot, taken: number[] = []): Passe
   return out;
 }
 
+/** Whatever this level pins to an address, if anything. */
+function cameoOn(lotId: string): NonNullable<LevelSpec['cameos']>[number] | undefined {
+  return day.cameos?.find((c) => c.lot_id === lotId);
+}
+
 /**
  * The named walkers, on the one lot a level says they pass.
  *
@@ -791,13 +879,13 @@ function makeTraffic(lot: LotSpec, rl: RenderedLot, taken: number[] = []): Passe
  * they are, and the whole point is that it should not look like it.
  */
 function makeCameo(lot: LotSpec, rl: RenderedLot): Passerby[] {
-  const c = day.cameo;
-  if (!c || c.lot_id !== lot.lot_id) return [];
+  const c = cameoOn(lot.lot_id);
+  if (!c?.people?.length) return [];
   const walk = sidewalkOf(rl);
   const depth = walk.bottom - walk.top;
   const speed = walk.w * 0.06;
 
-  const people = c.people.map((name: string, i: number) => ({
+  const people = c.people.map((name, i) => ({
     character: characterNamed(name),
     // A stride apart, so they read as walking together rather than as one
     // figure with a rendering fault.
@@ -924,6 +1012,7 @@ function claimBounty(b: Bounty, mark: { x: number; y: number }): void {
     rendered = built.rl;
     currentCanvas = built.cv;
     currentProps = propLayerFor(rendered);
+    currentGlow = glowLayerFor(rendered, current);
     centroidCache.clear();
   }
   syncFlyer();
@@ -1043,6 +1132,7 @@ window.addEventListener('resize', () => {
     rendered = built.rl;
     currentCanvas = built.cv;
     currentProps = propLayerFor(rendered);
+    currentGlow = glowLayerFor(rendered, current);
     centroidCache.clear();
     // Rebuild the resident too. Their patch of lawn is derived from the house
     // rect, so a layout change invalidates it — and the walker keeps walking to
@@ -1096,6 +1186,7 @@ function loadLot(index: number): void {
   rendered = built.rl;
   currentCanvas = built.cv;
   currentProps = propLayerFor(rendered);
+  currentGlow = glowLayerFor(rendered, current);
   flagged = new Set();
   centroidCache.clear();
   stamping = false;
@@ -1689,6 +1780,7 @@ function slideToLot(index: number): void {
     rendered = next.rl;
     currentCanvas = next.cv;
     currentProps = propLayerFor(rendered);
+    currentGlow = glowLayerFor(rendered, current);
     flagged = new Set();
     centroidCache.clear();
     stamping = false;

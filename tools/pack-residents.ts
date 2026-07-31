@@ -141,6 +141,11 @@ const CAST: Outfit[] = [
   { name: 'rachel',         skin: 'skin4', hair: 'style1_light_brown', tops: ['tshirt_white'],                      bottom: 'shorts_blue',       feet: 'boots_brown', cameo: true },
   { name: 'cj',             skin: 'skin3', hair: 'style3_dark_brown',  tops: ['long_sleeve_white'],                 bottom: 'pants_green',       feet: 'boots_brown', cameo: true }, // + liz, cat-chaz
   { name: 'liz',            skin: 'skin5', hair: 'style1_light_brown', tops: ['long_sleeve_green'],                 bottom: 'short_skirt_white', feet: 'boots_brown', cameo: true },
+
+  // Black head to foot. The pack shipped no black at all until these four
+  // layers arrived — one hair, one top, one bottom, one pair of boots — so this
+  // is the only outfit that can be built in it, and every piece is spoken for.
+  { name: 'thief',          skin: 'skin3', hair: 'style4_black',        tops: ['long_sleeve_black'],                 bottom: 'pants_black',       feet: 'boots_black',  cameo: true },
 ];
 
 /**

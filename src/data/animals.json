@@ -7,6 +7,8 @@
   "dirs": 4,
   "animals": [
     "pablo",
+    "tabby",
+    "tuxedo",
     "gus",
     "armadillo",
     "raccoon",
@@ -18,6 +20,8 @@
   ],
   "kinds": [
     "cat",
+    "cat",
+    "cat",
     "dog",
     "armadillo",
     "raccoon",
@@ -28,6 +32,8 @@
     "cat"
   ],
   "nocturnal": [
+    false,
+    false,
     false,
     false,
     true,
@@ -42,6 +48,8 @@
     true,
     true,
     true,
+    false,
+    true,
     true,
     false,
     false,
@@ -55,6 +63,18 @@
       "y0": 14,
       "w": 32,
       "h": 28
+    },
+    {
+      "x0": 14,
+      "y0": 13,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "x0": 14,
+      "y0": 15,
+      "w": 32,
+      "h": 29
     },
     {
       "x0": 15,

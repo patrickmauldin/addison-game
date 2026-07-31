@@ -39,11 +39,19 @@ const FALLBACK: Record<string, string[]> = { north: ['north-east', 'north-west']
  */
 const ANIMALS = [
   { id: 'pablo', folder: 'cat-pablo', kind: 'cat', nocturnal: false, ambient: true },
-  { id: 'gus', folder: 'dog-gus', kind: 'dog', nocturnal: false, ambient: true },
+  // Two more strays, unnamed. Once the dogs all became somebody's, Pablo was
+  // the only animal loose by daylight and turned up on half the street looking
+  // like a rendering fault. Three cats is a neighbourhood; one is a bug.
+  { id: 'tabby', folder: 'cat2', kind: 'cat', nocturnal: false, ambient: true },
+  { id: 'tuxedo', folder: 'cat3', kind: 'cat', nocturnal: false, ambient: true },
+  { id: 'gus', folder: 'dog-gus', kind: 'dog', nocturnal: false, ambient: false },
   { id: 'armadillo', folder: 'armadillo', kind: 'armadillo', nocturnal: true, ambient: true },
   { id: 'raccoon', folder: 'raccoon', kind: 'raccoon', nocturnal: true, ambient: true },
-  // Juniper belongs to somebody and walks with them. Not ambient: she is never
-  // one of the strays that turns up loose in a yard.
+  // NAMED PETS ARE NEVER STRAYS. Every one of these belongs to a couple and is
+  // out either with them or, if a notice has gone up, lost — in which case it
+  // roams and has to be found. What none of them ever is is ambient wildlife
+  // turning up loose in a stranger's yard, which is what `ambient` gates.
+  // Pablo is the exception and stays ambient: he is the neighbourhood's cat.
   { id: 'juniper', folder: 'dog-juniper', kind: 'dog', nocturnal: false, ambient: false },
   { id: 'pellet', folder: 'dog-pellet', kind: 'dog', nocturnal: false, ambient: false },
   { id: 'lani', folder: 'dog-lani', kind: 'dog', nocturnal: false, ambient: false },

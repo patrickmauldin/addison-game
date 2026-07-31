@@ -28,7 +28,8 @@
     "scott",
     "rachel",
     "cj",
-    "liz"
+    "liz",
+    "thief"
   ],
   "skins": [
     "skin5",
@@ -52,7 +53,8 @@
     "skin4",
     "skin4",
     "skin3",
-    "skin5"
+    "skin5",
+    "skin3"
   ],
   "pick": [
     0.10625,
@@ -65,6 +67,7 @@
     0.10625,
     0.10625,
     0.075,
+    0,
     0,
     0,
     0,

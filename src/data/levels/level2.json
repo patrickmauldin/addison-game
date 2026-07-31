@@ -12,6 +12,25 @@
   "verdict_mode": "notice",
   "_teaching": "Bins arrive on the one day they are legal. Every bin on this level is compliant — the player learns the object before they learn to cite it, and Level 3 (Friday) is where the same object becomes a finding. Also the first bounty: a missing-cat notice, with the cat somewhere on the round.",
   "briefing": "Collection day. Containers at the curb are within the window today. Weeds and fence condition remain live.",
+  "_cameos": "Jake and Sam walk Gus past 4400; Casey and Jess walk Pellet past 4412. Second shift, second pair of couples \u2014 the street fills up with people the player has seen before rather than with more strangers.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "people": [
+        "jake",
+        "sam"
+      ],
+      "dog": "gus"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "people": [
+        "casey",
+        "jess"
+      ],
+      "dog": "pellet"
+    }
+  ],
   "story": [
     "Wednesday. Collection day on Bonerville, so half the street has bins at the curb.",
     "That is permitted today. Article IX allows Tuesday and Wednesday. It does not allow Thursday, and residents are aware of this.",

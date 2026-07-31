@@ -12,15 +12,21 @@
   "verdict_mode": "notice",
   "_teaching": "Two rules, four lots, and nothing you do can cost anybody money. The arc is: here is a violation - here is a thing you can click that is NOT one - here is the second rule - now tell them apart on one lot.",
   "briefing": "First day. Bonerville, outer loop. Two articles are live — weeds and fence condition. Nothing else on that street is your business, however it looks.",
-  "_cameo": "Named walkers, pinned to one address rather than rolled. They pass 4404 every time Shift 1 is played, which is what makes them people the player recognises rather than more traffic.",
-  "cameo": {
-    "lot_id": "bonerville_02",
-    "people": [
-      "patrick",
-      "savanna"
-    ],
-    "dog": "juniper"
-  },
+  "_cameos": "Named residents pinned to addresses rather than rolled. Pablo is on 4400 and Patrick, Savanna and Juniper pass 4404 every time Shift 1 is played, which is what makes them people the player recognises rather than more traffic.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "animal": "pablo"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "people": [
+        "patrick",
+        "savanna"
+      ],
+      "dog": "juniper"
+    }
+  ],
   "story": [
     "Welcome to the Addison Master Community Association. You are the Compliance Inspector. There is one.",
     "You're at 2118 Eyezeta, yes? Good. Short commute.",
