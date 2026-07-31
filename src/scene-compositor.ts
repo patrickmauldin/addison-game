@@ -41,7 +41,21 @@ export type LotSpec = {
   lot_id: string;
   address: string;
   street: string;
-  house?: { sprite?: string; mirror?: boolean };
+  house?: {
+    sprite?: string;
+    mirror?: boolean;
+    /**
+     * A repainted version of the same house — `house1-window` for the smashed
+     * pane, `house1-christmas` for the lights. Drawn INSTEAD of the base, with
+     * the pixels that differ from it becoming the click target. See
+     * stampVariant: nothing about where the change is has to be authored.
+     */
+    variant?: string;
+    /** What the Findings pad calls the changed part. Required with `variant`. */
+    variantLabel?: string;
+    /** Object id for the changed part, so truth blocks can name it. */
+    variantId?: string;
+  };
   props: PropSpec[];
   truth: {
     violations: Array<{ object: string; article: string; why: string }>;
@@ -132,6 +146,75 @@ function blitScaled(
       const c: Rgb = [rr / n / alpha, gg / n / alpha, bb / n / alpha];
       if (opaque) r.px(tx, ty, c);
       else r.blendPx(tx, ty, c, alpha);
+    }
+  }
+}
+
+/**
+ * How far a channel must move before a pixel counts as REPAINTED.
+ *
+ * The houses ship as JPEG, so a re-export of the same picture still differs
+ * everywhere by a little: on house1 over a million pixels differ by something,
+ * but under five thousand differ by more than this. The real edits — smashed
+ * glass, a string of lights — clear 64. The gap between the noise floor and the
+ * signal is wide enough that the exact number does not matter much; it only has
+ * to sit inside it.
+ */
+const VARIANT_THRESHOLD = 24;
+
+/**
+ * Give the repainted part of a house its own click target.
+ *
+ * The variant is a whole house, identical to the base except for the thing that
+ * is wrong with it. Rather than authoring where the broken window is — six
+ * numbers per house that go stale the moment the art is re-exported, and which
+ * would not describe a string of lights at all — the CHANGED PIXELS are the
+ * violation. Diffing the two images finds them exactly, for any house and any
+ * future repaint, with nothing measured by hand.
+ *
+ * Runs as a second pass over the same box filter the house was drawn with, so
+ * the destination pixels it stamps are exactly the ones the variant painted
+ * differently. The colour is left alone — only the id buffer is written.
+ */
+function stampVariant(
+  r: Raster,
+  base: Bitmap,
+  variant: Bitmap,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  flipX: boolean,
+): void {
+  if (base.w !== variant.w || base.h !== variant.h) return;
+  const sxr = variant.w / dw;
+  const syr = variant.h / dh;
+  for (let y = 0; y < dh; y++) {
+    const ty = dy + y;
+    if (ty < 0 || ty >= r.h) continue;
+    const sy0 = Math.floor(y * syr);
+    const sy1 = Math.max(sy0 + 1, Math.floor((y + 1) * syr));
+    for (let x = 0; x < dw; x++) {
+      const tx = dx + x;
+      if (tx < 0 || tx >= r.w) continue;
+      const srcCol = flipX ? dw - 1 - x : x;
+      const sx0 = Math.floor(srcCol * sxr);
+      const sx1 = Math.max(sx0 + 1, Math.floor((srcCol + 1) * sxr));
+      // ANY source pixel in the box having changed claims the destination
+      // pixel. A light strand is a couple of source pixels wide and would be
+      // averaged away by asking for the mean to have moved.
+      let changed = false;
+      for (let j = sy0; j < sy1 && j < variant.h && !changed; j++)
+        for (let i = sx0; i < sx1 && i < variant.w; i++) {
+          const s = (j * variant.w + i) << 2;
+          if (Math.abs(variant.rgba[s] - base.rgba[s]) > VARIANT_THRESHOLD
+            || Math.abs(variant.rgba[s + 1] - base.rgba[s + 1]) > VARIANT_THRESHOLD
+            || Math.abs(variant.rgba[s + 2] - base.rgba[s + 2]) > VARIANT_THRESHOLD) {
+            changed = true;
+            break;
+          }
+        }
+      if (changed) r.stampId(tx, ty);
     }
   }
 }
@@ -280,9 +363,23 @@ export function renderLot(
 
   // House. Its own lawn is baked in and matches the tile closely enough that
   // the join is invisible, so it blits opaque with no keying.
-  const house = spec.house?.sprite ? S.get(spec.house.sprite) : undefined;
+  const baseHouse = spec.house?.sprite ? S.get(spec.house.sprite) : undefined;
+  const variant = spec.house?.variant ? S.get(spec.house.variant) : undefined;
+  // The variant IS the house when there is one — same picture, repainted.
+  const house = variant ?? baseHouse;
   if (house) {
     blitScaled(r, house, L.house.x, L.house.y, L.house.w, L.house.h, true, mirror);
+    // Then hand the changed pixels their own id, so the broken window or the
+    // strung lights can be clicked and cited like any prop.
+    if (variant && baseHouse && spec.house?.variantId) {
+      begin({
+        id: spec.house.variantId,
+        label: spec.house.variantLabel ?? 'Dwelling',
+        flaggable: true,
+      });
+      stampVariant(r, baseHouse, variant, L.house.x, L.house.y, L.house.w, L.house.h, mirror);
+      scenery();
+    }
   } else {
     // Hatched placeholder — can never be mistaken for finished art.
     const c = PALETTE.concrete_weathered;

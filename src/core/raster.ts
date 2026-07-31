@@ -131,6 +131,20 @@ export class Raster {
     if (a >= idCut) this.id[p] = this.current;
   }
 
+  /**
+   * Claim a pixel for the current object WITHOUT touching its colour.
+   *
+   * For a click target that is already painted — the repainted part of a house
+   * variant, whose pixels came off the variant image and are correct as they
+   * are. Only the id buffer moves.
+   */
+  stampId(x: number, y: number): void {
+    x = Math.floor(x);
+    y = Math.floor(y);
+    if (x < 0 || y < 0 || x >= this.w || y >= this.h) return;
+    this.id[y * this.w + x] = this.current;
+  }
+
   /** Read the object id under a pixel. Exact — nothing under it means nothing. */
   idAt(x: number, y: number): number {
     if (x < 0 || y < 0 || x >= this.w || y >= this.h) return 0;

@@ -18,7 +18,17 @@
     "tshirt-white",
     "skirt-purple",
     "patrick",
-    "savanna"
+    "savanna",
+    "jake",
+    "sam",
+    "casey",
+    "jess",
+    "garret",
+    "sonya",
+    "scott",
+    "rachel",
+    "cj",
+    "liz"
   ],
   "skins": [
     "skin5",
@@ -32,7 +42,17 @@
     "skin3",
     "skin2",
     "skin5",
-    "skin4"
+    "skin4",
+    "skin5",
+    "skin4",
+    "skin4",
+    "skin5",
+    "skin4",
+    "skin4",
+    "skin4",
+    "skin4",
+    "skin3",
+    "skin5"
   ],
   "pick": [
     0.10625,
@@ -45,6 +65,16 @@
     0.10625,
     0.10625,
     0.075,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
     0,
     0
   ],
@@ -85,7 +115,7 @@
   ],
   "centerX": 20,
   "ground": 34,
-  "contentH": 28,
+  "contentH": 29,
   "crop": {
     "x": 4,
     "y": 5,

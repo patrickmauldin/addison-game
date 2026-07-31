@@ -20,11 +20,12 @@
   "bounty": {
     "id": "chaz",
     "name": "Chaz",
-    "kind": "prop",
-    "headline": "Missing",
-    "note": "Belongs to the Robbersons",
+    "kind": "animal",
+    "animal": "chaz",
     "sprite": "animals/cat-chaz/walking/rotations/south",
-    "scale": 2.8,
+    "_sprite": "The PHOTO on the notice, not how he is drawn in the yard — that comes off the packed animal sheet via `animal`. A still frame is right for a photograph and wrong for a cat you are meant to spot moving.",
+    "headline": "Missing",
+    "note": "Belongs to CJ and Liz",
     "label": "Cat, gray — answers to Chaz",
     "reward": 25,
     "_placement": "Seeded per level across the lots listed below. Never the first lot of the round: the player needs to have read the notice before they can be expected to have found him.",
@@ -34,7 +35,8 @@
       "bonerville_03",
       "bonerville_04",
       "bonerville_05"
-    ]
+    ],
+    "_roams": "He WANDERS the lot rather than sitting in a yard slot. A still cat is a spot-the-difference; one that moves has to be found — and the lot he is on may also have its own animal out, which is the whole point."
   },
   "lots": [
     {

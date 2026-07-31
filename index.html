@@ -147,7 +147,7 @@
          and a notice that eats clicks over the scene would be a trap. */
       #flyer {
         position: absolute; top: 14px; left: 14px; z-index: 6;
-        pointer-events: none; user-select: none; width: 132px;
+        pointer-events: none; user-select: none; width: 152px;
       }
       #flyer[hidden] { display: none; }
       #flyer-paper {
@@ -379,6 +379,13 @@
         padding: 0 44px 0 18px;
         position: relative;
         image-rendering: pixelated;
+        /* Put down at a slight angle, like the calendar — and leaning the other
+           way to it, so the desk reads as things set down at different moments
+           rather than one systematic skew. The margin is the room the corners
+           need once it is off square; without it they crowd the cards above and
+           below, which sit on a 10px gap. */
+        transform: rotate(-2deg);
+        margin: 5px 0;
       }
       /* The block of leaves, sitting BEHIND the boards and sticking out on the
          fore edge. One object with its own navy outline rather than a stack of
@@ -1165,6 +1172,31 @@
         detail.innerHTML = '<code>' + String((e && e.message) || e) + '</code>';
       });
     </script>
-    <script type="module" src="./dist/bundle.js"></script>
+    <script>
+      /**
+       * Load the bundle with a cache-buster, the same way every asset is loaded.
+       *
+       * python -m http.server sends no Cache-Control, so the browser applies
+       * heuristic caching and will happily serve the PREVIOUS build against
+       * freshly-written HTML. That failure is nasty because it does not look
+       * like caching: the symptoms are a feature silently not working, or a
+       * crash on a line that reads correctly, because old code is running
+       * against new markup and data. It has cost real debugging time twice.
+       *
+       * Injected rather than stamped into the tag at build time, so building
+       * does not dirty a tracked file on every run. Millisecond granularity
+       * rather than the seconds main.ts uses for art: a rebuild and a reload
+       * inside the same second is exactly the case that bites.
+       *
+       * A module script added this way still runs after the document is parsed,
+       * which is what the deferred `type="module"` tag it replaced did.
+       */
+      (function () {
+        var s = document.createElement('script');
+        s.type = 'module';
+        s.src = './dist/bundle.js?v=' + Date.now();
+        document.body.appendChild(s);
+      })();
+    </script>
   </body>
 </html>

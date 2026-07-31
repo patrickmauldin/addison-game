@@ -77,6 +77,8 @@ type Outfit = {
   tops: string[];
   bottom: string;
   feet: string;
+  /** 2_Hats, above the hair. The pack ships exactly one: `straw`. */
+  hat?: string;
   /**
    * A named person who turns up as themselves, not as filler.
    *
@@ -120,11 +122,25 @@ const CAST: Outfit[] = [
   { name: 'tshirt-white',   skin: 'skin3', hair: 'style1_red',         tops: ['tshirt_white'],                      bottom: 'shorts_green',      feet: 'boots_grey'  },
   { name: 'skirt-purple',   skin: 'skin2', hair: 'style3_blonde',      tops: ['long_sleeve_purple'],                bottom: 'long_skirt_purple', feet: 'boots_brown' },
 
-  // Named residents. APPENDED, never inserted: a character is referred to by
-  // its index into this table, so slipping a row into the middle would change
-  // who lives on every lot in the game.
-  { name: 'patrick',        skin: 'skin5', hair: 'style3_med_brown',   tops: ['tshirt_white'],                      bottom: 'pants_blue',        feet: 'boots_brown', cameo: true },
-  { name: 'savanna',        skin: 'skin4', hair: 'style1_blonde',      tops: ['sleeveless_blue'],                   bottom: 'short_skirt_blue',  feet: 'boots_grey',  cameo: true },
+  // Named residents, from assets/characters.rtf. APPENDED, never inserted: a
+  // character is referred to by its INDEX into this table, so slipping a row
+  // into the middle would change who lives on every lot in the game.
+  //
+  // Six couples, each with a dog. The pets are not built here — they live in
+  // assets/animals/ and are the animal packer's business — but they are noted
+  // beside their owners so the pairing has one home rather than two.
+  { name: 'patrick',        skin: 'skin5', hair: 'style3_med_brown',   tops: ['tshirt_white'],                      bottom: 'pants_blue',        feet: 'boots_brown', cameo: true }, // + savanna, dog-juniper
+  { name: 'savanna',        skin: 'skin4', hair: 'style1_blonde',      tops: ['sleeveless_blue'],                   bottom: 'short_skirt_white', feet: 'boots_grey',  cameo: true },
+  { name: 'jake',           skin: 'skin5', hair: 'style4_light_brown', tops: ['overalls_blue'],                     bottom: 'pants_blue',        feet: 'boots_brown', hat: 'straw', cameo: true }, // + sam, dog-gus
+  { name: 'sam',            skin: 'skin4', hair: 'style2_blonde',      tops: ['sleeveless_green'],                  bottom: 'short_skirt_white', feet: 'boots_brown', cameo: true },
+  { name: 'casey',          skin: 'skin4', hair: 'style3_dark_brown',  tops: ['tshirt_red'],                        bottom: 'shorts_grey',       feet: 'boots_brown', cameo: true }, // + jess, dog-pellet
+  { name: 'jess',           skin: 'skin5', hair: 'style2_dark_brown',  tops: ['sleeveless_purple'],                 bottom: 'short_skirt_white', feet: 'boots_brown', cameo: true },
+  { name: 'garret',         skin: 'skin4', hair: 'style3_dark_brown',  tops: ['overalls_grey'],                     bottom: 'pants_grey',        feet: 'boots_brown', cameo: true }, // + sonya, dog-lani
+  { name: 'sonya',          skin: 'skin4', hair: 'style1_dark_brown',  tops: ['tshirt_purple'],                     bottom: 'shorts_white',      feet: 'boots_grey',  cameo: true },
+  { name: 'scott',          skin: 'skin4', hair: 'style4_med_brown',   tops: ['long_sleeve_brown'],                 bottom: 'pants_grey',        feet: 'boots_brown', cameo: true }, // + rachel, dog-moxy
+  { name: 'rachel',         skin: 'skin4', hair: 'style1_light_brown', tops: ['tshirt_white'],                      bottom: 'shorts_blue',       feet: 'boots_brown', cameo: true },
+  { name: 'cj',             skin: 'skin3', hair: 'style3_dark_brown',  tops: ['long_sleeve_white'],                 bottom: 'pants_green',       feet: 'boots_brown', cameo: true }, // + liz, cat-chaz
+  { name: 'liz',            skin: 'skin5', hair: 'style1_light_brown', tops: ['long_sleeve_green'],                 bottom: 'short_skirt_white', feet: 'boots_brown', cameo: true },
 ];
 
 /**
@@ -193,6 +209,7 @@ function build(o: Outfit, withTool: boolean): Bitmap {
   // tops are listed highest-first, so paint them back to front
   for (const t of [...o.tops].reverse()) over(sheet, load(`4_Tops/Tops_${t}.png`));
   over(sheet, load(`3_Hair/Hair_${o.hair}.png`));
+  if (o.hat) over(sheet, load(`2_Hats/Hats_${o.hat}.png`));
   if (withTool) over(sheet, load('1_Tools/Tools_basic.png'));
   return sheet;
 }

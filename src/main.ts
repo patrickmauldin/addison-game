@@ -61,13 +61,26 @@ const LEVELS = [level1, level2, level3, level4] as unknown as LevelSpec[];
  */
 type Bounty = {
   id: string;
-  kind?: 'prop' | 'person';
+  /**
+   * What is being looked for.
+   *
+   *  prop    — a thing standing still in a yard, drawn from the scene.
+   *  person  — a face on the notice, walking a lot as a resident.
+   *  animal  — a pet, ROAMING the lot it is hiding on. Sitting still made it a
+   *            spot-the-difference; a cat that moves has to be found.
+   */
+  kind?: 'prop' | 'person' | 'animal';
+  /** animal only: the id in the packed animal sheet — how it moves in the yard. */
+  animal?: string;
   /** MISSING for a pet, WANTED for a person. */
   headline?: string;
   name: string;
   /** The line under the reward: who owns it, or where they are seen. */
   note: string;
-  /** prop only. */
+  /**
+   * The picture on the NOTICE. A prop is also drawn from it in the yard; an
+   * animal is not — it walks off the packed sheet, and this is only its photo.
+   */
   sprite?: string;
   label: string;
   reward: number;
@@ -249,7 +262,7 @@ function placeBounty(): void {
 /** The bounty prop, if it is hiding on this lot and has not been claimed. */
 function bountyPropFor(lot: LotSpec): PropSpec | null {
   const b = day.bounty;
-  if (!b || b.kind === 'person' || !b.sprite) return null;
+  if (!b || b.kind === 'person' || b.kind === 'animal' || !b.sprite) return null;
   if (lot.lot_id !== bountyLot || claimed.has(b.id)) return null;
   // Seeded off the lot so he is in the same place every time you visit it.
   const rnd = seedFrom(`${lot.lot_id}:${b.id}`);
@@ -309,7 +322,21 @@ const TALL_GRASS = ['grass1', 'grass2', 'grass3', 'grass4'];
  * between folders should not rewrite every level. assetDir() is the one place
  * that knows the difference.
  */
-const HOUSE_SPRITES = ['house1', 'house2', 'house3', 'house4', 'house5', 'house6'];
+const HOUSE_PLANS = ['house1', 'house2', 'house3', 'house4', 'house5', 'house6'];
+
+/**
+ * Repainted versions of each plan — the same house with one thing wrong.
+ *
+ * Loaded up front rather than on demand: the compositor needs both the base and
+ * the variant in hand to work out which pixels changed, and it composites
+ * synchronously. All eighteen house files together are about 4.5MB, which is
+ * what re-exporting the variants as JPEG bought.
+ */
+const HOUSE_VARIANTS = ['window', 'christmas'];
+const HOUSE_SPRITES = [
+  ...HOUSE_PLANS,
+  ...HOUSE_PLANS.flatMap((h) => HOUSE_VARIANTS.map((v) => `${h}-${v}`)),
+];
 
 /** Subfolder for a sprite key, '' for the ones at the top of assets/. */
 function assetDir(name: string): string {
@@ -440,6 +467,14 @@ type Escort = Passerby & { which: number };
 let escort: Escort | null = null;
 /** An animal pottering about this lot, if one turned up. */
 let animal: { which: number; walker: Walker } | null = null;
+/**
+ * The bounty pet, on the lot it is hiding on.
+ *
+ * Its own slot rather than reusing `animal`, because a lot can have both — the
+ * resident's cat wandering the lawn AND the missing one the notice is about,
+ * which is exactly the confusion that makes the search worth doing.
+ */
+let bountyAnimal: { which: number; walker: Walker } | null = null;
 /** What the barks on this lot are allowed to gate on. Rebuilt per lot. */
 let barkCtx: BarkContext = { facts: new Set() };
 let walkerLast = 0;
@@ -695,6 +730,28 @@ function makeAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Wal
   };
 }
 
+/**
+ * The missing pet, roaming the lot it is on.
+ *
+ * Same wander as any stray — it is a cat, not a quest marker — but seeded off
+ * the lot AND the bounty so adding one did not move the resident's own animal.
+ * Gone the moment it is claimed: the tick left behind is the receipt.
+ */
+function makeBountyAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Walker } | null {
+  const b = day.bounty;
+  if (!b || b.kind !== 'animal' || !b.animal) return null;
+  if (lot.lot_id !== bountyLot || claimed.has(b.id)) return null;
+  const L = rl.layout;
+  const top = L.house.y + L.house.h * 0.8;
+  const bottom = L.walkTop - 10;
+  if (bottom - top < 24) return null;
+  const rnd = seedFrom(`${lot.lot_id}:${b.id}:roam`);
+  return {
+    which: animalNamed(b.animal),
+    walker: new Walker(0, { x0: L.w * 0.06, x1: L.w * 0.94, y0: top, y1: bottom }, rnd, L.house.w * 0.05),
+  };
+}
+
 /** The band a passerby's feet may land in. */
 function sidewalkOf(rl: RenderedLot): Sidewalk {
   return { w: rl.layout.w, top: rl.layout.walkTop, bottom: rl.layout.roadTop };
@@ -835,14 +892,34 @@ function drawAnimal(x: number, y: number, sx: number, sy: number, flip: boolean)
  * id buffer: findable again, and still hoverable after supposedly running off.
  * A person just stops being wanted; they carry on living there.
  */
+/**
+ * How long the tick stays on the lot after a claim.
+ *
+ * It is a confirmation that the click landed, not a marker: leaving it up for
+ * the round put a permanent green tick in a yard the player had already dealt
+ * with. The one on the NOTICE stays — that is the receipt, and it belongs with
+ * the thing it is a receipt for.
+ */
+const BOUNTY_TICK_MS = 1800;
+let bountyTickTimer = 0;
+
 function claimBounty(b: Bounty, mark: { x: number; y: number }): void {
   bountyMark = mark;
+  clearTimeout(bountyTickTimer);
+  bountyTickTimer = setTimeout(() => {
+    bountyMark = null;
+    // Explicit repaint: with the claimed animal gone, the lot may have nothing
+    // moving on it, and then no frame would be asked for.
+    paint();
+  }, BOUNTY_TICK_MS) as unknown as number;
   claimed.add(b.id);
   bountyPay += b.reward;
   saveFile.inspector.pay += b.reward;
   save(saveFile);
   sound.play('money');
-  if (b.kind !== 'person') {
+  // Only a PROP is baked into the scene, so only a prop needs the scene
+  // rebuilding to take it back out. A person or a pet is drawn over the top.
+  if (b.kind !== 'person' && b.kind !== 'animal') {
     const built = renderToCanvas(current, routeIndex * stageSize().w);
     rendered = built.rl;
     currentCanvas = built.cv;
@@ -882,6 +959,11 @@ function drawWalker(): void {
   }
   if (animal && animalSheet.complete && animalSheet.naturalWidth) {
     const c = animal;
+    const f = animalFrameFor(c.which, c.walker);
+    queue.push({ y: c.walker.y, draw: () => drawAnimal(c.walker.x, c.walker.y, f.sx, f.sy, f.flip) });
+  }
+  if (bountyAnimal && animalSheet.complete && animalSheet.naturalWidth) {
+    const c = bountyAnimal;
     const f = animalFrameFor(c.which, c.walker);
     queue.push({ y: c.walker.y, draw: () => drawAnimal(c.walker.x, c.walker.y, f.sx, f.sy, f.flip) });
   }
@@ -926,7 +1008,7 @@ function startWalkerLoop(): void {
   cancelAnimationFrame(walkerRaf);
   // Traffic alone is reason enough to run: a lot can have an empty yard and
   // still have somebody walking past it.
-  if (!resident && !passersby.length && !animal && !escort) return;
+  if (!resident && !passersby.length && !animal && !escort && !bountyAnimal) return;
   walkerLast = performance.now();
   const step = (now: number) => {
     if (sliding) { walkerRaf = requestAnimationFrame(step); return; }
@@ -935,6 +1017,7 @@ function startWalkerLoop(): void {
     resident?.walker.update(dt);
     resident?.work?.update(dt);
     animal?.walker.update(dt);
+    bountyAnimal?.walker.update(dt);
     resident?.bark?.update(dt, barkCtx);
     passersby = stepPassersby(passersby, dt, sidewalkOf(rendered));
     // The dog walks off the edge on the same terms as the people beside her.
@@ -943,7 +1026,7 @@ function startWalkerLoop(): void {
     paint();
     // Once the last of them has gone and there is nobody in the yard there is
     // nothing left moving, so stop asking for frames.
-    if (!resident && !passersby.length && !animal && !escort) return;
+    if (!resident && !passersby.length && !animal && !escort && !bountyAnimal) return;
     walkerRaf = requestAnimationFrame(step);
   };
   walkerRaf = requestAnimationFrame(step);
@@ -967,6 +1050,7 @@ window.addEventListener('resize', () => {
     // roof. Seeded from the lot id, so this is the same person, just re-placed.
     resident = makeWalker(current, rendered);
     animal = makeAnimal(current, rendered);
+    bountyAnimal = makeBountyAnimal(current, rendered);
     // Traffic is REMAPPED, not respawned: anyone who has already walked off has
     // gone for good, and rebuilding from the seed would march them back on.
     passersby = remapPassersby(passersby, wasWalk, sidewalkOf(rendered));
@@ -1025,6 +1109,7 @@ function loadLot(index: number): void {
   barkCtx = barkContextFor(current);
   resident = makeWalker(current, rendered);
   animal = makeAnimal(current, rendered);
+  bountyAnimal = makeBountyAnimal(current, rendered);
   passersby = makeTraffic(current, rendered, resident ? [resident.walker.character] : []);
   startWalkerLoop();
   renderCaseFile(rec);
@@ -1313,13 +1398,18 @@ function personHit(px: number, py: number): number | null {
   return null;
 }
 
-function animalHit(px: number, py: number): boolean {
-  if (!animal) return false;
+/** Rect test against a walking animal. Feet at y, so the body is ABOVE it. */
+function overAnimal(a: { walker: Walker } | null, px: number, py: number): boolean {
+  if (!a) return false;
   const k = ANIMAL_UPSCALE * rendered.layout.scale;
   const w = ANIMALS.frameW * k;
   const h = ANIMALS.frameH * k;
-  const { x, y } = animal.walker;
+  const { x, y } = a.walker;
   return px > x - w / 2 && px < x + w / 2 && py > y - h && py < y;
+}
+
+function animalHit(px: number, py: number): boolean {
+  return overAnimal(animal, px, py);
 }
 
 frame.addEventListener('click', (ev) => {
@@ -1337,6 +1427,27 @@ frame.addEventListener('click', (ev) => {
   // Animals answer, but they are not findings — no mark, nothing recorded.
   // Checked BEFORE the id buffer so a cat standing over a prop still meows
   // rather than silently citing whatever is behind it.
+  /**
+   * The missing pet, tested BEFORE the strays.
+   *
+   * Both are drawn from the same sheet and both wander the same yard, so if the
+   * two overlap the click has to resolve to the one that pays — a player who
+   * has found Chaz and gets a meow out of the neighbour's cat instead would
+   * reasonably conclude the bounty is broken.
+   */
+  const bAnimal = day.bounty;
+  if (bAnimal?.kind === 'animal' && bountyAnimal && !claimed.has(bAnimal.id)
+      && overAnimal(bountyAnimal, p.x, p.y)) {
+    // Its BODY, not its feet. drawAnimal puts the sprite in y-h..y, so the
+    // walker's y is the ground line — centring the tick there hangs half of it
+    // on the grass below the cat.
+    const { x, y } = bountyAnimal.walker;
+    const h = ANIMALS.frameH * ANIMAL_UPSCALE * rendered.layout.scale;
+    bountyAnimal = null;
+    claimBounty(bAnimal, { x, y: y - h / 2 });
+    return;
+  }
+
   if (animalHit(p.x, p.y)) {
     const kind = animalKind(animal!.which);
     // Two barks, so a dog clicked twice does not sound like a loop. The
@@ -1449,10 +1560,12 @@ function gotoLevel(i: number): void {
   claimed.clear();
   bountyPay = 0;
   bountyMark = null;
+  clearTimeout(bountyTickTimer);
   resident = null;
   animal = null;
   passersby = [];
   escort = null;
+  bountyAnimal = null;
   saveFile.inspector.strikes_today = 0;
   stamping = false;
   sliding = false;
@@ -1585,6 +1698,7 @@ function slideToLot(index: number): void {
     barkCtx = barkContextFor(current);
     resident = makeWalker(current, rendered);
     animal = makeAnimal(current, rendered);
+    bountyAnimal = makeBountyAnimal(current, rendered);
     passersby = makeTraffic(current, rendered, resident ? [resident.walker.character] : []);
     startWalkerLoop();
     renderCaseFile(rec);
@@ -1971,6 +2085,7 @@ function startRound(): void {
   claimed.clear();
   bountyPay = 0;
   bountyMark = null;
+  clearTimeout(bountyTickTimer);
   placeBounty();
   syncFlyer();
   syncStampButtons();

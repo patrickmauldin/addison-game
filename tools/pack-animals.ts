@@ -45,19 +45,52 @@ const ANIMALS = [
   // Juniper belongs to somebody and walks with them. Not ambient: she is never
   // one of the strays that turns up loose in a yard.
   { id: 'juniper', folder: 'dog-juniper', kind: 'dog', nocturnal: false, ambient: false },
+  { id: 'pellet', folder: 'dog-pellet', kind: 'dog', nocturnal: false, ambient: false },
+  { id: 'lani', folder: 'dog-lani', kind: 'dog', nocturnal: false, ambient: false },
+  { id: 'moxy', folder: 'dog-moxy', kind: 'dog', nocturnal: false, ambient: false },
+  // The Shift 2 bounty. He roams the lot he is hiding on, which is what makes
+  // finding him a search rather than a spot-the-difference.
+  { id: 'chaz', folder: 'cat-chaz', kind: 'cat', nocturnal: false, ambient: false },
 ];
 
 /**
- * Two delivery layouts, because the exports came from different sessions:
- * the cat and dog nest their walk under `walking/animations/Walking/<dir>`,
- * the later animals under `Idle/animations/walking/<dir>`. Trying both beats
- * renaming folders the artist will export over again.
+ * FIND the walk rather than know where it is.
+ *
+ * Every export so far has put the frames at `<something>/animations/<walk>/<dir>`
+ * and disagreed about both middle names. Three shapes have turned up already:
+ *
+ *   cat-pablo    walking/animations/Walking/<dir>
+ *   raccoon      Idle/animations/walking/<dir>
+ *   dog-pellet   top_down_perspective_tan_pit_mix.../animations/Walking/<dir>
+ *
+ * The last one is the reason this is a search and not a list: the container is
+ * named after the PROMPT that generated the animal, so it is different for
+ * every one of them and cannot be enumerated in advance. Matching on the shape
+ * — any folder holding `animations/` with a walk inside — is stable against
+ * whatever the next export calls itself.
+ *
+ * Cached per animal: the scan is cheap but it runs once per direction.
  */
-const LAYOUTS = ['walking/animations/Walking', 'Idle/animations/walking'];
+const walkBases = new Map<string, string[]>();
+function basesFor(folder: string): string[] {
+  const hit = walkBases.get(folder);
+  if (hit) return hit;
+  const root = `assets/animals/${folder}`;
+  const found: string[] = [];
+  for (const sub of readdirSync(root)) {
+    const anim = `${root}/${sub}/animations`;
+    if (!existsSync(anim) || !statSync(anim).isDirectory()) continue;
+    for (const a of readdirSync(anim)) {
+      // "Walking", "walking", "Walk" — the case and the suffix both drift.
+      if (a.toLowerCase().startsWith('walk')) found.push(`${anim}/${a}`);
+    }
+  }
+  walkBases.set(folder, found);
+  return found;
+}
 
 const framesFor = (folder: string, dir: string): string[] => {
-  for (const layout of LAYOUTS) {
-    const base = `assets/animals/${folder}/${layout}`;
+  for (const base of basesFor(folder)) {
     for (const d of [dir, ...(FALLBACK[dir] ?? [])]) {
       const p = `${base}/${d}`;
       if (existsSync(p) && statSync(p).isDirectory()) {
