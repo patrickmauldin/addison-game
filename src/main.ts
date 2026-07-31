@@ -503,6 +503,21 @@ let flagged = new Set<string>();
  */
 let claimed = new Set<string>();
 let bountyPay = 0;
+/**
+ * The balance AS SHOWN, which is not the balance.
+ *
+ * Pay is banked the moment a lot is stamped and a finder's fee the moment it is
+ * claimed, and a figure that ticked up on each of those turned the route sheet
+ * into a score counter — reward for getting through the street rather than for
+ * getting it right, and visible before the audit has said whether any of it was
+ * right. It is worse than noise: the number went UP on a lot you got wrong.
+ *
+ * So the sheet holds the figure it opened the shift with and settles once, at
+ * the audit, by the round's whole net. `saveFile.inspector.pay` is still the
+ * truth and is still written through on every stamp — this is only what the
+ * desk is willing to say before the Board has looked at your work.
+ */
+let bankShown = saveFile.inspector.pay;
 /** Which lot this level hid the bounty on, if any. */
 let bountyLot: string | null = null;
 /** For a person bounty: which of the ten they are. Drawn per level. */
@@ -1414,9 +1429,9 @@ function syncDesk(): void {
   // Put the row back when a route offers more addresses than the quota needs,
   // or when End Round Early ships and finishing short becomes a real choice.
   $('c-strikes').textContent = `${saveFile.inspector.strikes_today} / 3`;
-  $('c-pay').textContent = `$${saveFile.inspector.pay}`;
+  $('c-pay').textContent = `$${bankShown}`;
   $('m-day').textContent = `Shift ${day.level_id}`;
-  $('m-pay').textContent = `$${saveFile.inspector.pay}`;
+  $('m-pay').textContent = `$${bankShown}`;
 
   syncBinder();
 
@@ -1963,6 +1978,10 @@ function endDay(): void {
   // Clamped: the round is meant to end on the third strike, but the mark should
   // not depend on that holding.
   const dayGrade = Math.min(strikes, GRADE.length - 1);
+  // The shift is over, so the sheet settles. Everything earned today lands in
+  // one movement, behind the audit the player is about to read.
+  bankShown = saveFile.inspector.pay;
+  syncDesk();
   /**
    * The audit is FOLDED AWAY by default, and this is what has to survive the
    * fold. Shut, the sheet reads as a receipt — grade, pay, balance — and the
@@ -2214,6 +2233,8 @@ function startRound(): void {
   claimed.clear();
   bountyPay = 0;
   bountyMark = null;
+  // What the sheet will say for the rest of the shift, whatever gets earned.
+  bankShown = saveFile.inspector.pay;
   clearTimeout(bountyTickTimer);
   placeBounty();
   syncFlyer();
