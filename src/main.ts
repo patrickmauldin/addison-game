@@ -1443,7 +1443,7 @@ function syncBinder(): void {
       return `<button type="button" role="tab" data-cat="${c}"
                  class="${locked ? 'locked' : ''}" title="${c}" aria-label="${c}"
                  aria-selected="${binderOpen && c === cat}"
-              ><img src="assets/rulebook/${c.toLowerCase()}.png" alt="" /></button>`;
+              ><img src="assets/rulebook/${c.toLowerCase()}.png${CB}" alt="" /></button>`;
     })
     .join('');
   $('binder-tabs').querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((b) => {
