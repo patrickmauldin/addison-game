@@ -1883,6 +1883,18 @@ function bossHeader(gif: 'boss1' | 'boss2'): string {
 }
 
 /**
+ * ONE definition of a clean lot, so the accuracy figure, the ruling record, the
+ * marks on the report and the tally on the audit header cannot drift apart.
+ * They had: accuracy once ignored missed findings, so a day could show a red
+ * mark on half its rows and still report 100%. A report that argues with itself
+ * is worse than no report — the player stops believing any of it.
+ *
+ * Clean means NO EXCEPTIONS. Not merely that the verdict was right.
+ */
+const lotClean = (o: LotOutcome): boolean =>
+  o.verdictRight && !o.falsePositives.length && !o.missed.length;
+
+/**
  * ONE mark for the day, off the strike count and nothing else.
  *
  * Strikes are already the thing the game threatens you with — three ends the
@@ -1907,14 +1919,7 @@ function endDay(): void {
   let strikes = 0;
   for (const o of outcomes) {
     if (o.strike) strikes++;
-    /**
-     * ONE definition of a clean lot, used by the accuracy figure, the ruling
-     * record and the marks on the report. They had drifted: accuracy ignored
-     * missed findings, so a day could show a red mark on half its rows and
-     * still report 100%. A report that argues with itself is worse than no
-     * report — the player stops believing any of it.
-     */
-    const clean = o.verdictRight && !o.falsePositives.length && !o.missed.length;
+    const clean = lotClean(o);
     bumpAccuracy(saveFile, 'R-101', clean);
     const rec = saveFile.addresses[o.lot_id];
     const last = rec.rulings[rec.rulings.length - 1];
@@ -1946,10 +1951,7 @@ function endDay(): void {
           `<div><b>Appeal granted</b> — ${f.label}. The Association pays costs.<br>
            <span class="muted">${f.why}</span></div>`,
         );
-      // "Clean" has to mean NO EXCEPTIONS, missed findings included. Marking a
-      // row good while it lists an audit finding contradicts itself, and the
-      // audit finding is the part the player most needs to take seriously.
-      const ok = o.verdictRight && !o.falsePositives.length && !o.missed.length;
+      const ok = lotClean(o);
       return `<div class="verdict-row ${ok ? 'good' : 'bad'}">
         <img class="mark" src="assets/${ok ? 'good' : 'bad'}.png" alt="${ok ? 'clean' : 'exception taken'}" />
         <b>${o.address}</b> — you stamped ${VERDICT_WORD[o.stamped] ?? o.stamped}; correct verdict was ${VERDICT_WORD[o.expected] ?? o.expected}.
@@ -1961,6 +1963,15 @@ function endDay(): void {
   // Clamped: the round is meant to end on the third strike, but the mark should
   // not depend on that holding.
   const dayGrade = Math.min(strikes, GRADE.length - 1);
+  /**
+   * The audit is FOLDED AWAY by default, and this is what has to survive the
+   * fold. Shut, the sheet reads as a receipt — grade, pay, balance — and the
+   * lot-by-lot argument is there for anyone who wants it. But a collapsed
+   * section that gives no hint of its contents is one nobody opens, and the
+   * audit is the part the player most needs to take seriously. The count is the
+   * hook: it says how much you got wrong without saying where.
+   */
+  const exceptions = outcomes.filter((o) => !lotClean(o)).length;
   const hasNext = levelIndex + 1 < LEVELS.length;
   sheet.innerHTML = `
     <div class="day-mark ${GRADE[dayGrade].cls}" aria-label="Grade ${GRADE[dayGrade].mark}">${GRADE[dayGrade].mark}</div>
@@ -1968,9 +1979,13 @@ function endDay(): void {
     <h1>END OF LEVEL ${day.level_id}</h1>
     <div class="muted">${today.weekday}, ${shortDate(today.iso)} · ${current.street}</div>
 
-    <h3>Board Audit</h3>
-    <p class="muted">Findings are reviewed the following morning. You were not told at the time.</p>
-    ${rows}
+    <details class="audit">
+      <summary>Board Audit<span class="tally">${
+        exceptions ? `${exceptions} of ${outcomes.length} with findings` : 'no exceptions taken'
+      }</span></summary>
+      <p class="muted">Findings are reviewed the following morning. You were not told at the time.</p>
+      ${rows}
+    </details>
 
     <h3>Pay Stub</h3>
     <div class="today-line"><span>${outcomes.length} inspections × $${day.pay_per_inspection}</span>

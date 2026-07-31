@@ -749,6 +749,24 @@
         font-size: 22px; font-weight: 400; letter-spacing: .06em;
         color: var(--ink); }
       #sheet .pg > h3:first-child { margin-top: 4px; }
+      /* The audit folds away. Its summary is an h3 in everything but name —
+         same face, size and tracking — so folding it did not demote it from a
+         section heading to a control. */
+      #sheet details.audit > summary {
+        margin: 22px 0 8px; font-family: var(--pixel-font); font-size: 22px;
+        letter-spacing: .06em; color: var(--ink); cursor: pointer;
+        display: flex; align-items: baseline; gap: 12px; list-style: none;
+      }
+      #sheet details.audit > summary::-webkit-details-marker { display: none; }
+      /* Two glyphs rather than one rotated: the arrow sits on a flex baseline,
+         and a transform there lands it a pixel or two off the text. */
+      #sheet details.audit > summary::before { content: '▶'; font-size: 12px; }
+      #sheet details.audit[open] > summary::before { content: '▼'; }
+      /* How much went wrong, without saying where — the reason to open it. */
+      #sheet details.audit .tally {
+        margin-left: auto; font-family: var(--mono, inherit); font-size: 13px;
+        letter-spacing: 0; color: var(--ink-soft);
+      }
       #sheet p { margin: 10px 0; }
       /* Money on the stub, at a size you read rather than scan past. */
       .money {
