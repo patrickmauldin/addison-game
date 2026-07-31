@@ -212,69 +212,6 @@
       }
       #flyer.found .fl-paper { opacity: .82; }
 
-      /* --- Reputation --------------------------------------------------- */
-      /* Never intercepts a click, for the same reason the notice does not: the
-         thing you click is on the lot, and a readout that ate clicks over the
-         scene would be a trap. */
-      #reputation {
-        position: absolute; top: 14px; right: 14px; z-index: 6;
-        pointer-events: none; user-select: none;
-        display: flex; flex-direction: column; gap: 2px;
-      }
-      .rep-row { display: flex; align-items: center; gap: 6px; }
-      /* NO SIZE SET. These are drawn at the size they are used, so CSS asking
-         for a height it liked better was resampling finished art — a 21px
-         house stretched to 22 and a 24px block squeezed to 19, which is what
-         made them look soft whatever the rendering mode said. At 1:1 there is
-         nothing to resample and the pixels are the ones that were drawn.
-         image-rendering stays as the guard for anyone who sets a height later. */
-      .rep-icon {
-        display: block;
-        image-rendering: pixelated;
-        filter: drop-shadow(1px 1px 0 rgba(0,0,0,.45));
-      }
-      /* Two slabs, not a border: black underneath, the track inset 2px on top
-         of it, each clipped to the same stepped shape. A border would be cut
-         flat by the clip and leave the steps unoutlined. drop-shadow rather
-         than box-shadow for the same reason — it follows the clipped silhouette
-         where a box-shadow would trace the box that is no longer there. */
-      /* A corner is a square REMOVED, not a curve: the boundary runs along the
-         top edge, turns down, turns out, and carries on down the side. That is
-         what a rounded corner looks like drawn a pixel at a time, and
-         border-radius cannot make that shape at any value.
-
-         Written out twice rather than shared through a custom property. A
-         custom property substitutes the var()s INSIDE it against the element
-         that declares it, not the one that uses it, so a polygon parameterised
-         on --r resolves against a --r that is not there yet and the whole
-         declaration is dropped. */
-      .rep-bar {
-        width: 96px; height: 15px;
-        background: #000;
-        clip-path: polygon(
-          3px 0, calc(100% - 3px) 0,
-          calc(100% - 3px) 3px, 100% 3px,
-          100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px),
-          calc(100% - 3px) 100%, 3px 100%,
-          3px calc(100% - 3px), 0 calc(100% - 3px),
-          0 3px, 3px 3px);
-        filter: drop-shadow(1px 2px 0 rgba(0,0,0,.35));
-      }
-      .rep-track {
-        margin: 2px; height: calc(100% - 4px); width: calc(100% - 4px);
-        background: #3f3f3f;
-        clip-path: polygon(
-          2px 0, calc(100% - 2px) 0,
-          calc(100% - 2px) 2px, 100% 2px,
-          100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px),
-          calc(100% - 2px) 100%, 2px 100%,
-          2px calc(100% - 2px), 0 calc(100% - 2px),
-          0 2px, 2px 2px);
-      }
-      .rep-track > i { display: block; height: 100%; width: var(--fill, 0%); }
-      .owners .rep-track > i { background: #ffcf3d; }
-      .office .rep-track > i { background: #5ba5f0; }
-
       /* --- The bulletin board ------------------------------------------ */
       /* Wood frame and cork panel as two nested boxes rather than a
          border-image: border-image with a repeating pixel texture rounds its
@@ -1148,22 +1085,10 @@
            The same notice hangs in two places and is written once. -->
       <div id="flyer" hidden></div>
 
-      <!-- Standing with the two people who can end this job: the residents you
-           write up and the office that grades you. Opposite corner to the
-           notice, so the top of the stage carries one thing on each side.
-
-           INERT for now. The widths are placeholders; when these start moving,
-           set --fill on each .rep-bar and nothing else has to change. -->
-      <div id="reputation">
-        <div class="rep-row">
-          <img class="rep-icon" src="assets/reputation/homeowners.png" alt="Homeowners" />
-          <div class="rep-bar owners" style="--fill: 72%"><div class="rep-track"><i></i></div></div>
-        </div>
-        <div class="rep-row">
-          <img class="rep-icon office" src="assets/reputation/office.png" alt="Office" />
-          <div class="rep-bar office" style="--fill: 48%"><div class="rep-track"><i></i></div></div>
-        </div>
-      </div>
+      <!-- The two reputation bars stood here, top right, opposite the notice.
+           Pulled out until they have something to report; the art is still in
+           assets/reputation. Markup and CSS both come back with
+           `git show ff17710 -- index.html`. -->
 
       <!-- On the stage, not the desk. What you have marked belongs beside the
            thing you marked, so checking your work does not mean looking away
