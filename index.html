@@ -219,24 +219,26 @@
       #reputation {
         position: absolute; top: 14px; right: 14px; z-index: 6;
         pointer-events: none; user-select: none;
-        display: flex; flex-direction: column; gap: 6px;
+        display: flex; flex-direction: column; gap: 2px;
       }
-      .rep-row { display: flex; align-items: center; gap: 8px; }
-      /* Drawn 1:1. These are native-resolution pixel art, not a 2x export —
-         checked — so halving them would drop every other row of real detail
-         rather than undoing a doubling. The drop shadow is what lifts them off
-         the grass; at this size an outline would close up the windows. */
+      .rep-row { display: flex; align-items: center; gap: 6px; }
+      /* Scaled DOWN, and not by a whole number — these are native-resolution
+         pixel art rather than a doubled export, so there is no factor that
+         resamples them cleanly. Smoothed rather than nearest-neighbour on the
+         way down: dropping rows at this ratio eats the one-pixel outline in
+         places and the roof starts to come apart, where a soft edge just reads
+         as a small icon. Redraw them at this size when it matters. */
       .rep-icon {
-        display: block; image-rendering: pixelated;
-        filter: drop-shadow(1px 2px 0 rgba(0,0,0,.45));
+        display: block; height: 22px; width: auto;
+        filter: drop-shadow(1px 1px 0 rgba(0,0,0,.45));
       }
-      /* Built rather than drawn, so a value can move it. One pixel of black,
-         corners just off square, and the same track grey the reference uses.
-         overflow clips the fill to those corners — without it a full bar has
-         square ends inside a rounded box. */
+      /* Built rather than drawn, so a value can move it. Corners just off
+         square, and the same track grey the reference uses. overflow clips the
+         fill to those corners — without it a full bar has square ends inside a
+         rounded box. */
       .rep-bar {
-        width: 108px; height: 16px;
-        border: 1px solid #000; border-radius: 3px;
+        width: 96px; height: 15px;
+        border: 2px solid #000; border-radius: 4px;
         background: #3f3f3f; overflow: hidden;
         box-shadow: 1px 2px 0 rgba(0,0,0,.35);
       }
