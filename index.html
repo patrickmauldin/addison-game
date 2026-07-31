@@ -161,12 +161,16 @@
         box-shadow: 2px 3px 0 rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.4);
         padding: 16px 8px 8px; text-align: center; position: relative;
       }
-      /* The pin sits ON the paper, so it rotates with it and reads as holding
-         it up rather than floating beside it. */
+      /* INSIDE the paper, so it centres on the paper and turns with it.
+         As a sibling carrying a matching rotation of its own it was centred on
+         the notice's BOX instead, and the box does not turn — the tack read a
+         few pixels right of the sheet it was supposed to be holding up, by
+         however far 2.5 degrees throws a top edge, which grows with the height
+         of the notice. Centred on its containing block, it is exact for a
+         notice of any length and needs no transform of its own. */
       .fl-pin {
         position: absolute; top: -13px; left: 50%; z-index: 2;
         width: 36px; height: auto; margin-left: -18px;
-        transform: rotate(-2.5deg);
         filter: drop-shadow(1px 2px 1px rgba(0,0,0,.45));
       }
       .fl-head {

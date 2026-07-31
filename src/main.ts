@@ -2298,8 +2298,8 @@ function flyerMarkup(): string {
     pic = `<img class="fl-pic" src="assets/${b.sprite}.png${CB}" alt="" />`;
   }
   return `
-    <img class="fl-pin" src="assets/pin.png" alt="" />
     <div class="fl-paper">
+      <img class="fl-pin" src="assets/pin.png" alt="" />
       <div class="fl-head">${b.headline ?? 'Missing'}</div>
       ${pic}
       <div class="fl-name">${b.name}</div>
