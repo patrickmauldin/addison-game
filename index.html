@@ -121,7 +121,16 @@
          shadow, no letterboxing — the scene IS the stage. */
       #stage { position: relative; min-width: 0; overflow: hidden; }
       #frame {
-        position: absolute; inset: 0; overflow: hidden; cursor: crosshair;
+        position: absolute; inset: 0; overflow: hidden;
+        /* The inspector is looking through a viewfinder, so the pointer over
+           the lot IS one. The two numbers are the hotspot — dead centre of the
+           reticle, so the thing you click is the thing under the crosshair.
+           camera-cursor.png rather than camera.png: browsers ignore a cursor
+           image over 128px, and the source art is 236px. Kept as a separate
+           file so the full-size original stays untouched.
+           crosshair is the fallback, and it is the one that shows if the image
+           ever fails to load — same behaviour as before. */
+        cursor: url('assets/camera-cursor.png') 59 59, crosshair;
         background: #1a1814;
       }
       #lot { display: block; image-rendering: pixelated; }

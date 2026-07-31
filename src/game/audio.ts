@@ -27,8 +27,8 @@ export const ONESHOT_FILES = {
   stamp: 'stamp.mp3',
   /** A bounty claimed, and the day's takings at the audit. */
   money: 'money.mp3',
-  /** A finding marked — the moment the red X lands. */
-  select: 'select.wav',
+  /** A finding marked. A shutter: the inspector is photographing it. */
+  camera: 'camera.mp3',
   /** The rulebook opened, and every leaf turned after that. */
   page: 'page-turn.mp3',
   meow: 'meow.wav',

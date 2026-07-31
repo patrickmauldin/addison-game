@@ -158,6 +158,12 @@ const CB = `?v=${Math.floor(Date.now() / 1000)}`;
  * the sprite pipeline because it is UI, not world art: it sits on top of the
  * finished scene and must not scale with the house. Declared after CB, which
  * it uses — const is block-scoped, so referencing it earlier is a dead zone.
+ *
+ * A photo frame was tried here — marking a finding as photographing it — and
+ * reverted. It read as an off-white rectangle rather than as a mark: over the
+ * driveway, the sidewalk and the house it is light on light, and there is
+ * nothing about a hollow box that says "cited". The X is loud, it is red, and
+ * it means one thing. The camera stays in the cursor and the shutter sound.
  */
 const xMark = new Image();
 xMark.src = 'assets/x.png' + CB;
@@ -1193,7 +1199,7 @@ frame.addEventListener('click', (ev) => {
     flagged.add(obj.id);
     // Only on the way IN. Unmarking is a correction, and a correction that
     // sounds identical to the act it undoes tells the player nothing.
-    sound.play('select');
+    sound.play('camera');
   }
   paint();
   syncDesk();
