@@ -2126,6 +2126,20 @@ function calendarMarkup(extraClass = ''): string {
 
 function briefing(): void {
   /**
+   * DRAWN BEFORE THE BOARD IS BUILT, not on the way out to the street.
+   *
+   * A person bounty has no face until this runs — it picks one from the sheet —
+   * and the corkboard's whole job is to show that face. Drawing it at the end
+   * of the briefing, which is where it used to happen, printed a notice with a
+   * blank where the photograph goes.
+   *
+   * Safe to move earlier because it is seeded off the level id alone: same lot,
+   * same face, whenever it is called. briefing() is the only route to the round
+   * — the button that starts one lives inside it — so once here is enough.
+   */
+  placeBounty();
+
+  /**
    * Only what is NEW today.
    *
    * The briefing used to list every live article, so by Level 4 it was three
@@ -2186,9 +2200,26 @@ function briefing(): void {
      <div class="today-line"><span>Inspections</span><b>${day.lots.length} on Bonerville</b></div>
      <div class="today-line"><span>Pay</span><b>$${day.pay_per_inspection} each</b></div>
      <div class="today-line"><span>Verdicts</span><b>${day.verdict_mode === 'notice' ? 'Pass or Notice — no fines today' : 'Pass, Notice or Citation'}</b></div>
-     ${day.bounty ? `<div class="today-line"><span>Also</span><b>$${day.bounty.reward} finder's fee</b></div>` : ''}
      <p style="margin-top:14px">Mark what you find, then stamp. You will not be told
         whether you were right — the Board reviews your calls overnight.</p>`);
+  /**
+   * THE BOARD, and always last.
+   *
+   * A notice used to be a sentence in the manager's briefing and a number on
+   * the round summary — which made the thing you are supposed to go out and
+   * RECOGNISE something you had read about rather than looked at. It gets a
+   * screen of its own now, the last one before the street, showing the actual
+   * paper you will be carrying: same markup, same face, still pinned.
+   *
+   * Only when there is one. An empty corkboard is worse than no corkboard.
+   */
+  if (day.bounty) pages.push(
+    `<h3>Posted on the route</h3>
+     <p class="muted" style="margin-bottom:14px">The Association has authorised a finder's fee of
+        $${day.bounty.reward}. This is not a compliance matter.</p>
+     <div class="board"><div class="board-cork">
+       <div class="board-note">${flyerMarkup()}</div>
+     </div></div>`);
   // The how-to only earns its place the first time.
   if (day.level_id === 1) {
     pages.splice(2, 0,
@@ -2237,6 +2268,48 @@ function briefing(): void {
 }
 
 /**
+ * The notice itself, wherever it is hanging.
+ *
+ * ONE renderer for both places it appears — the board at the briefing and the
+ * corner of the stage for the rest of the round. They are the same piece of
+ * paper, and the player is meant to recognise it as such: what they studied
+ * before setting off is literally what stays clipped up while they look. Two
+ * copies of this markup would eventually disagree about something, and the
+ * thing they would disagree about is the face you are supposed to be matching.
+ *
+ * Returns classes and no ids, so it can be dropped in twice.
+ */
+function flyerMarkup(): string {
+  const b = day.bounty;
+  if (!b) return '';
+  // A prop shows its own sprite; a person is a window onto the resident sheet,
+  // so the face on the notice IS the sprite to spot and cannot drift from it.
+  const isPerson = b.kind === 'person' && bountyCharacter !== null;
+  let pic = '';
+  if (isPerson) {
+    // Their south-facing idle frame, at 2x, positioned by row and column.
+    const Z = 2;
+    const row = bountyCharacter! * RESIDENTS.rowsPerCharacter;
+    pic = `<div class="fl-face" style="background-image:url('${RESIDENTS.sheet}${CB}');`
+      + `background-size:${RESIDENTS.sheetW * Z}px ${RESIDENTS.sheetH * Z}px;`
+      + `background-position:-${RESIDENTS.idleCol * RESIDENTS.frameW * Z}px -${row * RESIDENTS.frameH * Z}px;`
+      + `width:${RESIDENTS.frameW * Z}px;height:${RESIDENTS.frameH * Z}px"></div>`;
+  } else if (b.sprite) {
+    pic = `<img class="fl-pic" src="assets/${b.sprite}.png${CB}" alt="" />`;
+  }
+  return `
+    <img class="fl-pin" src="assets/pin.png" alt="" />
+    <div class="fl-paper">
+      <div class="fl-head">${b.headline ?? 'Missing'}</div>
+      ${pic}
+      <div class="fl-name">${b.name}</div>
+      <div class="fl-reward">$${b.reward} reward</div>
+      <div class="fl-owner">${b.note}</div>
+      ${claimed.has(b.id) ? '<img class="fl-found" src="assets/checkmark.png" alt="Found" />' : ''}
+    </div>`;
+}
+
+/**
  * The notice pinned to the corner of the stage.
  *
  * Stays up for the whole round once the level has a bounty — a reward poster
@@ -2248,33 +2321,8 @@ function syncFlyer(): void {
   const b = day.bounty;
   if (!b) { el.hidden = true; return; }
   el.hidden = false;
-  $('flyer-head').textContent = b.headline ?? 'Missing';
-  $('flyer-name').textContent = b.name;
-  $('flyer-reward').textContent = `$${b.reward} reward`;
-  $('flyer-note').textContent = b.note;
-
-  // A prop shows its own sprite; a person is a window onto the resident sheet.
-  const pic = $<HTMLImageElement>('flyer-pic');
-  const face = $('flyer-face');
-  const isPerson = b.kind === 'person' && bountyCharacter !== null;
-  pic.hidden = isPerson;
-  face.hidden = !isPerson;
-  if (isPerson) {
-    // Their south-facing idle frame, at 2x, positioned by row and column.
-    const Z = 2;
-    const row = bountyCharacter! * RESIDENTS.rowsPerCharacter;
-    face.style.backgroundImage = `url('${RESIDENTS.sheet}${CB}')`;
-    face.style.backgroundSize = `${RESIDENTS.sheetW * Z}px ${RESIDENTS.sheetH * Z}px`;
-    face.style.backgroundPosition = `-${RESIDENTS.idleCol * RESIDENTS.frameW * Z}px -${row * RESIDENTS.frameH * Z}px`;
-    face.style.width = `${RESIDENTS.frameW * Z}px`;
-    face.style.height = `${RESIDENTS.frameH * Z}px`;
-  } else if (b.sprite) {
-    pic.src = `assets/${b.sprite}.png${CB}`;
-  }
-
-  const found = claimed.has(b.id);
-  $('flyer-found').hidden = !found;
-  el.classList.toggle('found', found);
+  el.innerHTML = flyerMarkup();
+  el.classList.toggle('found', claimed.has(b.id));
 }
 
 /** Leave the briefing and put the player on the first lot. */
@@ -2293,7 +2341,6 @@ function startRound(): void {
   // What the sheet will say for the rest of the shift, whatever gets earned.
   bankShown = saveFile.inspector.pay;
   clearTimeout(bountyTickTimer);
-  placeBounty();
   syncFlyer();
   syncStampButtons();
   loadLot(0);

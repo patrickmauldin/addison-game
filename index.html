@@ -152,7 +152,7 @@
         pointer-events: none; user-select: none; width: 152px;
       }
       #flyer[hidden] { display: none; }
-      #flyer-paper {
+      .fl-paper {
         background: var(--paper) url('assets/paper.png') repeat;
         image-rendering: pixelated;
         border: 1px solid #9d9075;
@@ -163,7 +163,7 @@
       }
       /* The pin sits ON the paper, so it rotates with it and reads as holding
          it up rather than floating beside it. */
-      #flyer-pin {
+      .fl-pin {
         position: absolute; top: -13px; left: 50%; z-index: 2;
         width: 36px; height: auto; margin-left: -18px;
         transform: rotate(-2.5deg);
@@ -178,13 +178,12 @@
          pulled back in with negative margins. Scaling pixel art by 1.3 to get
          a similar size would leave some source pixels one screen pixel wide and
          others two, which on a 32px-wide subject is very visible. */
-      #flyer-pic {
+      .fl-pic {
         width: 112px; height: 112px; image-rendering: pixelated;
         display: block; margin: -26px auto -28px;
       }
-      #flyer-pic[hidden], #flyer-face[hidden] { display: none; }
       /* Cropped to the figure: the sheet frame is padded for a swung hoe. */
-      #flyer-face {
+      .fl-face {
         image-rendering: pixelated; display: block; margin: 0 auto;
         background-repeat: no-repeat;
         clip-path: inset(6px 18px 6px 18px);
@@ -200,14 +199,39 @@
       .fl-owner { font-size: 10px; color: var(--ink-soft); margin-top: 4px; line-height: 1.3; }
       /* Sized and offset to read as a stamp across the notice rather than an
          obliteration of it — the name still has to be legible afterwards. */
-      #flyer-found {
+      .fl-found {
         position: absolute; left: 50%; top: 34px;
         width: 50px; height: 50px; margin-left: -21px;
         image-rendering: pixelated;
         transform: rotate(-8deg);
         filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
       }
-      #flyer.found #flyer-paper { opacity: .82; }
+      #flyer.found .fl-paper { opacity: .82; }
+
+      /* --- The bulletin board ------------------------------------------ */
+      /* Wood frame and cork panel as two nested boxes rather than a
+         border-image: border-image with a repeating pixel texture rounds its
+         slices differently on each edge, and the corners visibly disagree. A
+         padded box holding another box cannot do that. */
+      .board {
+        background: #6b4b2c url('assets/wood.png') repeat;
+        image-rendering: pixelated;
+        padding: 14px;
+        box-shadow: 3px 4px 0 rgba(0,0,0,.3);
+      }
+      /* Fallback colour under the texture, so a missing cork.png degrades to a
+         cork-coloured board rather than to nothing. */
+      .board-cork {
+        background: #b1793f url('assets/cork.png') repeat;
+        image-rendering: pixelated;
+        min-height: 236px;
+        display: flex; align-items: center; justify-content: center;
+        /* Hard, offset down-right, 20% — the frame sitting proud of the cork. */
+        box-shadow: inset 6px 6px 0 rgba(0,0,0,.2);
+      }
+      /* The notice needs a positioned box of its own width: the pin hangs off
+         the top of it, and the paper is tacked at an angle inside it. */
+      .board-note { position: relative; width: 152px; }
 
       /* --- Desk -------------------------------------------------------- */
       /* The cards scroll; the stamps do not. By Level 15 the rule list alone is
@@ -1039,21 +1063,9 @@
         <!-- Tacked to the stage, not stood in a yard. A notice is read once and
            carried for the round; a prop in one lot is walked away from. The
            top-left corner is otherwise dead space. -->
-      <div id="flyer" hidden>
-        <img id="flyer-pin" src="assets/pin.png" alt="" />
-        <div id="flyer-paper">
-          <div class="fl-head" id="flyer-head">Missing</div>
-          <img id="flyer-pic" src="" alt="" />
-          <!-- A person is a window onto the resident sheet rather than its own
-               image: the face on the notice is then literally the sprite you
-               have to spot in the street, and cannot drift from it. -->
-          <div id="flyer-face" hidden></div>
-          <div class="fl-name" id="flyer-name">—</div>
-          <div class="fl-reward" id="flyer-reward">—</div>
-          <div class="fl-owner" id="flyer-note">—</div>
-          <img id="flyer-found" src="assets/checkmark.png" alt="Found" hidden />
-        </div>
-      </div>
+      <!-- Filled by flyerMarkup(), which also fills the briefing's corkboard.
+           The same notice hangs in two places and is written once. -->
+      <div id="flyer" hidden></div>
 
       <!-- On the stage, not the desk. What you have marked belongs beside the
            thing you marked, so checking your work does not mean looking away
