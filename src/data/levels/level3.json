@@ -2,6 +2,8 @@
   "level_id": 3,
   "_date": "DERIVED — Friday 5 March 2027. NOT a collection day, which is the point.",
   "weather": "clear",
+  "night": true,
+  "_night": "A night shift. Every couple of shifts the round runs after dark: the scene takes a flat wash, almost nobody is out on their own lawn, and the armadillo and the raccoon are abroad. Authored rather than derived from the level number — which shifts are nights is a pacing decision.",
   "active_rules": [
     "R-101",
     "R-105",

@@ -247,12 +247,18 @@
          height instead of stretching to the taller clipboard. */
       #topcards { display: flex; gap: 10px; align-items: flex-start; }
       #topcards .clip { flex: 1; min-width: 0; }
+      #topcards .cal { margin-top: 10px; }
+      /* The same pad, on the manager's desk instead of yours. Absolute in the
+         sheet's top-right corner, which is where the date used to be printed as
+         a line of text — an object says it better than a heading did. */
+      /* #sheet wins on source order otherwise — .cal sets position: relative
+         further down the sheet, so this needs the extra specificity. */
+      #sheet .brief-cal { position: absolute; top: 20px; right: 26px; z-index: 2; }
       /* A desk calendar: coil across the head, the day on a red band, the date
          on the leaf below it. Bound like the rulebook, so it takes the binder's
          navy rather than the paperwork's tan. */
-      #calendar {
+      .cal {
         flex: none; width: 104px; position: relative;
-        margin-top: 10px;
         background: #ffffff;
         border: 2px solid #303843;
         box-shadow: -6px 6px 0 rgba(0,0,0,.3);
@@ -265,26 +271,26 @@
       }
       /* Mostly above the sheet, biting a few pixels into it — the wire is wound
          round the outside of the pad, not printed on the face of it. */
-      #cal-spine {
+      .cal-spine {
         position: absolute; top: -19px; left: 5px; right: 5px; height: 27px;
         display: flex;
       }
-      #cal-spine i { display: block; background-repeat: no-repeat; }
+      .cal-spine i { display: block; background-repeat: no-repeat; }
       /* Caps swap ends. A clockwise quarter turn sends the coil's top to the
          RIGHT and its bottom to the LEFT, so the small tail cap leads and the
          full cap closes — the reverse of the reading order in the markup would
          put the wire's two ends on the wrong sides. */
-      #cal-spine .h-start {
+      .cal-spine .h-start {
         width: 9px; height: 15px; align-self: flex-start;
         background-image: url('assets/rulebook/binder-ring-bot-h.png');
         background-size: 9px 15px;
       }
-      #cal-spine .h-mid {
+      .cal-spine .h-mid {
         flex: 1; min-width: 0;
         background-image: url('assets/rulebook/binder-ring-mid-h.png');
         background-size: 12px 27px; background-repeat: repeat-x;
       }
-      #cal-spine .h-end {
+      .cal-spine .h-end {
         width: 12px;
         background-image: url('assets/rulebook/binder-ring-top-h.png');
         background-size: 12px 27px;
@@ -294,13 +300,13 @@
       /* Deep enough that the coil sits in the band rather than on the seam,
          with the weekday pushed to the lower half of it — the wire bites into
          the top few pixels and would otherwise cross the letters. */
-      #cal-dow {
+      .cal-dow {
         background: #d4594e; color: #fff;
         font-family: var(--pixel-font); font-size: 15px; letter-spacing: .06em;
         padding: 16px 2px 7px;
         text-shadow: 1px 1px 0 rgba(90,26,20,.5);
       }
-      #cal-date {
+      .cal-date {
         font-family: var(--pixel-font); font-size: 26px; color: #2b2721;
         padding: 16px 2px 20px; line-height: 1;
       }
@@ -380,9 +386,28 @@
          1px lines read as a rendering seam instead. Painted first, so the front
          board covers everything but the protruding edge. Inset top and bottom
          because the leaves are a little smaller than the boards. */
+      /* Cut to the same stepped corners as the boards, and outlined the same
+         way — a navy slab with the white leaf inset inside it, because a border
+         cannot follow a clip-path. Only the protruding right edge is ever
+         visible, which is exactly where the corners are. */
       #binder-edge {
         position: absolute; left: 18px; right: 36px; top: 5px; bottom: 5px;
-        background: #ffffff; border: 2px solid var(--binder-ink);
+        background: var(--binder-ink);
+        clip-path: var(--binder-corner);
+      }
+      #binder-edge::before {
+        content: ''; position: absolute; inset: 2px;
+        background: #ffffff;
+        clip-path: var(--binder-corner);
+      }
+      /* The same band the tabs carry, landing on the page block between them.
+         Placed by where the BOARD's edge crosses this element — 8px in from its
+         right, the width of the protrusion — rather than on its own left edge,
+         which is buried behind the boards. */
+      #binder-edge::after {
+        content: ''; position: absolute; top: 2px; bottom: 2px;
+        right: 5px; width: 3px;
+        background: rgba(0,0,0,.3);
       }
       /* The board. Navy fill clipped to the stepped shape, with the cover or the
          open leaf sitting 2px inside it — which is what draws the outline,
@@ -539,13 +564,19 @@
       /* Clear of the front board by 2px, so a divider never sits on the cover's
          own edge — and spaced apart enough that the paper block and back board
          behind them read as the thickness of the book between the tabs. */
+      /* The column starts at the board's outer edge, so a divider reads as
+         coming OUT of the page rather than floating alongside it. z-index puts
+         the whole strip over the paper block, which then shows only in the
+         gaps between tabs — the thickness of the book, seen between dividers.
+         44px = the binder's right padding, so the strip spans exactly from the
+         board edge to the outside of the card. */
       #binder-tabs {
-        position: absolute; right: 0; top: 8px; width: 34px; z-index: 2;
+        position: absolute; right: 0; top: 8px; width: 44px; z-index: 2;
         display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
       }
       #binder-tabs button {
         background: #ffffff; border: 0;
-        width: 30px; height: 30px; padding: 3px; cursor: pointer;
+        width: 36px; height: 30px; padding: 3px; cursor: pointer;
         display: flex; align-items: center; justify-content: center;
       }
       /* contain, not cover: the five icons are drawn at five different aspect
@@ -556,12 +587,36 @@
         object-fit: contain; display: block;
       }
       #binder-tabs button:hover { background: #eef2f6; }
+      /* The front board stands proud of everything behind it, so it throws a
+         hard band down its whole right edge — onto the dividers here, and onto
+         the page block in the gaps between them (see #binder-edge::after). No
+         blur: every other shadow in the game is hard-edged, and a soft one
+         beside pixel art reads as a different medium.
+         Inset on the tab rather than a drop-shadow on the board, because the
+         tabs paint OVER the board and would have covered its shadow — and
+         because the open divider has to be exempt: it is continuous with the
+         leaf, so nothing falls across it. */
+      #binder-tabs button { box-shadow: inset 3px 0 0 rgba(0,0,0,.3); }
+      #binder-tabs button[aria-selected='true'] { box-shadow: none; }
       /* An untrained section. Still pullable — the leaf behind it explains
-         itself — but visibly not yours yet. */
-      #binder-tabs button.locked { opacity: .5; }
-      /* All the dividers are the same white as the leaves. The open one is
-         told apart by being pulled further out of the book, not by color. */
-      #binder-tabs button[aria-selected='true'] { width: 34px; }
+         itself — but visibly not yours yet. A wash rather than transparency:
+         opacity faded the icon toward the desk behind it and made the tab read
+         as half-drawn, where a shade over it reads as unlit. */
+      #binder-tabs button.locked { position: relative; }
+      #binder-tabs button.locked::after {
+        content: ''; position: absolute; inset: 0;
+        background: rgba(0,0,0,.2); pointer-events: none;
+      }
+      /* All the dividers are the same white as the leaves. The open one is told
+         apart by being pulled further out of the book, not by color — and by
+         sliding 2px LEFT, the width of the board's outline, so it covers the
+         navy edge where it passes. Tab white then runs straight into page
+         white with no seam: the open divider is part of the leaf you are
+         reading. The closed ones stop at the outline and stay separate. */
+      #binder-tabs button[aria-selected='true'] {
+        width: calc(100% + 2px);
+        margin-left: -2px;
+      }
       #findings ul { margin: 0; padding: 0; list-style: none; }
       #findings li {
         display: flex; justify-content: space-between; align-items: center;
@@ -577,12 +632,11 @@
          desk's wood shows through unbroken — a separate opaque background would
          tile from this element's origin instead of the desk's, and the grain
          would visibly jump at the boundary now that no border hides it. */
+      /* No wash and no recess: the stamps sit ON the desk, and the wood behind
+         them runs unbroken to the bottom of the column. */
       #stamps {
         flex: 0 0 auto; display: flex; gap: 16px; justify-content: center;
         padding: 12px 12px 14px;
-        background: rgba(0, 0, 0, 0.1);
-        /* Reads as a recess in the desk rather than a panel sitting on it. */
-        box-shadow: inset 0 14px 18px -12px rgba(0, 0, 0, 0.6);
       }
       /* Physical plunger buttons. Two at 168px plus the gap fills the 356px
          panel; a third will not, so the panel drops to three narrower buttons
@@ -667,20 +721,26 @@
         font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
         color: var(--ink-soft);
       }
+      /* The panel's own title, now that the masthead above it is gone. Display
+         face, a step under the section headings. */
       .boss-id .who {
-        font-weight: 700; font-size: 16px; letter-spacing: .04em; margin-top: 3px;
+        font-family: var(--pixel-font); font-weight: 400;
+        font-size: 20px; letter-spacing: .05em; margin-top: 4px;
       }
       .boss-id .org { font-size: 11px; color: var(--ink-soft); margin-top: 8px; }
 
       /* Briefing and audit headings, same rule as the desk cards: titles get
          the display face, the prose underneath stays monospace. */
-      #sheet h1 { margin: 0 0 2px; font-family: var(--pixel-font);
-        font-size: 22px; font-weight: 400; letter-spacing: .06em; }
-      #sheet h3 { margin: 16px 0 6px; font-family: var(--pixel-font);
-        font-size: 15px; font-weight: 400; letter-spacing: .08em;
-        text-transform: uppercase; color: var(--ink-soft);
-        border-bottom: 1px solid var(--rule); padding-bottom: 3px; }
-      #sheet p { margin: 6px 0; }
+      /* Section titles took over the display treatment the Association's own
+         name used to have — same face, same size, same tracking, minus the
+         all-caps. There is no masthead any more: with the name gone, the thing
+         a section is ABOUT is the largest text on the page, which is the right
+         order of importance for a page you read once each morning. */
+      #sheet h3 { margin: 22px 0 8px; font-family: var(--pixel-font);
+        font-size: 22px; font-weight: 400; letter-spacing: .06em;
+        color: var(--ink); }
+      #sheet .pg > h3:first-child { margin-top: 4px; }
+      #sheet p { margin: 10px 0; }
       /* Money on the stub, at a size you read rather than scan past. */
       .money {
         font-family: var(--pixel-font); font-size: 22px; line-height: 1.2;
@@ -704,33 +764,14 @@
         display: block; border-radius: 50%;
       }
       .pg-dots i.on { background: var(--ink); }
-      .story p { margin: 0 0 10px; font-size: 13.5px; line-height: 1.6; }
+      .story p { margin: 0 0 15px; font-size: 13.5px; line-height: 1.65; }
       /* No drop cap: a pixel capital at 2.4em reads as a rune rather than a
          letter, which is the opposite of charming. The opening line carries
          itself. */
       .story p:first-child { font-size: 14.5px; }
-      /* A rule is introduced WITH the thing it is about. */
-      .exh { margin: 0 0 14px; border-left: 3px solid var(--rule); padding-left: 11px; }
-      .exh-head { display: flex; align-items: baseline; gap: 9px; }
-      .exh-head .code { font-weight: 700; letter-spacing: .04em; }
-      .exh-head .tab {
-        background: var(--manila); border: 1px solid #9d8b63; font-size: 10px;
-        letter-spacing: .08em; text-transform: uppercase; padding: 0 5px;
-      }
-      .exh-head .one { color: var(--ink-soft); font-size: 12px; }
-      /* One column, violating examples only. The near-miss is in the article's
-         enforcement-limits note rather than shown beside the violation — a
-         cite/leave pair breaks down the moment the same object is on both
-         sides, which is exactly what the bins do. */
-      .exh-body { display: flex; gap: 12px; align-items: center; margin-top: 8px; }
-      .exh-pics {
-        display: flex; gap: 8px; align-items: flex-end; flex: none;
-        background: rgba(43,39,33,.07); border: 1px solid var(--rule);
-        padding: 6px 8px; min-height: 56px;
-      }
-      .exh-pics img { height: 48px; width: auto; image-rendering: pixelated; }
-      .exh-pics .none { color: var(--ink-soft); font-size: 11px; font-style: italic; }
-      .exh-body p { margin: 0; font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+      /* A rule is introduced WITH the thing it is about — and in exactly the
+         form it takes in the binder, so the two cannot drift apart. See
+         binderEntry: the briefing renders its new articles with it. */
       /* Found, not told. Handwriting on the legal pad rather than Association
          letterhead, so it reads as somebody else's note and not as instruction. */
       .artifact {
@@ -779,6 +820,15 @@
         position: relative; overflow: hidden; min-height: 178px;
         padding-top: 25px; border: 0;
       }
+      /* Findings is a pad too — the same glued board across its head. It also
+         lives on the STAGE rather than the desk: anchored to the bottom-right
+         corner over the road, so the list grows upward off a fixed bottom edge
+         as marks land. z-index above the hover readout, and it takes clicks
+         (the flyer beside it does not) because the unflag buttons are in it. */
+      #findings {
+        position: absolute; right: 14px; bottom: 0; z-index: 7;
+        width: 262px; padding-top: 25px; border: 0; overflow: hidden;
+      }
       /* The glued edge of a legal pad. A few pixels of brown board across the
          head of the sheet, which is what makes the case file read as a pad you
          tear a sheet off rather than as a loose leaf. Tiled from the texture
@@ -787,7 +837,7 @@
       /* Flush to the card's own edges — the card has no border to clear now,
          and a real pad's binding is the outermost thing at the head of the
          sheet anyway. */
-      #casefile-card::before {
+      #casefile-card::before, #findings::before {
         content: ''; position: absolute; top: 0; left: 0; right: 0;
         height: 16px;
         background: #433622 url('assets/paper-brown.png') repeat;
@@ -966,6 +1016,15 @@
         </div>
       </div>
 
+      <!-- On the stage, not the desk. What you have marked belongs beside the
+           thing you marked, so checking your work does not mean looking away
+           from the lot. Anchored to the bottom edge, so the list grows UPWARD
+           as findings land and the pad stays put. -->
+      <div class="card" id="findings">
+        <h2>Findings</h2>
+        <ul id="find-list"></ul>
+      </div>
+
       <div id="tools">
           <span id="hover"></span>
         </div>
@@ -995,12 +1054,12 @@
 
             <!-- Same wire as the rulebook, turned a quarter — see
                  tools/rotate-rings.ts for why the sprites are pre-rotated. -->
-            <div id="calendar">
-              <div id="cal-spine" aria-hidden="true">
+            <div class="cal" id="calendar">
+              <div class="cal-spine" aria-hidden="true">
                 <i class="h-start"></i><i class="h-mid"></i><i class="h-end"></i>
               </div>
-              <div id="cal-dow">—</div>
-              <div id="cal-date">—</div>
+              <div class="cal-dow" id="cal-dow">—</div>
+              <div class="cal-date" id="cal-date">—</div>
             </div>
           </div>
 
@@ -1051,10 +1110,6 @@
             <img id="stamp-mark" alt="" />
           </div>
 
-          <div class="card" id="findings">
-            <h2>Findings</h2>
-            <ul id="find-list"></ul>
-          </div>
         </div>
 
         <!-- Which of these is present depends on the level's verdict_mode.

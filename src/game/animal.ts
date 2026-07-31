@@ -32,6 +32,36 @@ export function animalKind(which: number): string {
 }
 
 /**
+ * Which animals are out, given the hour.
+ *
+ * The two sets do not overlap: cats and dogs belong to somebody and are indoors
+ * after dark, and the armadillo and the raccoon are the neighborhood's own and
+ * are not out in daylight. That is a stronger rule than "night also allows the
+ * wild ones", and deliberately so — an animal turns up on well under half the
+ * lots, so a night set that still contained the cat and the dog would show the
+ * new animals almost never. If a cat wandering a night lawn is wanted later,
+ * this is the one line to relax.
+ *
+ * Returning the INDEX list rather than filtering at the draw site keeps the
+ * sheet rows as the single source of truth — adding an animal to the packer is
+ * then the whole change.
+ */
+export function animalsAbroad(night: boolean): number[] {
+  const out: number[] = [];
+  for (let i = 0; i < ANIMALS.count; i++) {
+    if (meta.ambient[i] && meta.nocturnal[i] === night) out.push(i);
+  }
+  return out;
+}
+
+/** Row index of a named animal, for the ones that are placed rather than rolled. */
+export function animalNamed(id: string): number {
+  const i = (meta.animals as string[]).indexOf(id);
+  if (i < 0) throw new Error(`no animal "${id}" in the sheet — is it in tools/pack-animals.ts?`);
+  return i;
+}
+
+/**
  * How much bigger a cat is drawn than its sprite.
  *
  * Residents are 28px of content at 4x, so 112px tall. A cat is also 28px of

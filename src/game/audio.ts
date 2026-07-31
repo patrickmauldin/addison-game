@@ -14,7 +14,13 @@
  *     never stop the game, so failures are swallowed rather than surfaced.
  */
 
-export type BedName = 'ambiance' | 'office' | 'theme';
+/**
+ * The looping beds. `ambiance-night` is the street after dark — same street,
+ * different room tone, so a night shift sounds like one as well as looking like
+ * one. Crossfading between the two day/night beds never happens inside a round;
+ * a level is one or the other.
+ */
+export type BedName = 'ambiance' | 'ambiance-night' | 'office' | 'theme';
 /**
  * One-shots, and the file each comes from.
  *
@@ -56,7 +62,7 @@ export class Sound {
 
   constructor(cacheBust = '') {
     this.muted = localStorage.getItem('addison.muted') === '1';
-    for (const name of ['ambiance', 'office', 'theme'] as BedName[]) {
+    for (const name of ['ambiance', 'ambiance-night', 'office', 'theme'] as BedName[]) {
       const a = new Audio(`assets/${name}.mp3${cacheBust}`);
       a.loop = true;
       a.preload = 'auto';

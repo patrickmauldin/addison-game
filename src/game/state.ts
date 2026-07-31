@@ -173,16 +173,38 @@ export function adjudicate(
   payPerInspection: number,
 ): LotOutcome {
   const violationIds = new Set(lot.truth.violations.map((v) => v.object));
+  const nameOf = (id: string) => labels.get(id) ?? id;
 
+  /**
+   * ONE CITATION COVERS THE KIND.
+   *
+   * A lot with six weeds on it is one finding written six times, and making the
+   * player click all six is a test of patience rather than of judgment. So
+   * citing any one of them answers for the rest: what is being recorded is
+   * "this lot has weeds", not an inventory.
+   *
+   * Grouped by LABEL rather than by article, and deliberately. The label is
+   * what the player reads on the pad and what tells two objects apart — the
+   * green bin and the brown bin are both R-104 but they are visibly two things,
+   * and citing one should not silently answer for the other. Same key the
+   * Findings pad groups on, so what the player is shown and what they are
+   * marked against cannot disagree.
+   */
+  const citedKinds = new Set(
+    lot.truth.violations.filter((v) => flagged.has(v.object)).map((v) => nameOf(v.object)),
+  );
+
+  // Hits stay the ones actually MARKED. The covered instances are not mistakes,
+  // but they are not the player's work either.
   const hits = lot.truth.violations
     .filter((v) => flagged.has(v.object))
-    .map((v) => ({ object: v.object, label: labels.get(v.object) ?? v.object, article: v.article }));
+    .map((v) => ({ object: v.object, label: nameOf(v.object), article: v.article }));
 
   const missed = lot.truth.violations
-    .filter((v) => !flagged.has(v.object))
+    .filter((v) => !flagged.has(v.object) && !citedKinds.has(nameOf(v.object)))
     .map((v) => ({
       object: v.object,
-      label: labels.get(v.object) ?? v.object,
+      label: nameOf(v.object),
       article: v.article,
       why: v.why,
     }));

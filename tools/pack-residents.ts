@@ -77,6 +77,14 @@ type Outfit = {
   tops: string[];
   bottom: string;
   feet: string;
+  /**
+   * A named person who turns up as themselves, not as filler.
+   *
+   * Kept out of the random draw entirely — weight 0 — so they appear only where
+   * something puts them. Somebody the player is meant to recognise loses that
+   * the moment they can also be the anonymous stranger on the next lot.
+   */
+  cameo?: boolean;
 };
 
 /**
@@ -111,15 +119,29 @@ const CAST: Outfit[] = [
   { name: 'overalls-blue',  skin: 'skin5', hair: 'style2_med_brown',   tops: ['overalls_blue', 'long_sleeve_red'],  bottom: 'pants_blue',        feet: 'boots_brown' },
   { name: 'tshirt-white',   skin: 'skin3', hair: 'style1_red',         tops: ['tshirt_white'],                      bottom: 'shorts_green',      feet: 'boots_grey'  },
   { name: 'skirt-purple',   skin: 'skin2', hair: 'style3_blonde',      tops: ['long_sleeve_purple'],                bottom: 'long_skirt_purple', feet: 'boots_brown' },
+
+  // Named residents. APPENDED, never inserted: a character is referred to by
+  // its index into this table, so slipping a row into the middle would change
+  // who lives on every lot in the game.
+  { name: 'patrick',        skin: 'skin5', hair: 'style3_med_brown',   tops: ['tshirt_white'],                      bottom: 'pants_blue',        feet: 'boots_brown', cameo: true },
+  { name: 'savanna',        skin: 'skin4', hair: 'style1_blonde',      tops: ['sleeveless_blue'],                   bottom: 'short_skirt_blue',  feet: 'boots_grey',  cameo: true },
 ];
 
-/** Relative odds of each character turning up, normalized to RARE_SHARE. */
-const rareCount = CAST.filter((c) => RARE_SKINS.has(c.skin)).length;
-const commonCount = CAST.length - rareCount;
+/**
+ * Relative odds of each character turning up, normalized to RARE_SHARE.
+ *
+ * Cameos are excluded from the draw AND from the counts the rest are divided
+ * by, so adding a named person does not quietly thin everybody else out.
+ */
+const drawable = CAST.filter((c) => !c.cameo);
+const rareCount = drawable.filter((c) => RARE_SKINS.has(c.skin)).length;
+const commonCount = drawable.length - rareCount;
 const CAST_WEIGHTS = CAST.map((c) =>
-  RARE_SKINS.has(c.skin)
-    ? RARE_SHARE / Math.max(1, rareCount)
-    : (1 - RARE_SHARE) / Math.max(1, commonCount),
+  c.cameo
+    ? 0
+    : RARE_SKINS.has(c.skin)
+      ? RARE_SHARE / Math.max(1, rareCount)
+      : (1 - RARE_SHARE) / Math.max(1, commonCount),
 );
 
 const load = (rel: string): Bitmap => {

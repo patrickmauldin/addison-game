@@ -4,6 +4,7 @@
   "weather": "clear",
   "active_rules": [
     "R-101",
+    "R-102",
     "R-105"
   ],
   "quota": 4,
@@ -11,6 +12,15 @@
   "verdict_mode": "notice",
   "_teaching": "Two rules, four lots, and nothing you do can cost anybody money. The arc is: here is a violation - here is a thing you can click that is NOT one - here is the second rule - now tell them apart on one lot.",
   "briefing": "First day. Bonerville, outer loop. Two articles are live — weeds and fence condition. Nothing else on that street is your business, however it looks.",
+  "_cameo": "Named walkers, pinned to one address rather than rolled. They pass 4404 every time Shift 1 is played, which is what makes them people the player recognises rather than more traffic.",
+  "cameo": {
+    "lot_id": "bonerville_02",
+    "people": [
+      "patrick",
+      "savanna"
+    ],
+    "dog": "juniper"
+  },
   "story": [
     "Welcome to the Addison Master Community Association. You are the Compliance Inspector. There is one.",
     "You're at 2118 Eyezeta, yes? Good. Short commute.",
@@ -43,6 +53,20 @@
           "anchor": "YARD_2",
           "label": "Weed growth, front turf",
           "first_seen": "2027-03-01"
+        },
+        {
+          "id": "turf_1",
+          "sprite": "grass1",
+          "anchor": "YARD_1",
+          "label": "Turf, overgrown",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "turf_2",
+          "sprite": "grass3",
+          "anchor": "YARD_3",
+          "label": "Turf, overgrown",
+          "first_seen": "2027-03-01"
         }
       ],
       "truth": {
@@ -56,6 +80,16 @@
             "object": "weeds_2",
             "article": "R-101",
             "why": "Unbordered weed growth in the front turf, visible from the street."
+          },
+          {
+            "object": "turf_1",
+            "article": "R-102",
+            "why": "Turf well past six inches across the front."
+          },
+          {
+            "object": "turf_2",
+            "article": "R-102",
+            "why": "Same lawn, same article."
           }
         ],
         "decoys": []
@@ -110,6 +144,34 @@
           "align": "left",
           "label": "Side-yard fence",
           "first_seen": "2027-03-01"
+        },
+        {
+          "id": "turf_1",
+          "sprite": "grass1",
+          "anchor": "YARD_1",
+          "label": "Turf, overgrown",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "turf_2",
+          "sprite": "grass2",
+          "anchor": "YARD_3",
+          "label": "Turf, overgrown",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "turf_3",
+          "sprite": "grass3",
+          "anchor": "YARD_4",
+          "label": "Turf, overgrown",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "turf_4",
+          "sprite": "grass4",
+          "anchor": "YARD_6",
+          "label": "Turf, overgrown",
+          "first_seen": "2027-03-01"
         }
       ],
       "truth": {
@@ -118,6 +180,26 @@
             "object": "fence",
             "article": "R-105",
             "why": "The panel has collapsed entirely — members down between the posts."
+          },
+          {
+            "object": "turf_1",
+            "article": "R-102",
+            "why": "The lawn has not been cut in weeks."
+          },
+          {
+            "object": "turf_2",
+            "article": "R-102",
+            "why": "Same lawn, same article."
+          },
+          {
+            "object": "turf_3",
+            "article": "R-102",
+            "why": "Same lawn, same article."
+          },
+          {
+            "object": "turf_4",
+            "article": "R-102",
+            "why": "Same lawn, same article."
           }
         ],
         "decoys": []

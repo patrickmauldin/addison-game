@@ -32,10 +32,10 @@ import rulesData from './data/rules.json';
 import housesData from './data/houses.json';
 import { BarkState, factsFromProps, resetBarkHistory, type BarkContext } from './game/barks.js';
 import { BUBBLE_FONT, drawBubble } from './game/bubble.js';
-import { ANIMAL_UPSCALE, ANIMALS, animalFrameFor, animalKind } from './game/animal.js';
+import { ANIMAL_UPSCALE, ANIMALS, animalFrameFor, animalKind, animalNamed, animalsAbroad } from './game/animal.js';
 import { dateForLevel } from './game/calendar.js';
 import { makePassersby, remapPassersby, stepPassersby, type Passerby, type Sidewalk } from './game/passerby.js';
-import { pickCharacter, RESIDENT_UPSCALE, RESIDENTS, residentFrame, TOOL_NAMES, ToolWork, walkFrame } from './game/residents.js';
+import { characterNamed, pickCharacter, RESIDENT_UPSCALE, residentFrame, RESIDENTS, TOOL_NAMES, ToolWork, walkFrame } from './game/residents.js';
 import { seedFrom, Walker } from './game/walker.js';
 import { Sound } from './game/audio.js';
 /**
@@ -77,6 +77,18 @@ type Bounty = {
 type LevelSpec = {
   level_id: number;
   weather: string;
+  /**
+   * Named walkers who pass one lot on this level. Authored, not rolled — a
+   * cameo that might not happen is not a cameo. See makeCameo.
+   */
+  cameo?: { lot_id: string; people: string[]; dog?: string };
+  /**
+   * A night shift. Authored per level rather than derived from the number: the
+   * intent is roughly every couple of shifts, but which ones is a pacing
+   * decision — a night round wants to land where the street has something worth
+   * seeing in the dark, not on a fixed modulus.
+   */
+  night?: boolean;
   active_rules: string[];
   quota: number;
   pay_per_inspection: number;
@@ -264,7 +276,30 @@ function bountyPropFor(lot: LotSpec): PropSpec | null {
 const PARKED_CARS = [
   'car1black', 'car1red', 'car1white',
   'car2white', 'car3cyber', 'car4blue', 'car5yellow',
+  // Two-wheelers. Shorter than any car, so DRIVEWAY_2 clears them easily.
+  'car6red', 'car7black', 'car7blue',
 ];
+
+/**
+ * Art that is loaded but never parked at random.
+ *
+ * car1redbad is a wreck — rust across the panels, rear window gone. Dropping it
+ * into the ambient pool would put a derelict on an innocent driveway as
+ * scenery, and a player who cites it takes a strike for reading the picture
+ * correctly. It belongs to an inoperable-vehicle article, and until there is
+ * one it stays out of the rotation and in the loader, so content can place it
+ * deliberately the day that rule exists.
+ */
+const UNPARKED_CARS = ['car1redbad'];
+
+/**
+ * Overgrown turf, in four tufts.
+ *
+ * Named here rather than left as loose strings because the compositor needs to
+ * recognise them: grass is the one prop class that draws UNDER all the others,
+ * so a tuft never covers a bin or a fence it happens to overlap.
+ */
+const TALL_GRASS = ['grass1', 'grass2', 'grass3', 'grass4'];
 
 /**
  * The house plans, which are filed in assets/houses/ rather than at the top.
@@ -286,9 +321,13 @@ const ASSET_FILES = [
   ...HOUSE_SPRITES,
   'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
+  // Overgrown turf. Four tufts so a lawn that has got away from its owner does
+  // not read as the same clump stamped five times.
+  ...TALL_GRASS,
   // Posted notices — the missing-animal flyer, and anything pinned up later.
   'pin',
   ...PARKED_CARS,
+  ...UNPARKED_CARS,
   // Not yet placed by any lot, but loaded so content can reference them:
   // R-107 clutter (couch, washer, dryer, boxes) and R-204 recreational
   // vehicles. Missing sprites are skipped at render, so listing them early
@@ -390,6 +429,15 @@ type Resident = { walker: Walker; work: ToolWork | null; bark: BarkState | null 
 let resident: Resident | null = null;
 /** People passing along the sidewalk. Drains as they leave; never refills. */
 let passersby: Passerby[] = [];
+/**
+ * A dog walking the sidewalk with somebody, rather than loose in a yard.
+ *
+ * Shaped as a Passerby so it steps, remaps on resize and leaves the frame
+ * through the same code the people do — the only difference is which sheet it
+ * is drawn from, which is what `which` carries.
+ */
+type Escort = Passerby & { which: number };
+let escort: Escort | null = null;
 /** An animal pottering about this lot, if one turned up. */
 let animal: { which: number; walker: Walker } | null = null;
 /** What the barks on this lot are allowed to gate on. Rebuilt per lot. */
@@ -473,6 +521,29 @@ function stageSize(): { w: number; h: number } {
   return { w: Math.max(320, Math.round(r.width)), h: Math.max(320, Math.round(r.height)) };
 }
 
+/**
+ * Night.
+ *
+ * One flat wash over the finished scene rather than re-lighting the art: the
+ * houses, props, residents and animals all go under it together, so nothing can
+ * be lit inconsistently with anything else.
+ *
+ * A FUNCTION, not two copies of a fillRect, because the scene reaches the
+ * screen by two routes — paint() for a lot you are standing at, and the pan
+ * between lots, which blits the two lot canvases itself. The pan missed the
+ * wash when it was inline, so the street turned to daylight for the length of
+ * the drive and back to night on arrival.
+ *
+ * Applied after the world and before anything the PLAYER put on it. A red X you
+ * cannot read in the dark is not atmosphere, it is a bug — the same reason the
+ * Findings pad sits in the DOM above the canvas entirely.
+ */
+function washNight(w: number, h: number): void {
+  if (!day.night) return;
+  ctx.fillStyle = 'rgba(5, 11, 25, .75)';
+  ctx.fillRect(0, 0, w, h);
+}
+
 function paint(): void {
   const { w, h } = stageSize();
   canvas.width = w;
@@ -483,6 +554,7 @@ function paint(): void {
   if (currentCanvas) ctx.drawImage(currentCanvas, 0, 0);
   else ctx.putImageData(rendered.raster.toImageData(), 0, 0);
   drawWalker();
+  washNight(w, h);
 
   // Flag markers, drawn over the finished scene. Half native size (104x117 ->
   // 52x59), an exact halving so the pixel grid survives the downscale.
@@ -529,7 +601,12 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   // A wanted person has to be findable, so on their lot somebody is always out
   // and it is always them. Everywhere else the usual roll applies.
   const wanted = day.bounty?.kind === 'person' && lot.lot_id === bountyLot && bountyCharacter !== null;
-  if (!wanted && rnd() < 0.45) return null; // nobody home, or nobody outside
+  // After dark almost nobody is out on their own lawn — the street is quiet,
+  // which is most of what makes a night round feel different from a day one.
+  // The roll is drawn either way, so the two sets of lots stay in step and a
+  // resident who is out at night is the same person who was out by day.
+  const stayIn = day.night ? 0.88 : 0.45;
+  if (!wanted && rnd() < stayIn) return null; // nobody home, or nobody outside
   // Out working, and with what. Drawn from a SEPARATE seed rather than the next
   // number in this stream, so adding tools did not reshuffle who stands where.
   const trnd = seedFrom(`${lot.lot_id}:tool`);
@@ -599,13 +676,19 @@ function barkContextFor(lot: LotSpec): BarkContext {
  */
 function makeAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Walker } | null {
   const rnd = seedFrom(`${lot.lot_id}:animal`);
-  if (rnd() >= 0.35) return null;
+  // More of them after dark, not fewer: the lawns have emptied of people, and
+  // wildlife on an empty street is the whole point of running a round at night.
+  if (rnd() >= (day.night ? 0.6 : 0.35)) return null;
   const L = rl.layout;
   const top = L.house.y + L.house.h * 0.8;
   const bottom = L.walkTop - 10;
   if (bottom - top < 24) return null;
+  // Cats and dogs by day; the armadillo and the raccoon join them after dark.
+  // Drawing from the allowed list rather than rolling over every row keeps the
+  // roll in the same place in the stream whichever set is in play.
+  const abroad = animalsAbroad(day.night === true);
   return {
-    which: Math.floor(rnd() * ANIMALS.count),
+    which: abroad[Math.floor(rnd() * abroad.length)],
     // Slower than a person and with the Walker's own habit of stopping, which
     // between them is most of what reads as "animal" rather than "small person".
     walker: new Walker(0, { x0: L.w * 0.06, x1: L.w * 0.94, y0: top, y1: bottom }, rnd, L.house.w * 0.05),
@@ -633,7 +716,56 @@ function makeTraffic(lot: LotSpec, rl: RenderedLot, taken: number[] = []): Passe
   // Most of them are thinking about something. They draw only from the lines a
   // stranger could say: no "my fence", no citations against them.
   for (const p of out) p.bark = rnd() < 0.6 ? new BarkState('passer', rnd, 2 + rnd() * 4) : null;
+  out.push(...makeCameo(lot, rl));
   return out;
+}
+
+/**
+ * The named walkers, on the one lot a level says they pass.
+ *
+ * Not a roll — they are specific people, and a cameo that might not happen is
+ * not a cameo. They walk together: same direction, same pace, a step apart in
+ * depth so the nearer one passes in front. The dog is separate because she is
+ * drawn from the animal sheet, but she is given the same heading and speed and
+ * put out ahead, which is where a dog on a lead is.
+ *
+ * Everything starts off the left edge so the group walks IN. Arriving already
+ * halfway across reads as three figures that were spawned there, which is what
+ * they are, and the whole point is that it should not look like it.
+ */
+function makeCameo(lot: LotSpec, rl: RenderedLot): Passerby[] {
+  const c = day.cameo;
+  if (!c || c.lot_id !== lot.lot_id) return [];
+  const walk = sidewalkOf(rl);
+  const depth = walk.bottom - walk.top;
+  const speed = walk.w * 0.06;
+
+  const people = c.people.map((name: string, i: number) => ({
+    character: characterNamed(name),
+    // A stride apart, so they read as walking together rather than as one
+    // figure with a rendering fault.
+    x: -walk.w * 0.08 - i * 26,
+    y: walk.top + depth * (0.42 + i * 0.22),
+    dir: 2 as Passerby['dir'],
+    vx: speed,
+    t: i * 0.4,
+    bark: null,
+  }));
+
+  escort = c.dog
+    ? {
+        which: animalNamed(c.dog),
+        character: 0,
+        x: -walk.w * 0.08 + 64,
+        y: walk.top + depth * 0.55,
+        dir: 2 as Passerby['dir'],
+        vx: speed,
+        t: 0,
+        bark: null,
+      }
+    : null;
+
+  return people;
 }
 
 /** Shared by everyone drawn from the resident sheet. */
@@ -753,6 +885,16 @@ function drawWalker(): void {
     const f = animalFrameFor(c.which, c.walker);
     queue.push({ y: c.walker.y, draw: () => drawAnimal(c.walker.x, c.walker.y, f.sx, f.sy, f.flip) });
   }
+  // The walked dog. Same sheet as the strays, but she is steered like a
+  // passerby, so the frame picker gets a stand-in with the four fields it
+  // actually reads: always moving, facing the way she is going.
+  if (escort && animalSheet.complete && animalSheet.naturalWidth) {
+    const e = escort;
+    const f = animalFrameFor(e.which, {
+      facing: e.dir, moving: true, phase: e.t, hx: Math.sign(e.vx),
+    } as unknown as Walker);
+    queue.push({ y: e.y, draw: () => drawAnimal(e.x, e.y, f.sx, f.sy, f.flip) });
+  }
   if (currentProps) {
     const layer = currentProps;
     for (const pr of rendered.props) {
@@ -784,7 +926,7 @@ function startWalkerLoop(): void {
   cancelAnimationFrame(walkerRaf);
   // Traffic alone is reason enough to run: a lot can have an empty yard and
   // still have somebody walking past it.
-  if (!resident && !passersby.length && !animal) return;
+  if (!resident && !passersby.length && !animal && !escort) return;
   walkerLast = performance.now();
   const step = (now: number) => {
     if (sliding) { walkerRaf = requestAnimationFrame(step); return; }
@@ -795,11 +937,13 @@ function startWalkerLoop(): void {
     animal?.walker.update(dt);
     resident?.bark?.update(dt, barkCtx);
     passersby = stepPassersby(passersby, dt, sidewalkOf(rendered));
+    // The dog walks off the edge on the same terms as the people beside her.
+    escort = (stepPassersby(escort ? [escort] : [], dt, sidewalkOf(rendered))[0] as Escort) ?? null;
     for (const p of passersby) p.bark?.update(dt, barkCtx);
     paint();
     // Once the last of them has gone and there is nobody in the yard there is
     // nothing left moving, so stop asking for frames.
-    if (!resident && !passersby.length && !animal) return;
+    if (!resident && !passersby.length && !animal && !escort) return;
     walkerRaf = requestAnimationFrame(step);
   };
   walkerRaf = requestAnimationFrame(step);
@@ -826,6 +970,7 @@ window.addEventListener('resize', () => {
     // Traffic is REMAPPED, not respawned: anyone who has already walked off has
     // gone for good, and rebuilding from the seed would march them back on.
     passersby = remapPassersby(passersby, wasWalk, sidewalkOf(rendered));
+    escort = (remapPassersby(escort ? [escort] : [], wasWalk, sidewalkOf(rendered))[0] as Escort) ?? null;
     startWalkerLoop();
     paint();
   }, 120) as unknown as number;
@@ -939,11 +1084,11 @@ const binderExpanded = new Set<string>();
  * question of WHICH article, not a question of statute. The citation goes down
  * there with them: the section number is flavour, not something you scan for.
  */
-function binderEntry(a: Article): string {
+function binderEntry(a: Article, expanded: Set<string> = binderExpanded): string {
   const pics = (a.exhibit?.cite ?? [])
     .map((k) => `<img src="assets/${k}.png" alt="" />`)
     .join('');
-  const open = binderExpanded.has(a.id);
+  const open = expanded.has(a.id);
   return `
     <div class="bk-rule">
       <div class="bk-head">
@@ -1014,7 +1159,7 @@ function syncBinder(): void {
   // Association's own voice is worth more than a blank leaf, and it tells the
   // player the tab will be worth something later without spoiling what.
   body.innerHTML = here.length
-    ? here.map(binderEntry).join('')
+    ? here.map((a) => binderEntry(a)).join('')
     : `<p class="bk-locked">These rules will be revealed to you once you have
          completed the relevant job training.</p>`;
   body.querySelectorAll<HTMLButtonElement>('[data-more]').forEach((b) => {
@@ -1099,16 +1244,36 @@ function syncDesk(): void {
   if (!flagged.size) {
     list.innerHTML = '<li class="none">Nothing marked.</li>';
   } else {
-    list.innerHTML = [...flagged]
-      .map((id) => {
-        const o = rendered.objects.find((x) => x.id === id)!;
-        return `<li><span>${o.label}<br><span class="muted" style="font-size:11px">R-101</span></span>
-                <button data-unflag="${id}">&times;</button></li>`;
-      })
+    /**
+     * One line per KIND of finding, counted.
+     *
+     * Six weeds is one thing wrong with the lot written six times. Listing them
+     * separately buries the other findings under a wall of identical rows, and
+     * it is the same reason adjudication treats one citation as covering the
+     * kind — see state.ts. Grouped on the label, the same key used there, so
+     * the pad and the scoring cannot disagree about what counts as "the same".
+     */
+    const kinds = new Map<string, string[]>();
+    for (const id of flagged) {
+      const o = rendered.objects.find((x) => x.id === id);
+      if (!o) continue;
+      const ids = kinds.get(o.label) ?? [];
+      ids.push(id);
+      kinds.set(o.label, ids);
+    }
+    list.innerHTML = [...kinds]
+      .map(
+        ([label, ids]) =>
+          `<li><span>${label}${ids.length > 1 ? ` <b>&times; ${ids.length}</b>` : ''}</span>
+             <button data-unflag="${ids.join(' ')}">&times;</button></li>`,
+      )
       .join('');
     list.querySelectorAll<HTMLButtonElement>('[data-unflag]').forEach((b) => {
+      // One row, one remove: taking off a grouped line takes off every instance
+      // behind it, or the count would drop by one and leave a row the player
+      // thought they had cleared.
       b.onclick = () => {
-        flagged.delete(b.dataset.unflag!);
+        for (const id of b.dataset.unflag!.split(' ')) flagged.delete(id);
         paint();
         syncDesk();
       };
@@ -1174,12 +1339,17 @@ frame.addEventListener('click', (ev) => {
   // rather than silently citing whatever is behind it.
   if (animalHit(p.x, p.y)) {
     const kind = animalKind(animal!.which);
-    // Two barks, so a dog clicked twice does not sound like a loop.
-    sound.play(kind === 'dog' ? (Math.random() < 0.5 ? 'bark1' : 'bark2') : 'meow');
+    // Two barks, so a dog clicked twice does not sound like a loop. The
+    // armadillo and the raccoon have no line — silence is the right answer for
+    // an animal with nothing to say, and better than borrowing the cat's.
+    if (kind === 'dog') sound.play(Math.random() < 0.5 ? 'bark1' : 'bark2');
+    else if (kind === 'cat') sound.play('meow');
     return;
   }
 
-  const key = rendered.raster.idAt(p.x, p.y);
+  // idNear, not idAt: a weed is mostly gaps, and a click that lands in one is
+  // the player pointing at the weed, not at the grass behind it.
+  const key = rendered.raster.idNear(p.x, p.y);
   if (!key) return;
   const obj = rendered.byKey.get(key);
   if (!obj?.flaggable) return;
@@ -1208,7 +1378,8 @@ frame.addEventListener('click', (ev) => {
 frame.addEventListener('mousemove', (ev) => {
   if (sliding) return;
   const p = toLotPixel(ev as MouseEvent);
-  const obj = rendered.byKey.get(rendered.raster.idAt(p.x, p.y));
+  // Same reach as the click, or the label would disagree with what a click does.
+  const obj = rendered.byKey.get(rendered.raster.idNear(p.x, p.y));
   // The loupe is an INFORMATION tool, not a magnifier: label and first-seen
   // date, never more pixels (manifest section 10, "Resolution & zoom").
   $('hover').textContent = obj?.flaggable
@@ -1281,6 +1452,7 @@ function gotoLevel(i: number): void {
   resident = null;
   animal = null;
   passersby = [];
+  escort = null;
   saveFile.inspector.strikes_today = 0;
   stamping = false;
   sliding = false;
@@ -1440,6 +1612,8 @@ function slideToLot(index: number): void {
     ctx.clearRect(0, 0, sz.w, sz.h);
     ctx.drawImage(from, dx, 0);
     ctx.drawImage(next.cv, dx + sz.w, 0);
+    // Both lots are scene, so both go under the same wash — see washNight.
+    washNight(sz.w, sz.h);
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
@@ -1607,13 +1781,31 @@ function endDay(): void {
  * Three pages: who you are and what today is, what is live and what it looks
  * like, then the route. The how-to-play page only appears on Level 1.
  */
-function briefing(): void {
-  const art = (key: string) => `assets/${key}.png`;
-  const pics = (keys: string[]) =>
-    keys.length
-      ? keys.map((k) => `<img src="${art(k)}" alt="${k}" />`).join('')
-      : '<span class="none">no example art yet</span>';
+/** Which articles the BRIEFING has expanded. Separate from the binder's own
+ *  set, so reading a rule at the morning meeting does not leave the book open
+ *  at that page for the rest of the round. */
+const briefExpanded = new Set<string>();
 
+/**
+ * A desk calendar showing today, as markup.
+ *
+ * The one on the desk is a fixed element the desk sync writes into; this builds
+ * a second, self-contained copy for the briefing panel, which is rebuilt from
+ * scratch on every page turn. Same classes, so both are the same object — the
+ * date on the manager's desk cannot drift from the date on yours.
+ */
+function calendarMarkup(extraClass = ''): string {
+  return `
+    <div class="cal ${extraClass}">
+      <div class="cal-spine" aria-hidden="true">
+        <i class="h-start"></i><i class="h-mid"></i><i class="h-end"></i>
+      </div>
+      <div class="cal-dow">${today.weekday}</div>
+      <div class="cal-date">${shortDate(today.iso)}</div>
+    </div>`;
+}
+
+function briefing(): void {
   /**
    * Only what is NEW today.
    *
@@ -1628,29 +1820,15 @@ function briefing(): void {
   );
 
   /**
-   * Only the VIOLATING examples, too.
+   * Rendered as BINDER PAGES, by the binder's own function.
    *
-   * A cite/leave pair reads badly the moment the same object appears on both
-   * sides — R-104's bins are cited at the curb and left when screened, so the
-   * old layout showed an identical bin under "cite this" and "leave this",
-   * which teaches confusion rather than the rule. The near-miss lives in the
-   * article's enforcement-limits note, one click away in the binder.
+   * A new article is introduced here and lived with in the book, and the two
+   * used to look nothing alike — the briefing had a tagged header and a boxed
+   * pair of thumbnails, the binder a compact entry with a read-more. Sharing
+   * one renderer means the thing you are shown at the morning meeting is
+   * literally the page you will be turning to at the third house.
    */
-  const exhibits = fresh.map((a) => {
-    const e = (a as { exhibit?: { cite: string[]; cite_note: string } }).exhibit;
-    return `
-      <div class="exh">
-        <div class="exh-head">
-          <span class="code">Rule ${ruleNumber(a.id)}</span>
-          <span class="tab">${a.tab}</span>
-          <span class="one">${a.short}</span>
-        </div>
-        <div class="exh-body">
-          <div class="exh-pics">${pics(e?.cite ?? [])}</div>
-          <p>${e?.cite_note ?? ''}</p>
-        </div>
-      </div>`;
-  }).join('');
+  const exhibits = () => fresh.map((a) => binderEntry(a as Article, briefExpanded)).join('');
 
   const storyBeats = ((day as { story?: string[] }).story ?? [day.briefing])
     .map((t) => `<p>${t}</p>`).join('');
@@ -1662,8 +1840,19 @@ function briefing(): void {
     ? `<div class="artifact"><h4>${art0.title}</h4><p>${art0.text}</p></div>`
     : '';
 
+  /**
+   * Rebuilt on every render, not built once.
+   *
+   * The new-article page contains read-more entries whose open/shut state is
+   * baked into the markup, so a page held as a constant string cannot change
+   * when one is expanded — the click toggled the set and re-rendered stale
+   * HTML. Anything with state in it has to be regenerated at draw time.
+   */
+  const buildPages = (): string[] => {
+  // No date heading: the calendar in the corner of the panel is the date, and
+  // printing it twice on the same sheet is how a prop stops being a prop.
   const pages: string[] = [
-    `<h3>${today.weekday} &middot; ${shortDate(today.iso)}</h3>
+    `<h3>This morning</h3>
      <div class="story">${storyBeats}</div>
      ${artifact}`,
   ];
@@ -1673,7 +1862,7 @@ function briefing(): void {
     `<h3>New today</h3>
      <p class="muted" style="margin-bottom:12px">Added to the binder as of this morning.
         Everything already in there still applies — look it up before you stamp.</p>
-     ${exhibits}`);
+     ${exhibits()}`);
   pages.push(`<h3>Today's round</h3>
      <div class="today-line"><span>Inspections</span><b>${day.lots.length} on Bonerville</b></div>
      <div class="today-line"><span>Pay</span><b>$${day.pay_per_inspection} each</b></div>
@@ -1692,13 +1881,16 @@ function briefing(): void {
           note folded underneath it, and it is load-bearing.</p>
        <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>`);
   }
+    return pages;
+  };
 
   let page = 0;
   const render = () => {
+    const pages = buildPages();
     sheet.innerHTML = `
+      ${calendarMarkup('brief-cal')}
       ${bossHeader('boss1')}
-      <h1>ADDISON MASTER COMMUNITY ASSOCIATION</h1>
-      <div class="muted">Compliance Inspector &middot; Level ${day.level_id}</div>
+      <div class="muted">Compliance Inspector &middot; Shift ${day.level_id}</div>
       ${pages.map((p, i) => `<div class="pg${i === page ? ' on' : ''}">${p}</div>`).join('')}
       <div class="pg-nav">
         <div class="pg-dots">${pages.map((_, i) => `<i class="${i === page ? 'on' : ''}"></i>`).join('')}</div>
@@ -1710,6 +1902,15 @@ function briefing(): void {
       if (page < pages.length - 1) { page++; render(); return; }
       startRound();
     };
+    // Same read-more as the binder's, against the briefing's own open set.
+    sheet.querySelectorAll<HTMLButtonElement>('[data-more]').forEach((b) => {
+      b.onclick = () => {
+        const id = b.dataset.more!;
+        if (briefExpanded.has(id)) briefExpanded.delete(id);
+        else briefExpanded.add(id);
+        render();
+      };
+    });
   };
   render();
   overlay.classList.add('on');
@@ -1760,7 +1961,9 @@ function syncFlyer(): void {
 /** Leave the briefing and put the player on the first lot. */
 function startRound(): void {
   clearTimeout(bossTimer);
-  sound.bed('ambiance');
+  // The street's own bed, day or night. Chosen here rather than inside bed()
+  // because the audio module has no idea what a level is.
+  sound.bed(day.night ? 'ambiance-night' : 'ambiance');
   overlay.classList.remove('on');
   // A line heard twice in one round lands worse than a line written badly, so
   // the used set is cleared per level rather than per lot.

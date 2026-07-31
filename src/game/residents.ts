@@ -22,6 +22,17 @@ import type { Dir, Walker } from './walker.js';
 export const TOOL_NAMES = meta.tools.map((t) => t.name);
 
 /**
+ * Row index of a named character, for the ones that are PLACED rather than
+ * drawn. The named cast carry a pick weight of 0, so they never come out of
+ * pickCharacter — this is the only way they reach the street.
+ */
+export function characterNamed(name: string): number {
+  const i = (meta.characters as string[]).indexOf(name);
+  if (i < 0) throw new Error(`no character "${name}" — is it in tools/pack-residents.ts?`);
+  return i;
+}
+
+/**
  * Draw a character, respecting how often each is meant to turn up.
  *
  * NOT a uniform pick. Skins 1 and 2 are on two of the ten characters but are

@@ -16,7 +16,9 @@
     "skirt-blue",
     "overalls-blue",
     "tshirt-white",
-    "skirt-purple"
+    "skirt-purple",
+    "patrick",
+    "savanna"
   ],
   "skins": [
     "skin5",
@@ -28,7 +30,9 @@
     "skin1",
     "skin5",
     "skin3",
-    "skin2"
+    "skin2",
+    "skin5",
+    "skin4"
   ],
   "pick": [
     0.10625,
@@ -40,7 +44,9 @@
     0.075,
     0.10625,
     0.10625,
-    0.075
+    0.075,
+    0,
+    0
   ],
   "rowsPerCharacter": 13,
   "dirsPerCharacter": 4,

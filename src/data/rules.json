@@ -39,10 +39,14 @@
       "tab": "Grass",
       "category": "Plants",
       "short": "Turf must be kept under six inches.",
-      "introduced_level": 5,
+      "introduced_level": 1,
       "exhibit": {
-        "cite": [],
-        "cite_note": "Turf over six inches.",
+        "cite": [
+          "grass1",
+          "grass2",
+          "grass3"
+        ],
+        "cite_note": "Turf grown past six inches, anywhere on the lot.",
         "allow": [],
         "allow_note": "Dormant turf is not dead turf."
       }

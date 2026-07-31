@@ -13,7 +13,7 @@
  * falls back to the north-east animation: real motion, angled a few degrees,
  * and at the size a cat renders that is not a difference anyone can see.
  *
- * Output is generated. Re-run with `npm run pack-cats`.
+ * Output is generated. Re-run with `npm run pack-animals`.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
@@ -28,7 +28,9 @@ const DIRS = ['south', 'west', 'east', 'north'] as const;
 const FALLBACK: Record<string, string[]> = { north: ['north-east', 'north-west'] };
 
 /**
- * `kind` decides what it says when you click it, nothing else.
+ * `kind` decides what it says when you click it. `nocturnal` decides whether it
+ * is out at all: an armadillo on a Tuesday afternoon is a dead armadillo, and a
+ * raccoon in daylight is a raccoon with a problem. Those two are night only.
  *
  * The delivered canvases are NOT the same size — the cat is 56x56 and the dog
  * 60x60 — so each animal's content box is measured against its own canvas and
@@ -36,19 +38,34 @@ const FALLBACK: Record<string, string[]> = { north: ['north-east', 'north-west']
  * crop offset across canvases of different sizes would slide one of them.
  */
 const ANIMALS = [
-  { id: 'pablo', folder: 'cat-pablo', kind: 'cat' },
-  { id: 'gus', folder: 'dog-gus', kind: 'dog' },
+  { id: 'pablo', folder: 'cat-pablo', kind: 'cat', nocturnal: false, ambient: true },
+  { id: 'gus', folder: 'dog-gus', kind: 'dog', nocturnal: false, ambient: true },
+  { id: 'armadillo', folder: 'armadillo', kind: 'armadillo', nocturnal: true, ambient: true },
+  { id: 'raccoon', folder: 'raccoon', kind: 'raccoon', nocturnal: true, ambient: true },
+  // Juniper belongs to somebody and walks with them. Not ambient: she is never
+  // one of the strays that turns up loose in a yard.
+  { id: 'juniper', folder: 'dog-juniper', kind: 'dog', nocturnal: false, ambient: false },
 ];
 
+/**
+ * Two delivery layouts, because the exports came from different sessions:
+ * the cat and dog nest their walk under `walking/animations/Walking/<dir>`,
+ * the later animals under `Idle/animations/walking/<dir>`. Trying both beats
+ * renaming folders the artist will export over again.
+ */
+const LAYOUTS = ['walking/animations/Walking', 'Idle/animations/walking'];
+
 const framesFor = (folder: string, dir: string): string[] => {
-  const base = `assets/animals/${folder}/walking/animations/Walking`;
-  for (const d of [dir, ...(FALLBACK[dir] ?? [])]) {
-    const p = `${base}/${d}`;
-    if (existsSync(p) && statSync(p).isDirectory()) {
-      const fs = readdirSync(p).filter((f) => f.endsWith('.png')).sort();
-      if (fs.length) {
-        if (d !== dir) console.log(`  ${folder}: no ${dir} walk, using ${d}`);
-        return fs.map((f) => `${p}/${f}`);
+  for (const layout of LAYOUTS) {
+    const base = `assets/animals/${folder}/${layout}`;
+    for (const d of [dir, ...(FALLBACK[dir] ?? [])]) {
+      const p = `${base}/${d}`;
+      if (existsSync(p) && statSync(p).isDirectory()) {
+        const fs = readdirSync(p).filter((f) => f.endsWith('.png')).sort();
+        if (fs.length) {
+          if (d !== dir) console.log(`  ${folder}: no ${dir} walk, using ${d}`);
+          return fs.map((f) => `${p}/${f}`);
+        }
       }
     }
   }
@@ -112,7 +129,7 @@ writeFileSync(
   META_OUT,
   `${JSON.stringify(
     {
-      _generated: 'tools/pack-cats.ts — do not hand-edit; run `npm run pack-cats`',
+      _generated: 'tools/pack-animals.ts — do not hand-edit; run `npm run pack-animals`',
       sheet: SHEET_OUT,
       frameW: fw,
       frameH: fh,
@@ -122,6 +139,10 @@ writeFileSync(
       animals: ANIMALS.map((a) => a.id),
       /** What it says when clicked. */
       kinds: ANIMALS.map((a) => a.kind),
+      /** Out only on night levels. See makeAnimal. */
+      nocturnal: ANIMALS.map((a) => a.nocturnal),
+      /** Eligible to turn up loose in a yard. See animalsAbroad. */
+      ambient: ANIMALS.map((a) => a.ambient),
       boxes,
     },
     null,

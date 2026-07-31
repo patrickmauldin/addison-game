@@ -24,6 +24,16 @@ export type Pt = { x: number; y: number };
 
 export type Shader = (x: number, y: number) => Rgb | null;
 
+/**
+ * How far a click may reach for a target it did not land on, in screen pixels
+ * — the raster is 1:1 with the canvas, so these are the pixels the player sees.
+ *
+ * Five is about the width of one gap in a weed at the size these render. Much
+ * more and a click on bare turf beside a prop starts citing the prop, which is
+ * a worse failure than the one being fixed: a false positive costs a strike.
+ */
+const ID_SLACK = 5;
+
 export class Raster {
   readonly w: number;
   readonly h: number;
@@ -121,10 +131,57 @@ export class Raster {
     if (a >= idCut) this.id[p] = this.current;
   }
 
-  /** Read the object id under a pixel. */
+  /** Read the object id under a pixel. Exact — nothing under it means nothing. */
   idAt(x: number, y: number): number {
     if (x < 0 || y < 0 || x >= this.w || y >= this.h) return 0;
     return this.id[(y | 0) * this.w + (x | 0)];
+  }
+
+  /**
+   * The object under a pixel, or the nearest one within `slack` pixels.
+   *
+   * Exact hit-testing is right for a solid prop and wrong for a sparse one. A
+   * weed is mostly gaps: click between two fronds and the id buffer honestly
+   * reports bare grass, which to the player is the game ignoring them. Every
+   * stippled or openwork sprite has the same problem — fences, boxes, anything
+   * the shader left holes in.
+   *
+   * A miss searches outward ring by ring and takes the id with the MOST pixels
+   * on the first ring that has any. Nearest wins, and counting within the ring
+   * stops a single stray pixel of a neighbour beating the body of the thing you
+   * were plainly aiming at.
+   *
+   * It only ever REACHES: a direct hit returns before any of this, so slack can
+   * never drag a click off something it actually landed on.
+   */
+  idNear(x: number, y: number, slack = ID_SLACK): number {
+    const direct = this.idAt(x, y);
+    if (direct) return direct;
+    const cx = x | 0;
+    const cy = y | 0;
+    const tally = new Map<number, number>();
+    for (let r = 1; r <= slack; r++) {
+      tally.clear();
+      for (let dy = -r; dy <= r; dy++) {
+        for (let dx = -r; dx <= r; dx++) {
+          // Perimeter only. Everything inside was covered by a smaller r, and
+          // re-reading it would let a far pixel outvote a near one.
+          if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;
+          const id = this.idAt(cx + dx, cy + dy);
+          if (id) tally.set(id, (tally.get(id) ?? 0) + 1);
+        }
+      }
+      let best = 0;
+      let bestN = 0;
+      for (const [id, n] of tally) {
+        if (n > bestN) {
+          best = id;
+          bestN = n;
+        }
+      }
+      if (best) return best;
+    }
+    return 0;
   }
 
   /**

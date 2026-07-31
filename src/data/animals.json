@@ -1,17 +1,37 @@
 {
-  "_generated": "tools/pack-cats.ts — do not hand-edit; run `npm run pack-cats`",
+  "_generated": "tools/pack-animals.ts — do not hand-edit; run `npm run pack-animals`",
   "sheet": "assets/animals.png",
-  "frameW": 32,
+  "frameW": 38,
   "frameH": 33,
   "cols": 8,
   "dirs": 4,
   "animals": [
     "pablo",
-    "gus"
+    "gus",
+    "armadillo",
+    "raccoon",
+    "juniper"
   ],
   "kinds": [
     "cat",
+    "dog",
+    "armadillo",
+    "raccoon",
     "dog"
+  ],
+  "nocturnal": [
+    false,
+    false,
+    true,
+    true,
+    false
+  ],
+  "ambient": [
+    true,
+    true,
+    true,
+    true,
+    false
   ],
   "boxes": [
     {
@@ -25,6 +45,24 @@
       "y0": 13,
       "w": 30,
       "h": 33
+    },
+    {
+      "x0": 12,
+      "y0": 14,
+      "w": 36,
+      "h": 32
+    },
+    {
+      "x0": 11,
+      "y0": 14,
+      "w": 38,
+      "h": 31
+    },
+    {
+      "x0": 11,
+      "y0": 11,
+      "w": 31,
+      "h": 32
     }
   ]
 }

@@ -305,7 +305,21 @@ export function renderLot(
     : base;
   const placedProps: PlacedProp[] = [];
   const placed = spec.props.map((p) => ({ p, a: anchor(p.anchor, L, anchors) }));
-  placed.sort((a, b) => a.a.y - b.a.y);
+  /**
+   * Depth order, with one exception: overgrown turf goes under everything.
+   *
+   * Everything else sorts by its ground line, which is what makes a bin at the
+   * curb sit in front of a fence up the lot. Tall grass is different — it is
+   * what the lot is covered IN, not a thing standing on it, so a tuft that
+   * happens to sit lower than a bin must still not be painted over the bin.
+   * Sorting grass to the front of the list puts it under the lot's contents
+   * while leaving the tufts correctly ordered among themselves.
+   */
+  const isGrass = (p: PropSpec) => p.sprite.startsWith('grass');
+  placed.sort((a, b) => {
+    const g = Number(isGrass(b.p)) - Number(isGrass(a.p));
+    return g !== 0 ? g : a.a.y - b.a.y;
+  });
   // From here to the end of the loop, remember which pixels the props actually
   // cover, so the paint pass can lift them back out with their real silhouette
   // rather than as a rectangle full of sidewalk.
