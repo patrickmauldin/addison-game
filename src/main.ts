@@ -879,6 +879,10 @@ function cameoOn(lotId: string): NonNullable<LevelSpec['cameos']>[number] | unde
  * they are, and the whole point is that it should not look like it.
  */
 function makeCameo(lot: LotSpec, rl: RenderedLot): Passerby[] {
+  // CLEARED here, not only set. There is one escort and this runs on every lot,
+  // so returning early without touching it left the last lot's dog walking onto
+  // the next lawn with nobody holding the lead.
+  escort = null;
   const c = cameoOn(lot.lot_id);
   if (!c?.people?.length) return [];
   const walk = sidewalkOf(rl);

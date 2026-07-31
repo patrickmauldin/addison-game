@@ -91,7 +91,10 @@ export function animalFrameFor(which: number, w: Walker): { sx: number; sy: numb
   const row = (which % ANIMALS.count) * meta.dirs + w.facing;
   // Standing still means STANDING still. Cycling the walk on the spot reads as
   // a treadmill, which is worse than no animation at all.
-  const col = w.moving ? Math.floor(w.phase * FPS) % meta.cols : 0;
+  // Modulo this ROW's length, not the sheet width: rows are padded out to the
+  // longest walk on the sheet, and cycling past the end of a short one drew the
+  // padding — a blank frame once per lap.
+  const col = w.moving ? Math.floor(w.phase * FPS) % meta.lens[row] : 0;
   return {
     sx: col * meta.frameW,
     sy: row * meta.frameH,

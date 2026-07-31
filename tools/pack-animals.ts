@@ -177,6 +177,16 @@ writeFileSync(
       cols,
       /** row = animalIndex * 4 + direction, directions 0 S, 1 W, 2 E, 3 N. */
       dirs: DIRS.length,
+      /**
+       * Frames in each row's own walk cycle, which is NOT `cols`.
+       *
+       * `cols` is how wide the sheet had to be for the longest walk anybody
+       * shipped, and every shorter row is padded out to it with empty frames.
+       * Cycling on `cols` therefore ran each animal through however many blanks
+       * its row was padded with — one whole frame of nothing per lap, which
+       * reads as a blink. Cycle on this instead.
+       */
+      lens: rows.map((r) => r.frames.length),
       animals: ANIMALS.map((a) => a.id),
       /** What it says when clicked. */
       kinds: ANIMALS.map((a) => a.kind),
