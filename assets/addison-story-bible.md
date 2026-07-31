@@ -56,7 +56,7 @@ One drop every day or two. Each is a *thing*, examinable at the player's pace.
 | 6 | Resident bark: *"You're not the first one they sent."* |
 | 7 | A citation in Mercer's hand, dated three weeks after the position "became available" |
 | 8 | The envelope. Note inside, different handwriting: *"he took it too."* (Unverifiable. Possibly a lie.) |
-| 9 | Permit ledger: variance for a 34-ft vessel, Karaoke, **backdated** |
+| 9 | Permit ledger: variance for a 34-ft vessel, Karaoke Dr, **backdated** |
 | 10 | **The boat.** Mercer's final citation is in the file, stamped APPEALED — GRANTED |
 | 11 | Eyezetta resident: *"He lived four doors down from you."* |
 | 12 | Mercer's own case file is in the system. You can open it. Nine citations, six weeks. |

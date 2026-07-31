@@ -13,7 +13,7 @@ import { decodePng, type Bitmap } from '../src/core/png.js';
 const HOUSES = ['house1','house2','house3','house4','house5','house6'];
 
 function load(id: string): Bitmap {
-  execSync(`sips -s format png "assets/${id}.jpg" --out /tmp/${id}.png`, { stdio: 'ignore' });
+  execSync(`sips -s format png "assets/houses/${id}.jpg" --out /tmp/${id}.png`, { stdio: 'ignore' });
   return decodePng(readFileSync(`/tmp/${id}.png`));
 }
 const at = (b: Bitmap, x: number, y: number) => {

@@ -111,8 +111,10 @@ checkTile('assets/sidewalk.png', 'sidewalk strip', 'x');
 // measure the real thing rather than an empty scene.
 const SPRITES = new Map<string, Bitmap>();
 for (const name of ['grass','road','sidewalk','house1','house2','house3','house4','house5','house6','fence1','fence2','fence3','weed1','weed2','weed3','trash-green','trash-brown']) {
+  // Houses are filed in their own folder; everything else sits at the top.
+  const dir = name.startsWith('house') ? 'houses/' : '';
   for (const ext of ['png','jpg']) {
-    const path = `assets/${name}.${ext}`;
+    const path = `assets/${dir}${name}.${ext}`;
     if (!existsSync(path)) continue;
     try {
       if (ext === 'jpg') {

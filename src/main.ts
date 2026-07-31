@@ -260,9 +260,24 @@ const PARKED_CARS = [
   'car2white', 'car3cyber', 'car4blue', 'car5yellow',
 ];
 
+/**
+ * The house plans, which are filed in assets/houses/ rather than at the top.
+ *
+ * The KEY stays bare — content says "house1", not "houses/house1" — because
+ * where a file is filed is not part of the sprite's name, and moving art
+ * between folders should not rewrite every level. assetDir() is the one place
+ * that knows the difference.
+ */
+const HOUSE_SPRITES = ['house1', 'house2', 'house3', 'house4', 'house5', 'house6'];
+
+/** Subfolder for a sprite key, '' for the ones at the top of assets/. */
+function assetDir(name: string): string {
+  return HOUSE_SPRITES.includes(name) ? 'houses/' : '';
+}
+
 const ASSET_FILES = [
   'grass', 'road', 'sidewalk',
-  'house1', 'house2', 'house3', 'house4', 'house5', 'house6',
+  ...HOUSE_SPRITES,
   'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
   // Posted notices — the missing-animal flyer, and anything pinned up later.
@@ -340,10 +355,12 @@ async function loadAssets(): Promise<SceneAssets> {
   const sprites = new Map<string, { w: number; h: number; rgba: Uint8ClampedArray }>();
   await Promise.all(
     ASSET_FILES.map(async (name) => {
-      // house1 shipped as a JPEG; everything else is PNG. Try both rather than
-      // encoding the extension into content.
-      for (const ext of ['png', 'jpg']) {
-        const b = await loadBitmap(`assets/${name}.${ext}`);
+      // The houses shipped as JPEGs; everything else is PNG. Try both rather
+      // than encoding the extension into content — but try the LIKELY one
+      // first, or every load opens with six 404s for house PNGs that have
+      // never existed.
+      for (const ext of HOUSE_SPRITES.includes(name) ? ['jpg', 'png'] : ['png', 'jpg']) {
+        const b = await loadBitmap(`assets/${assetDir(name)}${name}.${ext}`);
         if (b) { sprites.set(name, b); return; }
       }
     }),
