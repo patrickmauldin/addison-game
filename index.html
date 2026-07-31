@@ -212,6 +212,38 @@
       }
       #flyer.found .fl-paper { opacity: .82; }
 
+      /* --- Reputation --------------------------------------------------- */
+      /* Never intercepts a click, for the same reason the notice does not: the
+         thing you click is on the lot, and a readout that ate clicks over the
+         scene would be a trap. */
+      #reputation {
+        position: absolute; top: 14px; right: 14px; z-index: 6;
+        pointer-events: none; user-select: none;
+        display: flex; flex-direction: column; gap: 6px;
+      }
+      .rep-row { display: flex; align-items: center; gap: 8px; }
+      /* Drawn 1:1. These are native-resolution pixel art, not a 2x export —
+         checked — so halving them would drop every other row of real detail
+         rather than undoing a doubling. The drop shadow is what lifts them off
+         the grass; at this size an outline would close up the windows. */
+      .rep-icon {
+        display: block; image-rendering: pixelated;
+        filter: drop-shadow(1px 2px 0 rgba(0,0,0,.45));
+      }
+      /* Built rather than drawn, so a value can move it. One pixel of black,
+         corners just off square, and the same track grey the reference uses.
+         overflow clips the fill to those corners — without it a full bar has
+         square ends inside a rounded box. */
+      .rep-bar {
+        width: 108px; height: 16px;
+        border: 1px solid #000; border-radius: 3px;
+        background: #3f3f3f; overflow: hidden;
+        box-shadow: 1px 2px 0 rgba(0,0,0,.35);
+      }
+      .rep-bar > i { display: block; height: 100%; width: var(--fill, 0%); }
+      .rep-bar.owners > i { background: #ffcf3d; }
+      .rep-bar.office > i { background: #5ba5f0; }
+
       /* --- The bulletin board ------------------------------------------ */
       /* Wood frame and cork panel as two nested boxes rather than a
          border-image: border-image with a repeating pixel texture rounds its
@@ -1084,6 +1116,23 @@
       <!-- Filled by flyerMarkup(), which also fills the briefing's corkboard.
            The same notice hangs in two places and is written once. -->
       <div id="flyer" hidden></div>
+
+      <!-- Standing with the two people who can end this job: the residents you
+           write up and the office that grades you. Opposite corner to the
+           notice, so the top of the stage carries one thing on each side.
+
+           INERT for now. The widths are placeholders; when these start moving,
+           set --fill on each .rep-bar and nothing else has to change. -->
+      <div id="reputation">
+        <div class="rep-row">
+          <img class="rep-icon" src="assets/reputation/homeowners.png" alt="Homeowners" />
+          <div class="rep-bar owners" style="--fill: 72%"><i></i></div>
+        </div>
+        <div class="rep-row">
+          <img class="rep-icon" src="assets/reputation/office.png" alt="Office" />
+          <div class="rep-bar office" style="--fill: 48%"><i></i></div>
+        </div>
+      </div>
 
       <!-- On the stage, not the desk. What you have marked belongs beside the
            thing you marked, so checking your work does not mean looking away
