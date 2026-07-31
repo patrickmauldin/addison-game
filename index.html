@@ -222,17 +222,17 @@
         display: flex; flex-direction: column; gap: 2px;
       }
       .rep-row { display: flex; align-items: center; gap: 6px; }
-      /* Nearest-neighbour on the way down, so the pixels stay pixels. There is
-         no clean factor to be had — these are native-resolution art, not a
-         doubled export — so some rows are dropped outright and the outline
-         thins where they go. */
+      /* NO SIZE SET. These are drawn at the size they are used, so CSS asking
+         for a height it liked better was resampling finished art — a 21px
+         house stretched to 22 and a 24px block squeezed to 19, which is what
+         made them look soft whatever the rendering mode said. At 1:1 there is
+         nothing to resample and the pixels are the ones that were drawn.
+         image-rendering stays as the guard for anyone who sets a height later. */
       .rep-icon {
-        display: block; height: 22px; width: auto;
+        display: block;
         image-rendering: pixelated;
         filter: drop-shadow(1px 1px 0 rgba(0,0,0,.45));
       }
-      /* The office sits a touch below the houses it grades. */
-      .rep-icon.office { height: 19px; }
       /* Two slabs, not a border: black underneath, the track inset 2px on top
          of it, each clipped to the same stepped shape. A border would be cut
          flat by the clip and leave the steps unoutlined. drop-shadow rather
@@ -249,7 +249,7 @@
          on --r resolves against a --r that is not there yet and the whole
          declaration is dropped. */
       .rep-bar {
-        width: 96px; height: 19px;
+        width: 96px; height: 15px;
         background: #000;
         clip-path: polygon(
           3px 0, calc(100% - 3px) 0,
