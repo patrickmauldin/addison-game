@@ -43,6 +43,8 @@
         --desk: #3a3630;
         --stamp-red: #8c2f24;
         --stamp-green: #2f5c33;
+        /* For a C: neither of the other two, and the same washed-out ink. */
+        --stamp-amber: #8a5a1c;
       }
       * { box-sizing: border-box; }
       html, body {
@@ -809,11 +811,23 @@
         width: 28px; height: 28px; image-rendering: pixelated;
       }
       #sheet { position: relative; }
+      /* The day's grade, where the pass/fail stamp used to be. Set in the
+         display face at a size nothing else on the sheet comes near, so it is
+         read as a mark on the page rather than as another heading — and tilted
+         off true, because it is meant to look applied by hand. */
       .day-mark {
-        position: absolute; right: 22px; top: 16px;
-        width: 76px; height: 76px; image-rendering: pixelated;
-        opacity: .92; transform: rotate(-8deg);
+        position: absolute; right: 26px; top: 10px;
+        font-family: var(--pixel-font); font-size: 54px; line-height: 1;
+        letter-spacing: .02em; opacity: .92; transform: rotate(-8deg);
+        /* Off the flow entirely: the header sits under it, and a grade that
+           nudged the manager's photo sideways on a bad day would be worse than
+           no grade. */
+        pointer-events: none;
       }
+      .day-mark.g-a { color: var(--stamp-green); }
+      .day-mark.g-b { color: var(--stamp-green); }
+      .day-mark.g-c { color: var(--stamp-amber); }
+      .day-mark.g-f { color: var(--stamp-red); }
       .bad { border-left: 4px solid var(--stamp-red); }
       .good { border-left: 4px solid var(--stamp-green); }
       /* The verdict lands on the case file as an ink impression. Absolutely

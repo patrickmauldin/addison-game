@@ -1882,6 +1882,25 @@ function bossHeader(gif: 'boss1' | 'boss2'): string {
     </div>`;
 }
 
+/**
+ * ONE mark for the day, off the strike count and nothing else.
+ *
+ * Strikes are already the thing the game threatens you with — three ends the
+ * arrangement — so grading on anything else would put a second, quieter score
+ * next to the one that actually matters. A day with a strike is not an A
+ * however tidy the rest of it was.
+ *
+ * There is no D. Four grades for four outcomes, and the gap where a D should be
+ * is deliberate: it makes the drop from C to F read as falling off a cliff,
+ * which is what a third strike is.
+ */
+const GRADE = [
+  { mark: 'A+', cls: 'g-a' },
+  { mark: 'B', cls: 'g-b' },
+  { mark: 'C', cls: 'g-c' },
+  { mark: 'F', cls: 'g-f' },
+];
+
 // --- End of day: the audit ------------------------------------------------
 
 function endDay(): void {
@@ -1939,13 +1958,12 @@ function endDay(): void {
     })
     .join('');
 
-  // One mark for the day as a whole. Clean means every lot came back without
-  // an audit finding or a successful appeal — not merely that the verdicts
-  // were right.
-  const cleanDay = outcomes.every((o) => o.verdictRight && !o.falsePositives.length && !o.missed.length);
+  // Clamped: the round is meant to end on the third strike, but the mark should
+  // not depend on that holding.
+  const dayGrade = Math.min(strikes, GRADE.length - 1);
   const hasNext = levelIndex + 1 < LEVELS.length;
   sheet.innerHTML = `
-    <img class="day-mark" src="assets/${cleanDay ? 'good' : 'bad'}.png" alt="" />
+    <div class="day-mark ${GRADE[dayGrade].cls}" aria-label="Grade ${GRADE[dayGrade].mark}">${GRADE[dayGrade].mark}</div>
     ${bossHeader('boss2')}
     <h1>END OF LEVEL ${day.level_id}</h1>
     <div class="muted">${today.weekday}, ${shortDate(today.iso)} · ${current.street}</div>
