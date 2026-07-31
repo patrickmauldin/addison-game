@@ -2322,10 +2322,32 @@ function postItMarkup(): string[] {
     const j = Math.floor(rnd() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
   }
-  // Nothing hangs straight on a corkboard, and nothing hangs at the same angle
-  // as the thing beside it.
-  return out.map((t, i) =>
-    `<div class="post-it t${i % 5}" style="--tilt:${(rnd() * 7 - 3.5).toFixed(1)}deg">${t}</div>`);
+  /**
+   * Nothing hangs straight on a corkboard, and nothing hangs like the thing
+   * beside it.
+   *
+   * The DIRECTION is dealt, not rolled. Four draws off a symmetric range is not
+   * enough samples to look symmetric — one board came up -1.6, -1.8, -1.5, -1.6,
+   * which does not read as four notes pinned by four people in a hurry, it reads
+   * as a container with a transform on it. Handing out two lefts and two rights
+   * and shuffling WHICH note gets which keeps the variety without leaving it to
+   * a coin that only gets flipped four times.
+   *
+   * Offsets are jitter and can stay random — a note a few pixels high is
+   * unremarkable on its own and only has to avoid agreeing with its neighbour.
+   * Bounded well inside the column gap so two notes never touch.
+   */
+  const signs = [-1, 1, -1, 1];
+  for (let i = signs.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [signs[i], signs[j]] = [signs[j], signs[i]];
+  }
+  return out.map((t, i) => {
+    const tilt = ((1.4 + rnd() * 3.1) * signs[i]).toFixed(1);
+    const dx = (rnd() * 14 - 7).toFixed(1);
+    const dy = (rnd() * 12 - 6).toFixed(1);
+    return `<div class="post-it t${i % 5}" style="--tilt:${tilt}deg;--dx:${dx}px;--dy:${dy}px">${t}</div>`;
+  });
 }
 
 /**

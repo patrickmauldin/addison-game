@@ -257,7 +257,9 @@
          absolutely-placed notes look better until one of them runs three lines
          and lands on the cat. */
       .board-col {
-        display: flex; flex-direction: column; gap: 12px;
+        /* Gap wide enough to absorb the vertical jitter: two notes nudged
+           toward each other still have air between them. */
+        display: flex; flex-direction: column; gap: 18px;
         width: 104px; flex: none;
       }
       /* Small, because a post-it IS small and because none of this is what the
@@ -268,7 +270,7 @@
         font-size: 12px; line-height: 1.18; color: #34302a;
         padding: 8px 7px; min-height: 66px;
         display: flex; align-items: center; text-align: center;
-        transform: rotate(var(--tilt, 0deg));
+        transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--tilt, 0deg));
         box-shadow: 2px 3px 0 rgba(0,0,0,.26);
       }
       /* Pastels, and deliberately not the paper tan used everywhere else —
