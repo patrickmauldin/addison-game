@@ -219,12 +219,18 @@
         padding: 14px;
         box-shadow: 3px 4px 0 rgba(0,0,0,.3);
       }
-      /* Fallback colour under the texture, so a missing cork.png degrades to a
-         cork-coloured board rather than to nothing. */
+      /* Fallback colour under the texture, in case cork.jpg ever fails to load. */
+      /* PADDED, and asymmetrically. The notice is not the box it sits in: the
+         pin hangs 13px above the paper and is absolutely positioned, so the
+         flex box does not measure it, and the paper is tacked at an angle,
+         which throws its corners a few pixels further still. Padding sized to
+         clear the pin at the top and the low corner at the bottom, so a longer
+         notice — the wanted poster runs two lines where the cat runs one —
+         still has cork all round it rather than growing into the frame. */
       .board-cork {
-        background: #b1793f url('assets/cork.png') repeat;
-        image-rendering: pixelated;
+        background: #b1793f url('assets/cork.jpg') repeat;
         min-height: 236px;
+        padding: 34px 20px 26px;
         display: flex; align-items: center; justify-content: center;
         /* Hard, offset down-right, 20% — the frame sitting proud of the cork. */
         box-shadow: inset 6px 6px 0 rgba(0,0,0,.2);
