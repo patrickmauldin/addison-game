@@ -565,27 +565,77 @@ function renderToCanvas(lot: LotSpec, worldX: number): { rl: RenderedLot; cv: HT
  * land on them. Those pixels are already identified: stampVariant claimed them
  * in the id buffer, so this is a lookup rather than a second diff.
  *
+ * FEATHERED, because the mask is a pixel diff and pixel diffs have terrible
+ * edges. A bulb differs from the roof behind it by a lot at its centre and by
+ * very little at its rim, so the threshold cuts a ragged, speckled outline —
+ * fine as a hit region, which is what it was built for, and very obvious as a
+ * lighting edge against a dark wash.
+ *
+ * The blur is applied to the MASK ALONE and the sharp scene is then punched
+ * through it, so nothing in the picture is softened: the lights keep every
+ * pixel they were drawn with, and only how much of the night they hold off
+ * varies across the edge. Blurring the composited layer instead would smear
+ * the bulbs.
+ *
+ * The colour punched through is the whole scene, not just the masked pixels,
+ * which is what lets the feather spread OUTWARD as well as in — a few pixels
+ * of un-washed roof around each bulb. That is not an artifact to be tolerated;
+ * it is what light falling on a surface looks like.
+ *
  * Returns null when the lot has no glowing variant, which is almost always.
  */
+
+/** How far the glow is feathered, in device pixels. Enough to kill the stair
+ *  steps, short of a halo you would notice as a halo. */
+const GLOW_FEATHER = 2;
+
 function glowLayerFor(rl: RenderedLot, lot: LotSpec): HTMLCanvasElement | null {
   if (!lot.house?.variantGlows || !lot.house.variantId) return null;
   const obj = rl.objects.find((o) => o.id === lot.house!.variantId);
   if (!obj) return null;
   const { w, h } = rl.raster;
+  const src = rl.raster.color;
+  const id = rl.raster.id;
+
+  // Two layers off one pass: where the glow is, and what the scene looks like
+  // there. The scene is forced opaque — it is the bottom of the picture, and
+  // the mask is the only thing that gets to decide what shows.
+  const mask = new ImageData(w, h);
+  const scene = new ImageData(w, h);
+  let any = false;
+  for (let p = 0, i = 0; p < id.length; p++, i += 4) {
+    scene.data[i] = src[i];
+    scene.data[i + 1] = src[i + 1];
+    scene.data[i + 2] = src[i + 2];
+    scene.data[i + 3] = 255;
+    if (id[p] !== obj.key) continue;
+    mask.data[i + 3] = 255;
+    any = true;
+  }
+  // A variant that claimed nothing would otherwise cost a full-frame blur to
+  // produce an empty canvas on every lot of the level.
+  if (!any) return null;
+
+  const scratch = document.createElement('canvas');
+  scratch.width = w;
+  scratch.height = h;
+  const sc = scratch.getContext('2d')!;
+  sc.putImageData(mask, 0, 0);
+
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;
-  const img = new ImageData(w, h);
-  const src = rl.raster.color;
-  const id = rl.raster.id;
-  for (let p = 0, i = 0; p < id.length; p++, i += 4) {
-    if (id[p] !== obj.key) continue;
-    img.data[i] = src[i];
-    img.data[i + 1] = src[i + 1];
-    img.data[i + 2] = src[i + 2];
-    img.data[i + 3] = 255;
-  }
-  cv.getContext('2d')!.putImageData(img, 0, 0);
+  const g = cv.getContext('2d')!;
+  g.filter = `blur(${GLOW_FEATHER}px)`;
+  g.drawImage(scratch, 0, 0);
+  g.filter = 'none';
+  // source-in multiplies the incoming alpha by what is already there, so the
+  // soft mask becomes the alpha of the sharp scene. Order matters: mask first.
+  g.globalCompositeOperation = 'source-in';
+  // putImageData overwrites everything including alpha, so the scratch canvas
+  // is reused rather than cleared.
+  sc.putImageData(scene, 0, 0);
+  g.drawImage(scratch, 0, 0);
   return cv;
 }
 
