@@ -291,7 +291,7 @@
          navy rather than the paperwork's tan. */
       .cal {
         flex: none; width: 104px; position: relative;
-        background: #ffffff;
+        background: #fff url('assets/paper.png') repeat;
         border: 2px solid #303843;
         box-shadow: -6px 6px 0 rgba(0,0,0,.3);
         image-rendering: pixelated; text-align: center;
@@ -332,8 +332,16 @@
       /* Deep enough that the coil sits in the band rather than on the seam,
          with the weekday pushed to the lower half of it — the wire bites into
          the top few pixels and would otherwise cross the letters. */
+      /* The red is MULTIPLIED over the same stock as the leaf below it, so the
+         band reads as printed on the pad rather than as a coloured box laid on
+         top of it — the fibre carries straight through the seam.
+         background-blend-mode and not mix-blend-mode: this blends the two
+         background layers of this element only. Blending the ELEMENT would take
+         the white weekday down with it, and white multiplied over red is red. */
       .cal-dow {
-        background: #d4594e; color: #fff;
+        background: url('assets/paper.png') repeat, #d4594e;
+        background-blend-mode: multiply;
+        color: #fff;
         font-family: var(--pixel-font); font-size: 15px; letter-spacing: .06em;
         padding: 16px 2px 7px;
         text-shadow: 1px 1px 0 rgba(90,26,20,.5);
