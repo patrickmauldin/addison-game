@@ -34,6 +34,7 @@ import level6 from './data/levels/level6.json';
 import level7 from './data/levels/level7.json';
 import level8 from './data/levels/level8.json';
 import rulesData from './data/rules.json';
+import streetsData from './data/streets.json';
 import bulletinData from './data/bulletin.json';
 import housesData from './data/houses.json';
 import { BarkState, factsFromProps, resetBarkHistory, type BarkContext } from './game/barks.js';
@@ -2262,6 +2263,29 @@ function calendarMarkup(extraClass = ''): string {
     </div>`;
 }
 
+/**
+ * The streets the player may claim as home.
+ *
+ * Everything on the map with a character written for it. Whistling Sparrow is
+ * excluded on purpose: the street data says in as many words that it has no
+ * phase, role or position yet, and letting somebody live on it would invent
+ * those by the back door.
+ */
+const HOME_STREETS = (streetsData.streets as Array<{ id: string; name: string; role: string }>)
+  .filter((s) => s.role !== 'unassigned');
+
+function askBeat(b: { ask: string; text: string; after?: string }): string {
+  if (b.ask !== 'street') return `<p>${b.text}</p>`;
+  const chosen = saveFile.inspector.street ?? '';
+  const opts = [`<option value=""${chosen ? '' : ' selected'}>— pick one —</option>`]
+    .concat(HOME_STREETS.map((s) =>
+      `<option value="${s.id}"${s.id === chosen ? ' selected' : ''}>${s.name}</option>`))
+    .join('');
+  return `<p>${b.text}</p>
+     <p class="ask"><select id="ask-street" aria-label="Your street">${opts}</select></p>
+     ${chosen && b.after ? `<p>${b.after}</p>` : ''}`;
+}
+
 function briefing(): void {
   /**
    * DRAWN BEFORE THE BOARD IS BUILT, not on the way out to the street.
@@ -2301,8 +2325,22 @@ function briefing(): void {
    */
   const exhibits = () => fresh.map((a) => binderEntry(a as Article, briefExpanded)).join('');
 
-  const storyBeats = ((day as { story?: string[] }).story ?? [day.briefing])
-    .map((t) => `<p>${t}</p>`).join('');
+  /**
+   * A beat may be a QUESTION rather than a line.
+   *
+   * Asked inline, in the middle of what the manager is already saying, because
+   * that is what it is — she is making conversation while she reads your file,
+   * not opening a settings screen. It sits where "You're at 2118 Eyezeta, yes?"
+   * used to, which told the player where they lived instead of asking.
+   *
+   * Answering is optional and she moves on either way. Gating the first round
+   * of the game on a dropdown would be a worse first impression than not
+   * knowing the answer.
+   */
+  type Beat = string | { ask: string; text: string; after?: string };
+  const storyBeats = () => ((day as { story?: Beat[] }).story ?? [day.briefing])
+    .map((t) => (typeof t === 'string' ? `<p>${t}</p>` : askBeat(t)))
+    .join('');
 
   // Backstory is FOUND, never told. The artifact is a thing on the desk, in a
   // different hand from the Association's — so it gets its own register.
@@ -2324,7 +2362,7 @@ function briefing(): void {
   // printing it twice on the same sheet is how a prop stops being a prop.
   const pages: string[] = [
     `<h3>This morning</h3>
-     <div class="story">${storyBeats}</div>
+     <div class="story">${storyBeats()}</div>
      ${artifact}`,
   ];
   // Levels that add no article skip the page entirely rather than show an
@@ -2392,6 +2430,15 @@ function briefing(): void {
     $('pg-next').onclick = () => {
       if (page < pages.length - 1) { page++; render(); return; }
       startRound();
+    };
+    const askStreet = document.getElementById('ask-street') as HTMLSelectElement | null;
+    if (askStreet) askStreet.onchange = () => {
+      saveFile.inspector.street = askStreet.value || undefined;
+      save(saveFile);
+      // Re-rendered rather than patched, so her follow-up line lands as part of
+      // the same conversation. `page` lives in the closure; the sheet does not
+      // jump back to the front.
+      render();
     };
     // Same read-more as the binder's, against the briefing's own open set.
     sheet.querySelectorAll<HTMLButtonElement>('[data-more]').forEach((b) => {

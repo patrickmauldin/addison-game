@@ -220,6 +220,16 @@
       }
       #flyer.found .fl-paper { opacity: .82; }
 
+      /* A control set into the manager's dialogue. Indented like a reply and
+         given the paperwork's own stock, so it reads as part of the exchange
+         rather than as a form dropped into the middle of it. */
+      #sheet .ask { margin: 6px 0 10px 18px; }
+      #sheet .ask select {
+        font: inherit; color: var(--ink);
+        background: var(--paper-2); border: 1px solid var(--rule);
+        padding: 4px 8px; cursor: pointer;
+      }
+
       /* --- Mid-inspection events ---------------------------------------- */
       /* Dimmed but not blacked: the lot stays visible behind it, because what
          is being discussed is on that lot and the player is meant to be looking

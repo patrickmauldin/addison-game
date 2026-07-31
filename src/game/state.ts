@@ -49,7 +49,20 @@ export type AddressRecord = {
 
 export type SaveFile = {
   version: 1;
-  inspector: { pay: number; strikes_today: number; reprimands: number };
+  inspector: {
+    pay: number;
+    strikes_today: number;
+    reprimands: number;
+    /**
+     * Which street the inspector lives on, by id. Asked in the first briefing
+     * and never again.
+     *
+     * Optional because a save written before the question existed does not have
+     * it, and because the player can walk past the dropdown without answering —
+     * the manager is making conversation, not gating the round on it.
+     */
+    street?: string;
+  };
   /** Accuracy per rule article, for the bi-weekly board review. */
   accuracy: Record<string, { right: number; wrong: number }>;
   addresses: Record<string, AddressRecord>;
