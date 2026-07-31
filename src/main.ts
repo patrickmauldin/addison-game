@@ -29,6 +29,7 @@ import level2 from './data/levels/level2.json';
 import level3 from './data/levels/level3.json';
 import level4 from './data/levels/level4.json';
 import rulesData from './data/rules.json';
+import bulletinData from './data/bulletin.json';
 import housesData from './data/houses.json';
 import { BarkState, factsFromProps, resetBarkHistory, type BarkContext } from './game/barks.js';
 import { BUBBLE_FONT, drawBubble } from './game/bubble.js';
@@ -2232,12 +2233,15 @@ function briefing(): void {
    *
    * Only when there is one. An empty corkboard is worse than no corkboard.
    */
+  const notes = day.bounty ? postItMarkup() : [];
   if (day.bounty) pages.push(
     `<h3>Posted on the route</h3>
      <p class="muted" style="margin-bottom:14px">The Association has authorised a finder's fee of
         $${day.bounty.reward}. This is not a compliance matter.</p>
      <div class="board"><div class="board-cork">
+       <div class="board-col">${notes.slice(0, 2).join('')}</div>
        <div class="board-note">${flyerMarkup()}</div>
+       <div class="board-col">${notes.slice(2).join('')}</div>
      </div></div>`);
   // The how-to only earns its place the first time.
   if (day.level_id === 1) {
@@ -2284,6 +2288,44 @@ function briefing(): void {
   render();
   overlay.classList.add('on');
   startBossIdle();
+}
+
+/**
+ * The rest of the board.
+ *
+ * A corkboard holding one notice is a peg with a poster on it. What makes it a
+ * board is everything ELSE pinned to it — the treadmill nobody wants, the cat
+ * nobody asked to be fed, the fourth notice about locking your cars — which is
+ * a street talking to itself, and the only place in the game it gets to.
+ *
+ * It also carries the story. One fixed posting per shift, sitting in among the
+ * noise and looking like more of it. That is the whole trick: the thread about
+ * the last inspector is legible only because everything around it is about
+ * Pablo, so the ambient pool never references it and never should.
+ *
+ * Seeded off the level, so a board is the same board every time that shift is
+ * played. A board that reshuffled on reload would be wallpaper.
+ */
+const POSTIT_SLOTS = 4;
+
+function postItMarkup(): string[] {
+  const rnd = seedFrom(`level${day.level_id}:board`);
+  const notes = [...bulletinData.ambient];
+  const out: string[] = [];
+  const story = (bulletinData.story as Record<string, string>)[String(day.level_id)];
+  if (story) out.push(story);
+  while (out.length < POSTIT_SLOTS && notes.length)
+    out.push(notes.splice(Math.floor(rnd() * notes.length), 1)[0]);
+  // Shuffled AFTER, so the story posting is not always the top left one — the
+  // player should have to read the board rather than learn where to look.
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  // Nothing hangs straight on a corkboard, and nothing hangs at the same angle
+  // as the thing beside it.
+  return out.map((t, i) =>
+    `<div class="post-it t${i % 5}" style="--tilt:${(rnd() * 7 - 3.5).toFixed(1)}deg">${t}</div>`);
 }
 
 /**

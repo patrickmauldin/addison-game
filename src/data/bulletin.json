@@ -1,0 +1,43 @@
+{
+  "_source": "assets/addison-bulletin-board.md — the full design has two pools, per-posting posted_day/pulled_day, and multi-day arcs. This is the subset that fits on a post-it: short enough to read at a glance beside the notice, which is the only thing the player came to the board for.",
+  "_ambient": "Rotated per shift, seeded off the level so a board is the same board every time you play it. NEVER references the story. The Mercer thread is legible only because everything around it is noise about brisket and Pablo.",
+  "ambient": [
+    "It's not the dog's fault.",
+    "It's a little bit the dog's fault.",
+    "The bags are FREE. They are RIGHT THERE.",
+    "FOR SALE: Treadmill. Barely used. Obviously.",
+    "FREE: Piano. You move it. It does not work.",
+    "PABLO IS AN OUTDOOR CAT. HE IS FINE.",
+    "Whoever keeps feeding Pablo: please stop.",
+    "Pablo has gained four pounds.",
+    "My gnome is gone. This is not a joke to me.",
+    "$90 for grass. Ninety. American. Dollars.",
+    "The board meets at 2pm on a Tuesday. Think about that.",
+    "POOL CLOSED. We know.",
+    "Book club is now a wine club. Same night. No books.",
+    "FOUND: One shoe. Child's. Left foot.",
+    "I make tamales. Text me. Don't tell the HOA.",
+    "LOCK YOUR CARS. This is the fourth notice.",
+    "There is nowhere out of view. I have looked.",
+    "Does anyone have a truck? I'll buy a lot of tacos.",
+    "Speed bump denied. Reason: aesthetics.",
+    "LAWN CARE — $35 weekly. I am fourteen.",
+    "Piano lessons. My house. Please, my house.",
+    "Recycling suspended since March. Temporarily.",
+    "Can someone teach me to use a weed trimmer.",
+    "Whoever has my grill grate: I know.",
+    "Whoever parks in front of my house: there are two other spots.",
+    "It's a public street.",
+    "Brisket confirmed for the block party. He said yes.",
+    "I have read the covenants. All sixty-one pages.",
+    "FREE: 400 bricks. I don't want to talk about it.",
+    "Holiday decorations off by January 15. Not negotiable.",
+    "Postings require prior approval.",
+    "The swing is still under review. Eight months."
+  ],
+  "_story": "Keyed by shift, and fixed. One per board, so the thread is always there and never twice. Pool A carries the joke; these are the ones the player is supposed to catch.",
+  "story": {
+    "2": "Is there a new inspector? What happened to the last one?",
+    "4": "He was right about the variance."
+  }
+}

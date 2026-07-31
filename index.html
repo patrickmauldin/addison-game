@@ -20,6 +20,14 @@
          "$25" read as "$SS". That needed digits excluded via unicode-range so
          they fell through to the monospace; Minecraft's digits are distinct, so
          the whole workaround is gone and one face covers everything. */
+      /* The board's own hand. Everything else in the game is set by the
+         Association or by the inspector; a post-it is a neighbour, and it
+         should not look like either of them. */
+      @font-face {
+        font-family: 'Boiled Pasta';
+        src: url('assets/fonts/Boiled Pasta.ttf') format('truetype');
+        font-display: swap;
+      }
       @font-face {
         font-family: 'Minecraft';
         src: url('assets/fonts/Minecraft.ttf') format('truetype');
@@ -234,14 +242,42 @@
       .board-cork {
         background: #b1793f url('assets/cork.jpg') repeat;
         min-height: 236px;
-        padding: 34px 20px 26px;
-        display: flex; align-items: center; justify-content: center;
+        padding: 34px 12px 26px;
+        /* Spread rather than clustered: the panel is as wide as the window
+           makes it, and four notes huddled in the middle of a wide board read
+           as a layout that ran out of ideas rather than as a board. */
+        display: flex; align-items: center; justify-content: space-evenly; gap: 10px;
         /* Hard, offset down-right, 20% — the frame sitting proud of the cork. */
         box-shadow: inset 6px 6px 0 rgba(0,0,0,.2);
       }
       /* The notice needs a positioned box of its own width: the pin hangs off
          the top of it, and the paper is tacked at an angle inside it. */
-      .board-note { position: relative; width: 152px; }
+      .board-note { position: relative; width: 152px; flex: none; }
+      /* Two to a side, flanking the notice. A column rather than a scatter:
+         absolutely-placed notes look better until one of them runs three lines
+         and lands on the cat. */
+      .board-col {
+        display: flex; flex-direction: column; gap: 12px;
+        width: 104px; flex: none;
+      }
+      /* Small, because a post-it IS small and because none of this is what the
+         player came to the board to read. Legible at a glance, and worth
+         stopping on maybe one board in three. */
+      .post-it {
+        font-family: 'Boiled Pasta', 'Bradley Hand', cursive;
+        font-size: 12px; line-height: 1.18; color: #34302a;
+        padding: 8px 7px; min-height: 66px;
+        display: flex; align-items: center; text-align: center;
+        transform: rotate(var(--tilt, 0deg));
+        box-shadow: 2px 3px 0 rgba(0,0,0,.26);
+      }
+      /* Pastels, and deliberately not the paper tan used everywhere else —
+         these are somebody's stationery, not Association stock. */
+      .post-it.t0 { background: #fdf1a0; }
+      .post-it.t1 { background: #f9c9d7; }
+      .post-it.t2 { background: #cbe8b3; }
+      .post-it.t3 { background: #bedaf3; }
+      .post-it.t4 { background: #fbd8ab; }
 
       /* --- Desk -------------------------------------------------------- */
       /* The cards scroll; the stamps do not. By Level 15 the rule list alone is
