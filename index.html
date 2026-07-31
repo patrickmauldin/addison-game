@@ -222,29 +222,58 @@
         display: flex; flex-direction: column; gap: 2px;
       }
       .rep-row { display: flex; align-items: center; gap: 6px; }
-      /* Scaled DOWN, and not by a whole number — these are native-resolution
-         pixel art rather than a doubled export, so there is no factor that
-         resamples them cleanly. Smoothed rather than nearest-neighbour on the
-         way down: dropping rows at this ratio eats the one-pixel outline in
-         places and the roof starts to come apart, where a soft edge just reads
-         as a small icon. Redraw them at this size when it matters. */
+      /* Nearest-neighbour on the way down, so the pixels stay pixels. There is
+         no clean factor to be had — these are native-resolution art, not a
+         doubled export — so some rows are dropped outright and the outline
+         thins where they go. */
       .rep-icon {
         display: block; height: 22px; width: auto;
+        image-rendering: pixelated;
         filter: drop-shadow(1px 1px 0 rgba(0,0,0,.45));
       }
-      /* Built rather than drawn, so a value can move it. Corners just off
-         square, and the same track grey the reference uses. overflow clips the
-         fill to those corners — without it a full bar has square ends inside a
-         rounded box. */
+      /* The office sits a touch below the houses it grades. */
+      .rep-icon.office { height: 19px; }
+      /* Two slabs, not a border: black underneath, the track inset 2px on top
+         of it, each clipped to the same stepped shape. A border would be cut
+         flat by the clip and leave the steps unoutlined. drop-shadow rather
+         than box-shadow for the same reason — it follows the clipped silhouette
+         where a box-shadow would trace the box that is no longer there. */
+      /* A corner is a square REMOVED, not a curve: the boundary runs along the
+         top edge, turns down, turns out, and carries on down the side. That is
+         what a rounded corner looks like drawn a pixel at a time, and
+         border-radius cannot make that shape at any value.
+
+         Written out twice rather than shared through a custom property. A
+         custom property substitutes the var()s INSIDE it against the element
+         that declares it, not the one that uses it, so a polygon parameterised
+         on --r resolves against a --r that is not there yet and the whole
+         declaration is dropped. */
       .rep-bar {
-        width: 96px; height: 15px;
-        border: 2px solid #000; border-radius: 4px;
-        background: #3f3f3f; overflow: hidden;
-        box-shadow: 1px 2px 0 rgba(0,0,0,.35);
+        width: 96px; height: 19px;
+        background: #000;
+        clip-path: polygon(
+          3px 0, calc(100% - 3px) 0,
+          calc(100% - 3px) 3px, 100% 3px,
+          100% calc(100% - 3px), calc(100% - 3px) calc(100% - 3px),
+          calc(100% - 3px) 100%, 3px 100%,
+          3px calc(100% - 3px), 0 calc(100% - 3px),
+          0 3px, 3px 3px);
+        filter: drop-shadow(1px 2px 0 rgba(0,0,0,.35));
       }
-      .rep-bar > i { display: block; height: 100%; width: var(--fill, 0%); }
-      .rep-bar.owners > i { background: #ffcf3d; }
-      .rep-bar.office > i { background: #5ba5f0; }
+      .rep-track {
+        margin: 2px; height: calc(100% - 4px); width: calc(100% - 4px);
+        background: #3f3f3f;
+        clip-path: polygon(
+          2px 0, calc(100% - 2px) 0,
+          calc(100% - 2px) 2px, 100% 2px,
+          100% calc(100% - 2px), calc(100% - 2px) calc(100% - 2px),
+          calc(100% - 2px) 100%, 2px 100%,
+          2px calc(100% - 2px), 0 calc(100% - 2px),
+          0 2px, 2px 2px);
+      }
+      .rep-track > i { display: block; height: 100%; width: var(--fill, 0%); }
+      .owners .rep-track > i { background: #ffcf3d; }
+      .office .rep-track > i { background: #5ba5f0; }
 
       /* --- The bulletin board ------------------------------------------ */
       /* Wood frame and cork panel as two nested boxes rather than a
@@ -1128,11 +1157,11 @@
       <div id="reputation">
         <div class="rep-row">
           <img class="rep-icon" src="assets/reputation/homeowners.png" alt="Homeowners" />
-          <div class="rep-bar owners" style="--fill: 72%"><i></i></div>
+          <div class="rep-bar owners" style="--fill: 72%"><div class="rep-track"><i></i></div></div>
         </div>
         <div class="rep-row">
-          <img class="rep-icon" src="assets/reputation/office.png" alt="Office" />
-          <div class="rep-bar office" style="--fill: 48%"><i></i></div>
+          <img class="rep-icon office" src="assets/reputation/office.png" alt="Office" />
+          <div class="rep-bar office" style="--fill: 48%"><div class="rep-track"><i></i></div></div>
         </div>
       </div>
 
