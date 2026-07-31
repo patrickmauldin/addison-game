@@ -215,25 +215,92 @@
         flex: 1; min-height: 0; overflow-y: auto;
         padding: 12px; display: flex; flex-direction: column; gap: 10px;
       }
+      /* Everything on the desk is lit from the upper right, so the paperwork
+         throws its shadow down and to the LEFT. Hard-edged and unblurred —
+         a soft gradient beside pixel art reads as a different medium. */
       .card {
         background: var(--paper) url('assets/paper.png') repeat;
         image-rendering: pixelated;
         border: 1px solid #9d9075;
-        box-shadow: 1px 2px 0 rgba(0,0,0,.28), 0 1px 3px rgba(0,0,0,.2);
+        box-shadow: -6px 6px 0 rgba(0,0,0,.3);
         padding: 9px 11px;
       }
-      /* Route sheet is the clipboard carbon; the case file is a ruled form. */
-      .clip { background: var(--manila) url('assets/paper-yellow.png') repeat; }
+      /* The route sheet is the same stock as the morning briefing — the sheet
+         she hands you and the sheet on your desk are the one document, so the
+         manila carbon it used to be is gone. Flat, like #sheet: no texture, so
+         the two read as identical paper rather than as near-misses. */
+      .clip { background: var(--paper); color: var(--ink); }
+
+      /* --- Route sheet and calendar ------------------------------------- */
+      /* The clipboard gives up whatever the calendar needs and no more: it is
+         label/value rows, which compress badly, so it takes the remainder
+         rather than a share. align-items:start keeps the calendar its own
+         height instead of stretching to the taller clipboard. */
+      #topcards { display: flex; gap: 10px; align-items: flex-start; }
+      #topcards .clip { flex: 1; min-width: 0; }
+      /* A desk calendar: coil across the head, the day on a red band, the date
+         on the leaf below it. Bound like the rulebook, so it takes the binder's
+         navy rather than the paperwork's tan. */
+      #calendar {
+        flex: none; width: 104px; position: relative;
+        margin-top: 10px;
+        background: #ffffff;
+        border: 2px solid #303843;
+        box-shadow: -6px 6px 0 rgba(0,0,0,.3);
+        image-rendering: pixelated; text-align: center;
+        /* Nothing on a desk is ever square to the desk. A couple of degrees is
+           enough to read as "put down" rather than "laid out". Leaning the
+           opposite way to the pinned notice on the stage, so the two tilts do
+           not look like one systematic skew. */
+        transform: rotate(2.5deg);
+      }
+      /* Mostly above the sheet, biting a few pixels into it — the wire is wound
+         round the outside of the pad, not printed on the face of it. */
+      #cal-spine {
+        position: absolute; top: -19px; left: 5px; right: 5px; height: 27px;
+        display: flex;
+      }
+      #cal-spine i { display: block; background-repeat: no-repeat; }
+      /* Caps swap ends. A clockwise quarter turn sends the coil's top to the
+         RIGHT and its bottom to the LEFT, so the small tail cap leads and the
+         full cap closes — the reverse of the reading order in the markup would
+         put the wire's two ends on the wrong sides. */
+      #cal-spine .h-start {
+        width: 9px; height: 15px; align-self: flex-start;
+        background-image: url('assets/rulebook/binder-ring-bot-h.png');
+        background-size: 9px 15px;
+      }
+      #cal-spine .h-mid {
+        flex: 1; min-width: 0;
+        background-image: url('assets/rulebook/binder-ring-mid-h.png');
+        background-size: 12px 27px; background-repeat: repeat-x;
+      }
+      #cal-spine .h-end {
+        width: 12px;
+        background-image: url('assets/rulebook/binder-ring-top-h.png');
+        background-size: 12px 27px;
+      }
+      /* Flush to the head of the sheet — the band IS the top of the pad, so
+         there is no white margin above it for the coil to sit in. */
+      /* Deep enough that the coil sits in the band rather than on the seam,
+         with the weekday pushed to the lower half of it — the wire bites into
+         the top few pixels and would otherwise cross the letters. */
+      #cal-dow {
+        background: #d4594e; color: #fff;
+        font-family: var(--pixel-font); font-size: 15px; letter-spacing: .06em;
+        padding: 16px 2px 7px;
+        text-shadow: 1px 1px 0 rgba(90,26,20,.5);
+      }
+      #cal-date {
+        font-family: var(--pixel-font); font-size: 26px; color: #2b2721;
+        padding: 16px 2px 20px; line-height: 1;
+      }
       #casefile-card { background: var(--paper) url('assets/paper-lined.png') repeat; }
       /* Findings is the legal pad — what the inspector writes, as opposed to
          the forms they fill in. Fallback is the texture's own base color so a
          failed load does not flash a stock that isn't the one being drawn. */
       #findings { background: #e8dda2 url('assets/paper-lined-yellow.png') repeat; }
-      /* The rulebook is a different document from the paperwork — blue stock
-         separates reference material from the forms you fill in. */
-      #binder { background: #d1d9e4 url('assets/paper-blue.png') repeat; }
-      #binder h2 { border-bottom-color: #9fadc0; }
-      #binder .rule { border-bottom-color: #9fadc0; }
+      /* The rulebook is not a card. See the binder block further down. */
       /* Section titles only. A pixel display face breaks up below about 13px,
          which is why the fine print underneath stays monospace. Bumped from
          11px and the tracking loosened: a pixel face needs the extra room
@@ -259,41 +326,233 @@
         padding: 6px 8px; font-size: 12px;
       }
 
-      /* --- Rule list ---------------------------------------------------- */
-      /* Collapsed by default and one scannable line each, because from Day 5
-         several articles are live at once and the binder has to stay readable
-         as it grows. The formal text is one click away, not in your face. */
-      .rule { border-bottom: 1px solid var(--rule); }
-      .rule:last-child { border-bottom: 0; }
-      /* Two lines: marker, code and tag identify the article; the plain-language
-         line sits beneath them. Grid rather than a wrapping flex so the
-         description hangs off the CODE rather than the disclosure marker, and
-         so the marker keeps its own column however long the article runs. */
-      .rule > summary {
-        list-style: none; cursor: pointer; padding: 5px 0; color: var(--ink);
-        display: grid; grid-template-columns: 9px 1fr;
-        column-gap: 8px; row-gap: 2px;
+      /* --- Rulebook binder ---------------------------------------------- */
+      /* A ring binder rather than a list. One article to a page, tabbed
+         dividers down the outer edge, and a next arrow — so looking a rule up
+         costs one click at Level 12 the same as it does at Level 2, instead of
+         a scroll past everything you already know.
+         Palette is fixed by the art, not by the theme variables: the ring
+         sprites are drawn in these exact colors and a near-miss reads as a
+         rendering fault rather than a design choice. */
+      #binder {
+        --cover: #96a9c1;
+        --cover-dark: #6c81a1;
+        --binder-ink: #303843;
+        /* The leaf's rules and dividers are #7a5859 at various alphas, written
+           out as rgba() below — a custom property cannot carry the alpha. */
+        /* The staircase that cuts the two OUTER corners. The spine side stays
+           square — a bound edge has no corner to round. Written as a variable
+           because the outline slab and the surface inside it are two elements
+           and have to be cut to the same shape or the border goes ragged. */
+        --binder-corner: polygon(
+          0 0,
+          calc(100% - 6px) 0,
+          calc(100% - 6px) 3px,
+          calc(100% - 3px) 3px,
+          calc(100% - 3px) 6px,
+          100% 6px,
+          100% calc(100% - 6px),
+          calc(100% - 3px) calc(100% - 6px),
+          calc(100% - 3px) calc(100% - 3px),
+          calc(100% - 6px) calc(100% - 3px),
+          calc(100% - 6px) 100%,
+          0 100%
+        );
+        /* Not a .card: a book is not a sheet of paper. The left padding is the
+           gutter the coil hangs in, the right is where the dividers stick out. */
+        background: none; border: 0; box-shadow: none;
+        padding: 0 44px 0 18px;
+        position: relative;
+        image-rendering: pixelated;
       }
-      .rule > summary::-webkit-details-marker { display: none; }
-      .rule > summary::before {
-        content: '+'; color: var(--ink-soft); font-weight: 700;
-        grid-column: 1; grid-row: 1; align-self: center;
+      /* The block of leaves, sitting BEHIND the boards and sticking out on the
+         fore edge. One object with its own navy outline rather than a stack of
+         hairlines: a book seen slightly off-axis shows a slab of paper, and two
+         1px lines read as a rendering seam instead. Painted first, so the front
+         board covers everything but the protruding edge. Inset top and bottom
+         because the leaves are a little smaller than the boards. */
+      #binder-edge {
+        position: absolute; left: 18px; right: 36px; top: 5px; bottom: 5px;
+        background: #ffffff; border: 2px solid var(--binder-ink);
       }
-      .rule[open] > summary::before { content: '\2212'; }
-      .rule .head {
-        grid-column: 2; grid-row: 1;
-        display: flex; gap: 8px; align-items: center;
+      /* The board. Navy fill clipped to the stepped shape, with the cover or the
+         open leaf sitting 2px inside it — which is what draws the outline,
+         corners included. A plain border cannot follow a clip-path. */
+      #binder-book {
+        position: relative;
+        background: var(--binder-ink);
+        clip-path: var(--binder-corner);
+        padding: 2px;
+        /* Clamped rather than fixed: the desk is a column of cards on a short
+           window as well as a tall one, and a book sized for 1200px puts
+           Findings below the fold at 860px — which is the card you need WHILE
+           you are marking. Closed and open are the same height so the desk does
+           not jump when the book is opened.
+           The floor clears the five tabbed dividers stacked down the outside
+           edge — 30px each plus 8px gaps — so the last one never hangs off the
+           bottom of the board. Adding sections means raising it. */
+        height: clamp(230px, 27vh, 340px);
+        /* drop-shadow, not box-shadow: box-shadow squares off the stepped
+           corners the clip-path just cut. Matches the .card offset. */
+        filter: drop-shadow(-6px 6px 0 rgba(0,0,0,.3));
       }
-      .rule .code { font-weight: 700; letter-spacing: .04em; flex: none; }
-      .rule .tab {
-        flex: none; background: var(--manila); border: 1px solid #9d8b63;
-        font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
-        padding: 0 5px;
+      /* The coil hangs off the spine edge, and overshoots the board top and
+         bottom the way a real wire does — it is wound round the outside of the
+         boards, not printed on them. */
+      #binder-spine {
+        position: absolute; left: 0; top: -5px; bottom: -5px; width: 27px;
+        display: flex; flex-direction: column; z-index: 1;
       }
-      /* Column 2 keeps it flush under the code; 9px + 8px gap matches .body. */
-      .rule .one { grid-column: 2; grid-row: 2; color: var(--ink-soft); font-size: 12px; }
-      .rule .body { padding: 2px 0 8px 17px; font-size: 12px; }
-      .rule .body .formal { margin: 0 0 6px; }
+      #binder-spine i { display: block; background-repeat: no-repeat; }
+      #binder-spine .r-top {
+        height: 12px; background-image: url('assets/rulebook/binder-ring-top.png');
+        background-size: 27px 12px;
+      }
+      #binder-spine .r-mid {
+        flex: 1; min-height: 0;
+        background-image: url('assets/rulebook/binder-ring-mid.png');
+        background-size: 27px 12px; background-repeat: repeat-y;
+      }
+      #binder-spine .r-bot {
+        height: 9px; width: 15px;
+        background-image: url('assets/rulebook/binder-ring-bot.png');
+        background-size: 15px 9px;
+      }
+      /* Shut, which is how the book sits until you open it. */
+      #binder-cover {
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 2px;
+        width: 100%; height: 100%;
+        clip-path: var(--binder-corner);
+        /* Board stock, tiled. The flat color underneath is the texture's own
+           base, so a failed load does not flash a shade that is not the one
+           being drawn — same rule as the paper cards. */
+        background: var(--cover) url('assets/rulebook/cover.png') repeat;
+        /* The boards have a thickness: the darker blue is the edge catching
+           less light down the left and along the bottom. */
+        box-shadow: inset 5px 0 0 var(--cover-dark), inset 0 -5px 0 var(--cover-dark);
+        border: 0; cursor: pointer; position: relative;
+        font-family: var(--pixel-font); font-size: 30px; letter-spacing: .06em;
+        color: var(--binder-ink); line-height: 1.2;
+      }
+      #binder-cover:hover { background-color: #a4b6cc; }
+      /* The hint that the book opens. Bottom right, where you would take hold
+         of a page — and only while the pointer is on the board. */
+      #cv-arrow {
+        position: absolute; right: 10px; bottom: 9px;
+        width: 30px; height: auto; image-rendering: pixelated;
+        opacity: 0; transition: opacity .12s;
+      }
+      #binder-cover:hover #cv-arrow { opacity: 1; }
+      /* Both faces set display, which outranks the UA rule for [hidden]. */
+      #binder-cover[hidden], #binder-page[hidden] { display: none; }
+      /* Open. No blue anywhere — you are looking at paper now, and the boards
+         are behind the leaf where you cannot see them. */
+      #binder-page {
+        background: #ffffff;
+        clip-path: var(--binder-corner);
+        /* Extra left padding: the coil now bites into the board, so the text
+           needs to start clear of the wire rather than under it. */
+        padding: 9px 10px 7px 17px;
+        width: 100%; height: 100%;
+        display: flex; flex-direction: column;
+        font-size: 12px; color: var(--ink);
+      }
+      #binder-body { flex: 1; min-height: 0; overflow-y: auto; }
+      /* One ruled line per RULE, so the divider means "next article" and
+         nothing else. Nothing inside an entry is separated by a rule. */
+      .bk-rule + .bk-rule { margin-top: 9px; }
+      .bk-rule { padding-bottom: 9px; border-bottom: 1px solid rgba(122,88,89,.45); }
+      .bk-rule:last-child { padding-bottom: 0; border-bottom: 0; }
+      .bk-head { display: flex; align-items: baseline; gap: 8px; }
+      .bk-code {
+        font-family: var(--pixel-font); font-size: 15px; letter-spacing: .04em;
+        color: var(--binder-ink); flex: none;
+      }
+      .bk-title { font-weight: 700; line-height: 1.3; }
+      /* What the rule actually asks of an owner, in one sentence. This is the
+         line the player reads mid-inspection; the citation and the statute are
+         behind "read more" because neither answers "is this a finding". */
+      .bk-gist { margin-top: 2px; color: var(--ink-soft); line-height: 1.4; }
+      .bk-cite { color: var(--ink-soft); font-size: 11px; }
+      .bk-formal { margin: 5px 0 0; line-height: 1.5; }
+      .bk-limits {
+        margin-top: 7px; padding: 6px 8px; font-size: 11px; line-height: 1.45;
+        background: rgba(122,88,89,.11); border-left: 3px solid rgba(122,88,89,.55);
+      }
+      /* The article's own exhibit art, so the page shows the thing as well as
+         describing it — the same reasoning as the briefing exhibits. */
+      .bk-pics { display: flex; gap: 7px; align-items: flex-end; margin-top: 6px; }
+      .bk-pics img { height: 38px; width: auto; image-rendering: pixelated; }
+      /* A text link, not a button — it is a way of reading further, and a
+         second control with a border would compete with the page arrows. */
+      .bk-more {
+        display: block; margin-top: 4px; padding: 0;
+        background: none; border: 0; cursor: pointer;
+        font: inherit; font-size: 11px; color: #7a5859;
+        text-decoration: underline; text-underline-offset: 2px;
+      }
+      .bk-more:hover { color: var(--binder-ink); }
+      .bk-full[hidden] { display: none; }
+      .bk-full { margin-top: 6px; }
+      /* A section you have not been trained on. Faint and italic so it reads as
+         a note on an otherwise blank leaf rather than as a rule. */
+      .bk-locked {
+        margin: 2px 0 0; font-style: italic; line-height: 1.5;
+        color: var(--ink); opacity: .42;
+      }
+      #binder-nav {
+        margin-top: auto; padding-top: 8px;
+        display: flex; align-items: center; justify-content: space-between;
+        border-top: 1px solid rgba(122,88,89,.45);
+      }
+      #binder-nav button {
+        background: none; border: 0; cursor: pointer;
+        padding: 2px 6px; line-height: 0;
+      }
+      #binder-nav img {
+        width: 30px; height: auto; display: block; image-rendering: pixelated;
+      }
+      /* Mirrored rather than a second sprite — see the markup. */
+      #binder-nav img.flip { transform: scaleX(-1); }
+      #binder-nav button:hover:not(:disabled) img { filter: brightness(1.15); }
+      #binder-nav button:disabled { opacity: .25; cursor: default; }
+      #bk-count { font-size: 11px; }
+      /* Dividers, in the gutter to the right of the cover. Vertical text rather
+         than the icons the reference uses: an icon small enough to fit the tab
+         is a downscaled game sprite, which at that size is a smudge, and the
+         section names are the thing the player is looking for anyway. */
+      /* Every section is tabbed, trained or not, so the strip has to fit FIVE
+         dividers inside the board's height. Icons rather than names: a picture
+         reads at a glance and does not grow when a section is called something
+         longer, which is what forced the type down to 10px when these were
+         words. The name survives as the title and the aria-label. */
+      /* Clear of the front board by 2px, so a divider never sits on the cover's
+         own edge — and spaced apart enough that the paper block and back board
+         behind them read as the thickness of the book between the tabs. */
+      #binder-tabs {
+        position: absolute; right: 0; top: 8px; width: 34px; z-index: 2;
+        display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+      }
+      #binder-tabs button {
+        background: #ffffff; border: 0;
+        width: 30px; height: 30px; padding: 3px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      /* contain, not cover: the five icons are drawn at five different aspect
+         ratios — the car is nearly 2:1, the trash bag is taller than it is
+         wide — and cropping to a square would cut the car in half. */
+      #binder-tabs img {
+        max-width: 100%; max-height: 100%; width: auto; height: auto;
+        object-fit: contain; display: block;
+      }
+      #binder-tabs button:hover { background: #eef2f6; }
+      /* An untrained section. Still pullable — the leaf behind it explains
+         itself — but visibly not yours yet. */
+      #binder-tabs button.locked { opacity: .5; }
+      /* All the dividers are the same white as the leaves. The open one is
+         told apart by being pulled further out of the book, not by color. */
+      #binder-tabs button[aria-selected='true'] { width: 34px; }
       #findings ul { margin: 0; padding: 0; list-style: none; }
       #findings li {
         display: flex; justify-content: space-between; align-items: center;
@@ -506,7 +765,27 @@
       /* min-height reserves room for the impression. Without it the card is
          ~128px, the stamp has to shrink below legibility to fit, and clipping
          it instead looks like a rendering fault rather than like ink. */
-      #casefile-card { position: relative; overflow: hidden; min-height: 178px; }
+      /* padding-top makes room for the binding strip; see ::before below. */
+      #casefile-card {
+        position: relative; overflow: hidden; min-height: 178px;
+        padding-top: 25px; border: 0;
+      }
+      /* The glued edge of a legal pad. A few pixels of brown board across the
+         head of the sheet, which is what makes the case file read as a pad you
+         tear a sheet off rather than as a loose leaf. Tiled from the texture
+         rather than a flat fill so the grain matches the other stock, with the
+         texture's own average underneath as the fallback color. */
+      /* Flush to the card's own edges — the card has no border to clear now,
+         and a real pad's binding is the outermost thing at the head of the
+         sheet anyway. */
+      #casefile-card::before {
+        content: ''; position: absolute; top: 0; left: 0; right: 0;
+        height: 16px;
+        background: #433622 url('assets/paper-brown.png') repeat;
+        image-rendering: pixelated;
+        /* The shadow the board casts onto the sheet below it. */
+        box-shadow: 0 1px 0 rgba(43,39,33,.28);
+      }
       /* The address is what identifies the lot; it should read at a glance
          rather than compete with the card heading. */
       #cf-addr { font-size: 20px; line-height: 1.15; margin: 2px 0 4px; }
@@ -607,7 +886,7 @@
         <button>Inspection</button>
         <div class="drop">
           <button disabled>Next Lot<span class="when">stamp a verdict</span></button>
-          <button disabled>End Round Early<span class="when">Level 2</span></button>
+          <button disabled>End Round Early<span class="when">Shift 2</span></button>
           <hr />
           <button id="mi-reset">Reset Save</button>
         </div>
@@ -616,10 +895,10 @@
       <div class="menu" data-menu>
         <button>Tools</button>
         <div class="drop">
-            <button disabled>Calendar<span class="when">Level 2</span></button>
-          <button disabled>Permit Ledger<span class="when">Level 9</span></button>
-          <button disabled>Paint Swatch Card<span class="when">Level 11</span></button>
-          <button disabled>Minimap<span class="when">Level 1</span></button>
+            <button disabled>Calendar<span class="when">Shift 2</span></button>
+          <button disabled>Permit Ledger<span class="when">Shift 9</span></button>
+          <button disabled>Paint Swatch Card<span class="when">Shift 11</span></button>
+          <button disabled>Minimap<span class="when">Shift 1</span></button>
           <hr />
           <button id="mi-mute">Sound<span class="when">on</span></button>
         </div>
@@ -629,8 +908,8 @@
         <button>Records</button>
         <div class="drop">
           <button disabled>Case File<span class="when">on the desk</span></button>
-          <button disabled>Board Memos<span class="when">Level 8</span></button>
-          <button disabled>My Record<span class="when">Level 5</span></button>
+          <button disabled>Board Memos<span class="when">Shift 8</span></button>
+          <button disabled>My Record<span class="when">Shift 5</span></button>
         </div>
       </div>
 
@@ -643,12 +922,12 @@
       </div>
 
       <div class="status">
-        <span id="m-day">Level 1</span>
+        <span id="m-day">Shift 1</span>
         <span id="m-pay">$0</span>
         <!-- Dev only. Jumping levels is how the pacing gets tuned without
              replaying the whole campaign to reach the level under test. -->
         <div class="menu right" id="dev-menu" data-menu>
-          <button id="dev-btn" title="Level select (dev)" aria-label="Level select">&#9881;</button>
+          <button id="dev-btn" title="Shift select (dev)" aria-label="Shift select">&#9881;</button>
           <div class="drop" id="dev-drop"></div>
         </div>
       </div>
@@ -685,31 +964,82 @@
 
       <div id="desk">
         <div id="desk-scroll">
-          <div class="card clip">
-            <h2>Route Sheet</h2>
-            <!-- The number belongs to the word: "Day 3" is the thing being
-                 named, so it reads as one label on the left rather than a value
-                 flung to the right margin. Weekday and date stay right. -->
-            <div class="row">
-              <span>Level <span id="c-day">—</span></span>
-              <span><b id="c-dow">—</b> <span id="c-date">—</span></span>
+          <!-- The clipboard and the desk calendar sit side by side, which is
+               where they would be. The calendar took the date off the route
+               sheet rather than repeating it — two copies of "Sunday Mar 7" an
+               inch apart reads as a rendering fault, not as emphasis. -->
+          <div id="topcards">
+            <div class="card clip">
+              <h2>Route Sheet</h2>
+              <!-- The number belongs to the word: "Shift 3" is the thing being
+                   named, so it reads as one label on the left rather than a
+                   value flung to the right margin.
+                   A shift, not a level: the inspector is clocking on, and the
+                   word the player reads should be the one the Association would
+                   use on a rota. "Level" stays in the code and the level files,
+                   where it is a content unit rather than a thing in the world. -->
+              <div class="row"><span>Shift</span><span id="c-day">—</span></div>
+              <div class="row"><span>Inspection</span><span id="c-prog">—</span></div>
+              <div class="row"><span>Strikes</span><span id="c-strikes">0 / 3</span></div>
+              <div class="row"><span>Pay</span><span id="c-pay">$0</span></div>
             </div>
-            <div class="row"><span>Inspection</span><span id="c-prog">—</span></div>
-            <div class="row"><span>Quota</span><span id="c-quota">—</span></div>
-            <div class="row"><span>Strikes</span><span id="c-strikes">0 / 3</span></div>
-            <div class="row"><span>Pay</span><span id="c-pay">$0</span></div>
+
+            <!-- Same wire as the rulebook, turned a quarter — see
+                 tools/rotate-rings.ts for why the sprites are pre-rotated. -->
+            <div id="calendar">
+              <div id="cal-spine" aria-hidden="true">
+                <i class="h-start"></i><i class="h-mid"></i><i class="h-end"></i>
+              </div>
+              <div id="cal-dow">—</div>
+              <div id="cal-date">—</div>
+            </div>
           </div>
 
+
+          <!-- The rulebook is a physical object: a ring binder with tabbed
+               dividers, one article per page. The tabs are the reason — by Act
+               III there are a dozen articles, and a scrolling list makes you
+               read past eleven of them to check the twelfth. -->
+          <div class="card" id="binder">
+            <!-- Three sprites, not one image: the coil has to stretch to
+                 whatever height the book is, so the middle tile repeats. -->
+            <div id="binder-spine" aria-hidden="true">
+              <i class="r-top"></i><i class="r-mid"></i><i class="r-bot"></i>
+            </div>
+            <!-- Before the boards in the DOM so the boards paint over it. -->
+            <div id="binder-edge" aria-hidden="true"></div>
+            <div id="binder-book">
+              <button id="binder-cover" type="button" aria-expanded="false">
+                <span>HOA</span><span>Rules</span>
+                <!-- Only on hover: the closed book should read as a shut book,
+                     not as a control with a permanent button on it. -->
+                <img id="cv-arrow" src="assets/rulebook/next-page.png" alt="" />
+              </button>
+              <div id="binder-page" hidden>
+                <div id="binder-body"></div>
+                <!-- One arrow sprite, mirrored for back. Two drawings of the
+                     same arrow would drift apart the moment one is redrawn. -->
+                <div id="binder-nav">
+                  <button id="bk-prev" type="button" aria-label="Previous page">
+                    <img class="flip" src="assets/rulebook/next-page.png" alt="" />
+                  </button>
+                  <span id="bk-count" class="muted"></span>
+                  <button id="bk-next" type="button" aria-label="Next page">
+                    <img src="assets/rulebook/next-page.png" alt="" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div id="binder-tabs" role="tablist" aria-label="Rulebook sections"></div>
+          </div>
+
+          <!-- Below the binder, not above it. The rulebook is what you consult
+               to decide; the case file is where the decision lands. -->
           <div class="card" id="casefile-card">
             <h2>Case File</h2>
             <div id="cf-addr" class="art">—</div>
             <div id="casefile" class="muted" style="margin-top:6px">—</div>
             <img id="stamp-mark" alt="" />
-          </div>
-
-          <div class="card" id="binder">
-            <h2>HOA Rules</h2>
-            <div id="binder-body"></div>
           </div>
 
           <div class="card" id="findings">

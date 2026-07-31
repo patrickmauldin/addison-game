@@ -1,14 +1,23 @@
 {
   "_note": "CC&R articles. Text is placeholder phrasing in the register of a real Texas HOA declaration; the actual Addison E-Binder wording is not used here.",
+  "_categories_note": "Binder tabs, in the order they are stapled into the book. An article's `category` decides which tab it lives behind; a category with no ACTIVE article grows no tab, so the book only ever advertises sections the player has actually been taught. Order is fixed rather than alphabetical: the tabs must not reshuffle when a new article is introduced, because the player learns where a tab IS.",
+  "categories": [
+    "Plants",
+    "Objects",
+    "Trash",
+    "Cars",
+    "Pets"
+  ],
   "articles": [
     {
       "id": "R-101",
-      "title": "Landscape Maintenance — Weeds and Unmaintained Beds",
+      "title": "Landscape Maintenance",
       "section": "Article VII, Section 3(a)",
       "text": "Each Owner shall keep all landscaped areas, planting beds, and paved joints free of weeds and volunteer growth. Weeds visible from the street in beds, turf, or pavement cracks constitute a violation of this Article.",
       "decoy_note": "A bed of native or drought-tolerant plantings, installed intentionally and maintained within a defined border, is NOT a violation of this Article. Chapter 202 of the Texas Property Code limits the Association's authority to prohibit drought-resistant landscaping. Enforcement against an intentional xeriscape bed will not survive appeal.",
       "tab": "Weeds",
-      "short": "No weeds in beds, turf, or pavement cracks.",
+      "category": "Plants",
+      "short": "Weeds must be cleared from beds, turf and pavement cracks.",
       "introduced_level": 1,
       "exhibit": {
         "cite": [
@@ -28,7 +37,8 @@
       "text": "Turf grass shall not exceed six (6) inches in height at any point visible from a public right-of-way.",
       "decoy_note": "Dormant turf is not a violation. Bermuda grass is naturally tan from November through March and greens up in April. Dormancy is even; death is patchy and exposes bare soil.",
       "tab": "Grass",
-      "short": "Turf over 6 inches.",
+      "category": "Plants",
+      "short": "Turf must be kept under six inches.",
       "introduced_level": 5,
       "exhibit": {
         "cite": [],
@@ -45,7 +55,8 @@
       "decoy_note": "A fence in sound condition is not a finding merely because it is there, or because it is old. The article covers missing, broken and displaced members — not age, color or style.",
       "introduced_level": 1,
       "tab": "Fences",
-      "short": "Fences broken, missing members, or leaning.",
+      "category": "Objects",
+      "short": "Fences must be in sound condition.",
       "exhibit": {
         "cite": [
           "fence2",
@@ -65,7 +76,8 @@
       "text": "Refuse and recycling containers shall not be placed at the curb or otherwise made visible from the street on any day other than Tuesday or Wednesday.",
       "decoy_note": "Containers screened from the right-of-way — stored behind a side-yard fence or at the garage face — are compliant on ANY day, and remain so whatever condition the screening itself is in.",
       "tab": "Bins",
-      "short": "Bins at the curb on Tuesday or Wednesday only.",
+      "category": "Trash",
+      "short": "Bins may be at the curb on Tuesday and Wednesday only.",
       "introduced_level": 2,
       "exhibit": {
         "cite": [
@@ -86,7 +98,8 @@
       "text": "No Owner shall permit the accumulation of junk, debris, or discarded materials upon any Lot.",
       "decoy_note": "Materials neatly stacked in support of an active, permitted project are not an accumulation. Children's equipment in use during daylight hours is not an accumulation.",
       "tab": "Clutter",
-      "short": "Accumulated junk or debris on the lot.",
+      "category": "Objects",
+      "short": "Junk and debris must not accumulate on the lot.",
       "introduced_level": 4,
       "exhibit": {
         "cite": [

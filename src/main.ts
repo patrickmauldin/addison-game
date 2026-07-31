@@ -101,6 +101,8 @@ function loadLevel(i: number): void {
 loadLevel(0);
 
 const ARTICLES = rulesData.articles;
+/** Binder divider order. Fixed by the data, never sorted — see rules.json. */
+const CATEGORIES: string[] = (rulesData as { categories?: string[] }).categories ?? [];
 
 /**
  * "2024-01-01" -> "Jan 1". The year is deliberately dropped: it is stored so
@@ -274,7 +276,7 @@ const ASSET_FILES = [
   // Bounty art, referenced straight out of its delivered folder. Copying one
   // frame out to assets/chaz.png would work today and be stale the moment the
   // animal is re-exported.
-  'animals/animal-chaz/walking/rotations/south',
+  'animals/cat-chaz/walking/rotations/south',
 ];
 
 /**
@@ -884,6 +886,168 @@ function renderCaseFile(rec: { address: string; lot_id: string; rulings: Ruling[
   }
 }
 
+type Article = (typeof ARTICLES)[number] & {
+  category?: string;
+  exhibit?: { cite: string[]; cite_note: string };
+};
+
+/**
+ * Which leaf of the binder is showing, and what the binder was built from.
+ *
+ * Page state has to survive syncDesk(), which runs on every click, every mark
+ * and every repaint — a player who has flipped to the fence article and then
+ * marks a weed should not find the book slammed shut back at page one. The key
+ * is the article set: when a LEVEL adds an article the page count changes, and
+ * only then does the book reopen at the front.
+ */
+let binderPage = 0;
+let binderKey = '';
+/** Shut until the player opens it, and it stays however they left it. */
+let binderOpen = false;
+/** Which articles have been read in full. Same reasoning: survives repaints. */
+const binderExpanded = new Set<string>();
+
+/**
+ * One rule, in its compact form.
+ *
+ * Number and title on one line, then a plain-language sentence, then the art.
+ * The formal wording and the enforcement-limits note — the two long things —
+ * are behind "read more", because looking a rule up mid-inspection is a
+ * question of WHICH article, not a question of statute. The citation goes down
+ * there with them: the section number is flavour, not something you scan for.
+ */
+function binderEntry(a: Article): string {
+  const pics = (a.exhibit?.cite ?? [])
+    .map((k) => `<img src="assets/${k}.png" alt="" />`)
+    .join('');
+  const open = binderExpanded.has(a.id);
+  return `
+    <div class="bk-rule">
+      <div class="bk-head">
+        <span class="bk-code">${ruleNumber(a.id)}</span>
+        <span class="bk-title">${a.title}</span>
+      </div>
+      <div class="bk-gist">${a.short}</div>
+      ${pics ? `<div class="bk-pics">${pics}</div>` : ''}
+      <button type="button" class="bk-more" data-more="${a.id}"
+              aria-expanded="${open}">${open ? 'collapse' : 'read more'}</button>
+      <div class="bk-full"${open ? '' : ' hidden'}>
+        <div class="bk-cite">${a.section}</div>
+        <p class="bk-formal">${a.text}</p>
+        <div class="bk-limits"><b>Enforcement limits.</b> ${a.decoy_note}</div>
+      </div>
+    </div>`;
+}
+
+/**
+ * Draw the open page.
+ *
+ * A page is a SECTION — every active article behind one divider, in compact
+ * form. That is what makes the tabs honest: pulling a tab and turning to the
+ * next page land you in the same place, rather than the arrows walking through
+ * articles the tabs describe as one group.
+ *
+ * EVERY section is tabbed, including the ones with nothing in them yet. The
+ * binder the Association hands you is the whole binder; the sections you have
+ * not been trained on are in there, and finding a tab you cannot read yet is
+ * the book telling you the job is bigger than today. What is withheld is the
+ * CONTENT, not the existence of the section.
+ */
+function syncBinder(): void {
+  const active = ARTICLES.filter((a) => day.active_rules.includes(a.id)) as Article[];
+  const cats = CATEGORIES;
+
+  const key = active.map((a) => a.id).join(',');
+  if (key !== binderKey) {
+    binderKey = key;
+    binderPage = 0;
+  }
+  binderPage = Math.min(Math.max(0, binderPage), Math.max(0, cats.length - 1));
+
+  const cat = cats[binderPage];
+  const body = $('binder-body');
+  const cover = $('binder-cover') as HTMLButtonElement;
+  const leaf = $('binder-page');
+  if (!cat) {
+    body.innerHTML = '<p class="muted">No articles in force.</p>';
+    $('binder-tabs').innerHTML = '';
+    $('bk-count').textContent = '';
+    return;
+  }
+
+  // Shut or open. The board is the same size either way, so opening the book
+  // does not move the Findings card underneath it.
+  cover.hidden = binderOpen;
+  leaf.hidden = !binderOpen;
+  cover.setAttribute('aria-expanded', String(binderOpen));
+  // The sound belongs to the HANDLERS, not to this function: syncBinder runs on
+  // every repaint, and a page-turn on each one would rustle continuously while
+  // the player is marking a lot. Expanding "read more" is deliberately silent —
+  // nothing has been turned, it is the same leaf.
+  cover.onclick = () => { binderOpen = true; sound.play('page'); syncBinder(); };
+
+  const here = active.filter((a) => a.category === cat);
+  // An untrained section is not empty — it is withheld. Saying so in the
+  // Association's own voice is worth more than a blank leaf, and it tells the
+  // player the tab will be worth something later without spoiling what.
+  body.innerHTML = here.length
+    ? here.map(binderEntry).join('')
+    : `<p class="bk-locked">These rules will be revealed to you once you have
+         completed the relevant job training.</p>`;
+  body.querySelectorAll<HTMLButtonElement>('[data-more]').forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.more!;
+      if (binderExpanded.has(id)) binderExpanded.delete(id);
+      else binderExpanded.add(id);
+      syncBinder();
+    };
+  });
+
+  $('bk-count').textContent = `${binderPage + 1} of ${cats.length}`;
+  const prev = $('bk-prev') as HTMLButtonElement;
+  const next = $('bk-next') as HTMLButtonElement;
+  // Forward stops rather than wraps: a book you can leaf off the end of loses
+  // you the one bit of orientation a physical binder gives you for free. Back
+  // from the first page shuts the book, which is the same gesture — there is
+  // nothing before page one except the cover, so no separate close control.
+  next.disabled = binderPage >= cats.length - 1;
+  prev.disabled = false;
+  prev.title = binderPage === 0 ? 'Close' : 'Previous page';
+  prev.onclick = () => {
+    if (binderPage === 0) binderOpen = false;
+    else binderPage--;
+    sound.play('page');
+    syncBinder();
+  };
+  next.onclick = () => { binderPage++; sound.play('page'); syncBinder(); };
+
+  $('binder-tabs').innerHTML = cats
+    .map((c) => {
+      // Dimmed, not disabled. You can pull the tab and read WHY it is empty.
+      const locked = !active.some((a) => a.category === c);
+      // The icon file IS the category name, lowercased — no lookup table to
+      // fall out of step with the data when a section is added.
+      return `<button type="button" role="tab" data-cat="${c}"
+                 class="${locked ? 'locked' : ''}" title="${c}" aria-label="${c}"
+                 aria-selected="${binderOpen && c === cat}"
+              ><img src="assets/rulebook/${c.toLowerCase()}.png" alt="" /></button>`;
+    })
+    .join('');
+  $('binder-tabs').querySelectorAll<HTMLButtonElement>('[data-cat]').forEach((b) => {
+    // Pulling a divider while the book is shut opens it there, so a tab is a
+    // shortcut past the cover rather than something you can only use once you
+    // are already inside.
+    b.onclick = () => {
+      const to = cats.indexOf(b.dataset.cat!);
+      // Silent if you pull the tab you are already reading — nothing moved.
+      if (to !== binderPage || !binderOpen) sound.play('page');
+      binderPage = to;
+      binderOpen = true;
+      syncBinder();
+    };
+  });
+}
+
 function syncDesk(): void {
   // Day number, weekday and date on one line. The weekday earns its place —
   // rules key off it (trash day, decor windows) — and the date is what makes a
@@ -891,39 +1055,22 @@ function syncDesk(): void {
   // one and it is now another. Weekday bold, date not: the weekday is the part
   // you check a rule against, the date is only there to be compared later.
   $('c-day').textContent = String(day.level_id);
-  $('c-dow').textContent = today.weekday;
-  $('c-date').textContent = shortDate(today.iso);
+  // The desk calendar, not the route sheet — the date lives in one place now.
+  $('cal-dow').textContent = today.weekday;
+  $('cal-date').textContent = shortDate(today.iso);
   $('c-prog').textContent = `${routeIndex + 1} of ${day.lots.length}`;
-  $('c-quota').textContent = String(day.quota);
+  // No quota row. `quota` is still authored per level and still checked at the
+  // audit, but it currently equals the lot count everywhere, the round can only
+  // end by stamping the last lot, and so the shortfall is structurally always
+  // zero — the route sheet was printing the same number twice under two labels.
+  // Put the row back when a route offers more addresses than the quota needs,
+  // or when End Round Early ships and finishing short becomes a real choice.
   $('c-strikes').textContent = `${saveFile.inspector.strikes_today} / 3`;
   $('c-pay').textContent = `$${saveFile.inspector.pay}`;
-  $('m-day').textContent = `Level ${day.level_id}`;
+  $('m-day').textContent = `Shift ${day.level_id}`;
   $('m-pay').textContent = `$${saveFile.inspector.pay}`;
 
-  // Only articles active today are in the book: code and tag on one line, the
-  // plain-language gist under it, formal text and enforcement limits behind a
-  // click. This list has to stay legible when a dozen articles are live in
-  // Act III, so the collapsed form stays two lines however long the rule is.
-  const active = ARTICLES.filter((a) => day.active_rules.includes(a.id));
-  $('binder-body').innerHTML = active
-    .map(
-      (a) => `
-      <details class="rule">
-        <summary>
-          <span class="head">
-            <span class="code">${ruleNumber(a.id)}</span>
-            <span class="tab">${a.tab}</span>
-          </span>
-          <span class="one">${a.short}</span>
-        </summary>
-        <div class="body">
-          <div class="muted" style="font-size:11px">${a.title} · ${a.section}</div>
-          <p class="formal">${a.text}</p>
-          <div class="decoy"><b>Enforcement limits.</b> ${a.decoy_note}</div>
-        </div>
-      </details>`,
-    )
-    .join('');
+  syncBinder();
 
   const list = $('find-list');
   if (!flagged.size) {
@@ -1081,7 +1228,7 @@ function buildDevMenu(): void {
   const drop = $('dev-drop');
   drop.innerHTML = LEVELS.map((l, i) => {
     const d = dateForLevel(l.level_id);
-    return `<button data-level="${i}">Level ${l.level_id}` +
+    return `<button data-level="${i}">Shift ${l.level_id}` +
       `<span class="lvl-when">${d.weekday.slice(0, 3)} ${d.label}</span></button>`;
   }).join('') + '<hr><button data-wipe="1">Wipe save &amp; restart</button>';
 

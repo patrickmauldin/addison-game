@@ -1,6 +1,6 @@
 {
   "level_id": 4,
-  "_date": "DERIVED — Sunday 7 March 2027. Two days past collection, so a bin at the kerb has been there a while.",
+  "_date": "DERIVED — Sunday 7 March 2027. Two days past collection, so a bin at the curb has been there a while.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -12,7 +12,7 @@
   "pay_per_inspection": 12,
   "verdict_mode": "notice",
   "_teaching": "Clutter arrives (R-107) and the bins have LINGERED — Sunday is four days past the window, and one address has had them out since Wednesday. Also the first person bounty: a face on a notice you have to recognise in the street.",
-  "briefing": "Sunday. Article XII is live from today — accumulated junk and debris. Containers have been at the kerb on one of these since Wednesday, which the file will show you.",
+  "briefing": "Sunday. Article XII is live from today — accumulated junk and debris. Containers have been at the curb on one of these since Wednesday, which the file will show you.",
   "story": [
     "Sunday round. Nobody expects you on a Sunday, which is presumably why the board schedules one.",
     "Article XII joins the list today: clutter. Neatly stacked material for a live project is not an accumulation. A sofa is.",
@@ -100,7 +100,7 @@
           {
             "object": "bin_green",
             "article": "R-104",
-            "why": "At the kerb since 3 March. Four days past the window."
+            "why": "At the curb since 3 March. Four days past the window."
           },
           {
             "object": "bin_brown",
@@ -120,13 +120,13 @@
       "house": {
         "sprite": "house3"
       },
-      "_teaching": "The clutter decoy: boxes stacked neatly for an active project are not an accumulation. The fence beside them is sound.",
+      "_teaching": "The clutter decoy: boxes stacked neatly for an active project are not an accumulation. On the driveway rather than the lawn, which is where a live project actually stages — and the fence beside them is sound.",
       "props": [
         {
           "id": "boxes",
           "sprite": "boxes",
-          "anchor": "YARD_5",
-          "label": "Stacked materials, side yard",
+          "anchor": "DRIVEWAY_3",
+          "label": "Stacked materials, driveway",
           "first_seen": "2027-03-07"
         },
         {
@@ -162,13 +162,13 @@
         "sprite": "house4",
         "mirror": true
       },
-      "_teaching": "Weeds and a washer. Two live articles on one lot, both real.",
+      "_teaching": "Weeds and a washer. Two live articles on one lot, both real — and the washer is on the driveway, so the article is not learned as 'junk on grass'.",
       "props": [
         {
           "id": "washer",
           "sprite": "washer",
-          "anchor": "YARD_2",
-          "label": "Appliance, front lawn",
+          "anchor": "DRIVEWAY_3",
+          "label": "Appliance, driveway",
           "first_seen": "2027-03-07"
         },
         {
@@ -184,7 +184,7 @@
           {
             "object": "washer",
             "article": "R-107",
-            "why": "A discarded appliance on the front lawn."
+            "why": "A discarded appliance on the driveway."
           },
           {
             "object": "weeds_1",

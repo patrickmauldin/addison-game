@@ -29,6 +29,8 @@ export const ONESHOT_FILES = {
   money: 'money.mp3',
   /** A finding marked — the moment the red X lands. */
   select: 'select.wav',
+  /** The rulebook opened, and every leaf turned after that. */
+  page: 'page-turn.mp3',
   meow: 'meow.wav',
   bark1: 'bark1.wav',
   bark2: 'bark2.wav',

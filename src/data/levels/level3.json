@@ -11,7 +11,7 @@
   "pay_per_inspection": 12,
   "verdict_mode": "notice",
   "_teaching": "Friday. The same bins that were legal on Level 2 are now a finding — the object did not change, the day did. Also the first return visits: two addresses you have already ruled on, one fixed and one not.",
-  "briefing": "Friday. Not a collection day. Containers at the kerb are outside the window today. Two of these addresses you have seen before.",
+  "briefing": "Friday. Not a collection day. Containers at the curb are outside the window today. Two of these addresses you have seen before.",
   "story": [
     "Second week. People are starting to recognise the clipboard.",
     "Two addresses on today's route you have already ruled on. The file will tell you which.",
@@ -52,7 +52,7 @@
           {
             "object": "bin_green",
             "article": "R-104",
-            "why": "At the kerb on a Friday. The window is Tuesday and Wednesday."
+            "why": "At the curb on a Friday. The window is Tuesday and Wednesday."
           },
           {
             "object": "bin_brown",
@@ -204,7 +204,7 @@
           {
             "object": "bin_brown",
             "article": "R-104",
-            "why": "At the kerb on a Friday."
+            "why": "At the curb on a Friday."
           }
         ],
         "decoys": []
