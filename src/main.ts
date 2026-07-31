@@ -296,7 +296,7 @@ function placeBounty(): void {
   // Drawn, not authored. The player is meant to RECOGNISE a face off a notice,
   // and a face that is the same every playthrough gets memorised instead.
   // Pinned if the level names one, drawn otherwise. The Poop Bandit is a face
-  // you have to match and so must not be memorisable; the prowler is the only
+  // you have to match and so must not be memorisable; the thief is the only
   // person crossing a lawn after dark and is meant to be recognised on sight.
   if (b.kind === 'person')
     bountyCharacter = b.character ? characterNamed(b.character) : Math.floor(rnd() * RESIDENTS.count);
@@ -818,18 +818,18 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
    * so the street is quiet rather than abandoned.
    *
    * The bounty is the one exception, and on Shift 3 it is the WHOLE point: the
-   * prowler is a reported figure with a notice up, and he is the only person
+   * thief is a reported figure with a notice up, and he is the only person
    * you will see on grass after dark. He used to turn up loose on a third of
    * night lots with nothing attached to him, which made him scenery — the thing
    * a night round most needed not to have.
    */
-  const prowling = day.night && wanted;
+  const thieving = day.night && wanted;
   if (!wanted && (day.night || rnd() < 0.45)) return null; // in for the night, or in anyway
   // Out working, and with what. Drawn from a SEPARATE seed rather than the next
   // number in this stream, so adding tools did not reshuffle who stands where.
-  // A prowler carries nothing: he is not out doing yard work.
+  // A thief carries nothing: he is not out doing yard work.
   const trnd = seedFrom(`${lot.lot_id}:tool`);
-  const tool = prowling ? null : trnd() < 0.4 ? Math.floor(trnd() * TOOL_NAMES.length) : null;
+  const tool = thieving ? null : trnd() < 0.4 ? Math.floor(trnd() * TOOL_NAMES.length) : null;
   const L = rl.layout;
   const top = L.house.y + L.house.h * 0.82;
   const bottom = L.walkTop - 14;
@@ -862,10 +862,10 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
     tool === null ? speed : 0);
   const work = tool === null ? null : new ToolWork(tool, seedFrom(`${lot.lot_id}:work`));
   // Not everybody has anything to say. Two thirds do; the rest just get on
-  // with it, which is what stops the street sounding like a chorus. The prowler
+  // with it, which is what stops the street sounding like a chorus. The thief
   // says nothing at all — the owner lines are all about MY fence, MY lawn.
   const brnd = seedFrom(`${lot.lot_id}:bark`);
-  const bark = prowling ? null
+  const bark = thieving ? null
     : brnd() < 0.66 ? new BarkState('owner', brnd, 1 + brnd() * 3) : null;
   return { walker, work, bark };
 }

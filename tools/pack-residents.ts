@@ -145,7 +145,7 @@ const CAST: Outfit[] = [
   // Black head to foot. The pack shipped no black at all until these four
   // layers arrived — one hair, one top, one bottom, one pair of boots — so this
   // is the only outfit that can be built in it, and every piece is spoken for.
-  { name: 'thief',          skin: 'skin3', hair: 'style4_black',        tops: ['long_sleeve_black'],                 bottom: 'pants_black',       feet: 'boots_black',  cameo: true },
+  { name: 'thief',          skin: 'skin4', hair: 'style4_black',        tops: ['long_sleeve_black'],                 bottom: 'pants_black',       feet: 'boots_black',  cameo: true },
 ];
 
 /**

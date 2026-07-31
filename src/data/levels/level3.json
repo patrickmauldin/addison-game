@@ -52,8 +52,8 @@
     "character": "thief",
     "_character": "PINNED, unlike the Poop Bandit. A face drawn at random is a face you have to match; this one is the only person crossing a lawn after dark, and the notice is there to tell you what that means rather than to be searched.",
     "headline": "Reported",
-    "name": "Prowler",
-    "note": "Seen on lawns after dark",
+    "name": "Thief",
+    "note": "Seen crossing lawns after dark",
     "label": "Person matching the report",
     "reward": 40,
     "eligible_lots": [
