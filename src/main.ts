@@ -11,6 +11,7 @@ import { renderLot, type LotSpec, type PropSpec, type RenderedLot, type SceneAss
 
 import {
   adjudicate,
+  type ArticleTiming,
   bumpAccuracy,
   cumulativeAccuracy,
   load,
@@ -28,6 +29,10 @@ import level1 from './data/levels/level1.json';
 import level2 from './data/levels/level2.json';
 import level3 from './data/levels/level3.json';
 import level4 from './data/levels/level4.json';
+import level5 from './data/levels/level5.json';
+import level6 from './data/levels/level6.json';
+import level7 from './data/levels/level7.json';
+import level8 from './data/levels/level8.json';
 import rulesData from './data/rules.json';
 import bulletinData from './data/bulletin.json';
 import housesData from './data/houses.json';
@@ -48,7 +53,7 @@ import { Sound } from './game/audio.js';
  * on each lot that day, and `lot_id` is the thread that ties an address to its
  * history in the save.
  */
-const LEVELS = [level1, level2, level3, level4] as unknown as LevelSpec[];
+const LEVELS = [level1, level2, level3, level4, level5, level6, level7, level8] as unknown as LevelSpec[];
 
 /**
  * A standing notice and the thing it is about.
@@ -86,6 +91,8 @@ type Bounty = {
   label: string;
   reward: number;
   scale?: number;
+  /** Pin the face instead of drawing one. See placeBounty. */
+  character?: string;
   eligible_lots: string[];
 };
 type LevelSpec = {
@@ -104,6 +111,29 @@ type LevelSpec = {
    * strangers and the named faces are the ones you come to know.
    */
   cameos?: { lot_id: string; people?: string[]; dog?: string; animal?: string }[];
+  /**
+   * Which animals are loose in yards on this shift, by id.
+   *
+   * Authored per level rather than derived from a nocturnal flag on the sheet.
+   * The flag could only ever say "night" or "day", and the schedule wants finer
+   * than that — an extra cat on one night round and not the other.
+   */
+  ambient_animals?: string[];
+  /**
+   * A thing that happens TO the player, mid-inspection.
+   *
+   * Fires on marking the named object, before anything is stamped, so it is
+   * their own noticing that summons it rather than the lot loading. See
+   * maybeEvent.
+   */
+  event?: {
+    id: string;
+    lot_id: string;
+    object: string;
+    speaker: string;
+    body: string;
+    options: { id: string; label: string; pay?: number; unmark?: boolean; reply: string }[];
+  };
   /**
    * A night shift. Authored per level rather than derived from the number: the
    * intent is roughly every couple of shifts, but which ones is a pacing
@@ -265,7 +295,11 @@ function placeBounty(): void {
   bountyLot = pool[Math.floor(rnd() * pool.length)];
   // Drawn, not authored. The player is meant to RECOGNISE a face off a notice,
   // and a face that is the same every playthrough gets memorised instead.
-  if (b.kind === 'person') bountyCharacter = Math.floor(rnd() * RESIDENTS.count);
+  // Pinned if the level names one, drawn otherwise. The Poop Bandit is a face
+  // you have to match and so must not be memorisable; the prowler is the only
+  // person crossing a lawn after dark and is meant to be recognised on sight.
+  if (b.kind === 'person')
+    bountyCharacter = b.character ? characterNamed(b.character) : Math.floor(rnd() * RESIDENTS.count);
 }
 
 /** The bounty prop, if it is hiding on this lot and has not been claimed. */
@@ -341,6 +375,24 @@ const HOUSE_PLANS = ['house1', 'house2', 'house3', 'house4', 'house5', 'house6']
  * synchronously. All eighteen house files together are about 4.5MB, which is
  * what re-exporting the variants as JPEG bought.
  */
+/**
+ * When each article bites, lifted straight off the rulebook.
+ *
+ * Derived rather than restated: the binder page a player reads and the clock
+ * the adjudicator runs are the same three fields, and a game where the book
+ * says seven days and the code says five is worse than one with no book.
+ */
+const ARTICLE_TIMING: Record<string, ArticleTiming> = Object.fromEntries(
+  (rulesData.articles as Array<Record<string, unknown>>).map((a) => [
+    a.id as string,
+    {
+      weekday_window: a.weekday_window as string[] | undefined,
+      season_window: a.season_window as { from: string; to: string } | undefined,
+      grace_days: a.grace_days as number | undefined,
+    },
+  ]),
+);
+
 const HOUSE_VARIANTS = ['window', 'christmas'];
 const HOUSE_SPRITES = [
   ...HOUSE_PLANS,
@@ -751,14 +803,6 @@ function paint(): void {
  * doing the same thing — the street should feel populated, not randomised on
  * every visit. Their patch is the front lawn between the house and the walk.
  */
-/**
- * How often the thief is on a given lot at night.
- *
- * Rare enough to be an event. On every lawn he would be wallpaper; on none of
- * them the night round is just a dark day.
- */
-const THIEF_CHANCE = 0.35;
-
 function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   const rnd = seedFrom(lot.lot_id);
   // A wanted person has to be findable, so on their lot somebody is always out
@@ -773,12 +817,14 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
    * scenery and becomes the thing you noticed. The sidewalk still has traffic,
    * so the street is quiet rather than abandoned.
    *
-   * The bounty is the one exception. A wanted face has to be findable, so if a
-   * night level ever carries a person bounty they are still out.
+   * The bounty is the one exception, and on Shift 3 it is the WHOLE point: the
+   * prowler is a reported figure with a notice up, and he is the only person
+   * you will see on grass after dark. He used to turn up loose on a third of
+   * night lots with nothing attached to him, which made him scenery — the thing
+   * a night round most needed not to have.
    */
-  const prowling = day.night && !wanted;
-  const stayIn = day.night ? 1 - THIEF_CHANCE : 0.45;
-  if (!wanted && rnd() < stayIn) return null; // nobody home, or nobody outside
+  const prowling = day.night && wanted;
+  if (!wanted && (day.night || rnd() < 0.45)) return null; // in for the night, or in anyway
   // Out working, and with what. Drawn from a SEPARATE seed rather than the next
   // number in this stream, so adding tools did not reshuffle who stands where.
   // A prowler carries nothing: he is not out doing yard work.
@@ -807,10 +853,8 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   }
   const speed = L.house.w * 0.085;
   // Weighted, not uniform — see pickCharacter for why the skin mix depends on it.
-  // At night it is always the same man, and he is not drawn from the street.
-  const character = wanted ? bountyCharacter!
-    : prowling ? characterNamed('thief')
-      : pickCharacter(rnd);
+  // The wanted face is whatever the notice printed, pinned or drawn.
+  const character = wanted ? bountyCharacter! : pickCharacter(rnd);
   // Somebody out with a hoe is working a patch of yard, not touring it. Speed
   // zero rather than a separate stationary type: the walker still keeps time,
   // which is what the tool animation cuts its frames from.
@@ -869,7 +913,11 @@ function makeAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Wal
   // Cats and dogs by day; the armadillo and the raccoon join them after dark.
   // Drawing from the allowed list rather than rolling over every row keeps the
   // roll in the same place in the stream whichever set is in play.
-  const abroad = animalsAbroad(day.night === true);
+  // The level's own roster if it has one; the sheet's day/night flags otherwise.
+  const abroad = day.ambient_animals?.length
+    ? day.ambient_animals.map(animalNamed)
+    : animalsAbroad(day.night === true);
+  if (!abroad.length) return null;
   const pick = Math.floor(rnd() * abroad.length);
   return {
     which: pinned ? animalNamed(pinned) : abroad[pick],
@@ -1667,7 +1715,62 @@ frame.addEventListener('click', (ev) => {
   }
   paint();
   syncDesk();
+  // AFTER the mark lands and before anything is stamped. The order is the
+  // point: the resident comes out because they saw you photograph it.
+  maybeEvent(obj.id);
 });
+
+/**
+ * A resident with something to say about what you just marked.
+ *
+ * Fires on the MARK, not on arrival at the lot — a man offering you money
+ * before you have noticed anything is a man confessing, and the whole tension
+ * of the thing is that he only comes out once you have raised the camera.
+ *
+ * Once per round. He does not get a second go at you if you unmark and remark,
+ * and the verdict stays entirely the player's: taking the money removes the
+ * finding but does not stamp the lot, so passing it afterwards is a second
+ * decision and the audit will treat it as one.
+ */
+const firedEvents = new Set<string>();
+
+function maybeEvent(objectId: string): void {
+  const e = day.event;
+  if (!e || firedEvents.has(e.id)) return;
+  if (e.lot_id !== current.lot_id || e.object !== objectId || !flagged.has(objectId)) return;
+  firedEvents.add(e.id);
+
+  const box = $('event');
+  const opts = $('ev-opts');
+  $('ev-who').textContent = e.speaker;
+  $('ev-body').textContent = e.body;
+  $('ev-reply').hidden = true;
+  box.hidden = false;
+  opts.innerHTML = e.options
+    .map((o, i) => `<button class="btn" data-opt="${i}">${o.label}</button>`)
+    .join('');
+  opts.querySelectorAll<HTMLButtonElement>('[data-opt]').forEach((b) => {
+    b.onclick = () => {
+      const o = e.options[Number(b.dataset.opt)];
+      if (o.pay) {
+        saveFile.inspector.pay += o.pay;
+        save(saveFile);
+        sound.play('money');
+      }
+      // Quietly. The pad simply no longer says it, which is the deal: what the
+      // Board reads in the morning is the pad, and the lights are not on it.
+      if (o.unmark) {
+        flagged.delete(e.object);
+        paint();
+        syncDesk();
+      }
+      $('ev-reply').textContent = o.reply;
+      $('ev-reply').hidden = false;
+      opts.innerHTML = '<button class="btn" id="ev-close">Close</button>';
+      $('ev-close').onclick = () => { box.hidden = true; };
+    };
+  });
+}
 
 frame.addEventListener('mousemove', (ev) => {
   if (sliding) return;
@@ -1799,16 +1902,31 @@ function stamp(v: Verdict): void {
   // maps because they are two questions: the audit names the brown bin, the
   // coverage rule does not care which bin it was.
   const kinds = new Map(rendered.objects.map((o) => [o.id, o.group ?? o.label]));
-  const outcome = adjudicate(current, labels, kinds, flagged, v, day.pay_per_inspection);
+  // The record has to exist BEFORE adjudication now: the grace clocks read
+  // first_seen off it and escalation reads its rulings.
+  const rec = recordFor(saveFile, current.lot_id, current.address);
+  const outcome = adjudicate(current, labels, kinds, flagged, v, day.pay_per_inspection, {
+    today: { iso: today.iso, weekday: today.weekday },
+    timing: ARTICLE_TIMING,
+    rec,
+  });
   outcomes.push(outcome);
 
-  // Log the ruling with correctness UNRESOLVED. The audit fills it in later.
-  const rec = recordFor(saveFile, current.lot_id, current.address);
+  /**
+   * Log the ruling with correctness UNRESOLVED. The audit fills it in later.
+   *
+   * The ARTICLE is the load-bearing part and it used to be the string 'R-101'
+   * for everything — harmless while a ruling was only ever read back as a line
+   * of prose on the case file, and wrong the moment escalation started asking
+   * which article this address had already been warned about. Taken off the
+   * lot's own truth now; null for anything marked that was not a violation.
+   */
+  const articleOf = new Map(current.truth.violations.map((x) => [x.object, x.article]));
   rec.rulings.push({
     day_id: day.level_id,
     date: today.iso,
     verdict: v,
-    findings: [...flagged].map((object) => ({ object, article: 'R-101' })),
+    findings: [...flagged].map((object) => ({ object, article: articleOf.get(object) ?? null })),
     correct: null,
   });
   saveFile.inspector.pay += day.pay_per_inspection;
@@ -2419,6 +2537,7 @@ function startRound(): void {
   // the used set is cleared per level rather than per lot.
   resetBarkHistory();
   claimed.clear();
+  firedEvents.clear();
   bountyPay = 0;
   bountyMark = null;
   // What the sheet will say for the rest of the shift, whatever gets earned.

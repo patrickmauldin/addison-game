@@ -52,3 +52,22 @@ export function dateForLevel(level: number): LevelDate {
 export function binsAllowed(weekday: string): boolean {
   return weekday === 'Tuesday' || weekday === 'Wednesday';
 }
+
+/** Whole days from `a` to `b`, both ISO. Negative if b precedes a. */
+export function daysBetween(a: string, b: string): number {
+  return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+}
+
+/**
+ * Is this date inside a MM-DD window?
+ *
+ * Wraps the year end, which is the only reason this is not a comparison. The
+ * seasonal-lighting window runs 1 November to 31 January, so "inside" is
+ * `>= from OR <= to` for that one and `>= from AND <= to` for a window that
+ * stays within a year. Getting this backwards would make lights legal for ten
+ * months and a violation for two.
+ */
+export function inSeasonWindow(iso: string, from: string, to: string): boolean {
+  const md = iso.slice(5);
+  return from <= to ? md >= from && md <= to : md >= from || md <= to;
+}

@@ -93,6 +93,48 @@
           "trash-green"
         ],
         "allow_note": "Screened behind a fence or at the garage face — compliant any day."
+      },
+      "weekday_window": [
+        "Tuesday",
+        "Wednesday"
+      ]
+    },
+    {
+      "id": "R-103",
+      "title": "Seasonal Decorations",
+      "section": "Article VIII, Section 4",
+      "text": "Seasonal lighting and decorative displays may be installed no earlier than 1 November and shall be removed no later than 31 January. Displays visible from the street outside that window constitute a violation of this Article.",
+      "decoy_note": "The window is the whole rule. Inside it, a display is compliant however elaborate; outside it, a display is a violation however tasteful. The Association does not review the decoration itself and has no authority to.",
+      "tab": "Lights",
+      "category": "Objects",
+      "short": "Seasonal lighting is permitted 1 November to 31 January only.",
+      "introduced_level": 3,
+      "season_window": {
+        "from": "11-01",
+        "to": "01-31"
+      },
+      "exhibit": {
+        "cite": [],
+        "cite_note": "Lighting still up outside the November-to-January window.",
+        "allow": [],
+        "allow_note": "Anything at all, between 1 November and 31 January."
+      }
+    },
+    {
+      "id": "R-106",
+      "title": "Exterior Condition",
+      "section": "Article VI, Section 1",
+      "text": "The exterior of each dwelling, including glazing, shall be maintained in sound repair. Broken, cracked or boarded glazing visible from the street constitutes a violation of this Article.",
+      "decoy_note": "The article covers CONDITION, not appearance. A window that is dirty, curtained, shuttered or of an unfashionable style is in sound repair. Cracked glass is not.",
+      "tab": "Windows",
+      "category": "Objects",
+      "short": "Glazing must be kept in sound repair.",
+      "introduced_level": 4,
+      "exhibit": {
+        "cite": [],
+        "cite_note": "Glazing broken, cracked or boarded.",
+        "allow": [],
+        "allow_note": "Dirty, curtained or old is not damaged."
       }
     },
     {
@@ -115,8 +157,56 @@
         "allow": [],
         "allow_note": "Neatly stacked materials for an active project are not an accumulation."
       }
+    },
+    {
+      "id": "R-108",
+      "title": "Temporary Containers",
+      "section": "Article VII, Section 6",
+      "text": "Dumpsters, portable storage units and similar temporary containers may remain upon a Lot for a period not exceeding seven (7) consecutive days. A container in place beyond that period constitutes a violation of this Article.",
+      "decoy_note": "Inside the seven days there is nothing to cite. The clock starts on the date YOU first recorded the container, and your own note is the only record of it — the Association keeps none.",
+      "tab": "Containers",
+      "category": "Objects",
+      "short": "Dumpsters and storage pods may stay seven days.",
+      "introduced_level": 5,
+      "grace_days": 7,
+      "exhibit": {
+        "cite": [
+          "dumpster",
+          "storage"
+        ],
+        "cite_note": "Still in place on the eighth day or later.",
+        "allow": [
+          "dumpster"
+        ],
+        "allow_note": "Within its seven days. Check the file before you mark it."
+      }
+    },
+    {
+      "id": "R-109",
+      "title": "Recreational and Inoperable Vehicles",
+      "section": "Article X, Section 2",
+      "text": "Recreational vehicles, boats, trailers and vehicles that are inoperable or unregistered may remain in view from the street for a period not exceeding seven (7) consecutive days.",
+      "decoy_note": "Seven days, the same as a container, and measured the same way — from your own first note. An operable passenger vehicle parked on its own driveway is not within this Article at all, however long it sits there.",
+      "tab": "Vehicles",
+      "category": "Cars",
+      "short": "RVs, boats and dead vehicles may stay seven days.",
+      "introduced_level": 6,
+      "grace_days": 7,
+      "exhibit": {
+        "cite": [
+          "rv1",
+          "boat1",
+          "car1redbad"
+        ],
+        "cite_note": "In view past the seventh day.",
+        "allow": [
+          "car1red"
+        ],
+        "allow_note": "A working car on its own driveway is not this Article."
+      }
     }
   ],
   "_ui_note": "tab and short drive the compact rule list; title/text/decoy_note are the expanded view. Several rules are live at once from Level 4 on, so the scannable line is what matters.",
-  "_exhibit_note": "exhibit drives the briefing: cite/allow are asset keys shown as thumbnails so a rule is introduced with the thing it is about, not a paragraph about the thing. An empty list is fine — the note still shows."
+  "_exhibit_note": "exhibit drives the briefing: cite/allow are asset keys shown as thumbnails so a rule is introduced with the thing it is about, not a paragraph about the thing. An empty list is fine — the note still shows.",
+  "_timing_note": "Three kinds of clock, and each is a different field so nothing has to be inferred from the id. `weekday_window` — legal only on those weekdays (bins). `season_window` — legal only INSIDE those month-days, wrapping the year end (lights). `grace_days` — legal for that many days from the date the player first recorded the object, and a violation after (containers, vehicles). An article with none of them is a violation whenever it is present."
 }

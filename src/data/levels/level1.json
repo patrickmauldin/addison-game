@@ -1,6 +1,6 @@
 {
   "level_id": 1,
-  "_date": "DERIVED, not stored — see game/calendar.ts. Level 1 is Monday 1 March 2027.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 1 is Monday 1 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -10,9 +10,10 @@
   "quota": 4,
   "pay_per_inspection": 12,
   "verdict_mode": "notice",
-  "_teaching": "Two rules, four lots, and nothing you do can cost anybody money. The arc is: here is a violation - here is a thing you can click that is NOT one - here is the second rule - now tell them apart on one lot.",
-  "briefing": "First day. Bonerville, outer loop. Two articles are live — weeds and fence condition. Nothing else on that street is your business, however it looks.",
-  "_cameos": "Named residents pinned to addresses rather than rolled. Pablo is on 4400 and Patrick, Savanna and Juniper pass 4404 every time Shift 1 is played, which is what makes them people the player recognises rather than more traffic.",
+  "_verdict_mode": "Shift 1 has no FINE stamp at all. Escalation needs a warning to escalate FROM, and on the first round no address has one.",
+  "_teaching": "Two rules, four lots, nothing you do costs anybody money. Violation, then a thing that is NOT one, then the second rule, then tell them apart.",
+  "briefing": "First day. Bonerville, outer loop. Two articles are live — turf and weeds — plus fence condition. Nothing else on that street is your business, however it looks.",
+  "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
   "cameos": [
     {
       "lot_id": "bonerville_01",
@@ -27,50 +28,39 @@
       "dog": "juniper"
     }
   ],
+  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "ambient_animals": [
+    "pablo"
+  ],
   "story": [
     "Welcome to the Addison Master Community Association. You are the Compliance Inspector. There is one.",
-    "You're at 2118 Eyezeta, yes? Good. Short commute.",
-    "Your predecessor also lived in the community. We won't be discussing that.",
-    "Your street is on the Friday route. We don't consider that a conflict.",
-    "Three errors ends your day. Three reprimands ends the arrangement.",
-    "Questions are addressed in the binder."
+    "You’re at 2118 Eyezeta, yes? Good. Short commute.",
+    "Your predecessor also lived in the community. We won’t be discussing that.",
+    "Today you may pass an address or issue a warning. Nothing you do can cost anybody money.",
+    "Three errors ends your day. Three reprimands ends the arrangement."
   ],
   "lots": [
     {
       "lot_id": "bonerville_01",
       "address": "4400 Bonerville",
       "street": "Bonerville",
-      "seed": 40001,
+      "seed": 10001,
       "house": {
         "sprite": "house1"
       },
-      "_teaching": "The unambiguous one. A single weed patch, nothing else on the lot to argue about. This is what a finding looks like.",
+      "_teaching": "Turf, on its own. The first thing the player is ever asked to judge, with nothing else on the lot to argue with it.",
       "props": [
         {
-          "id": "weeds_1",
-          "sprite": "weed1",
-          "anchor": "YARD_4",
-          "label": "Weed growth, front turf",
-          "first_seen": "2027-03-01"
-        },
-        {
-          "id": "weeds_2",
-          "sprite": "weed2",
-          "anchor": "YARD_2",
-          "label": "Weed growth, front turf",
-          "first_seen": "2027-03-01"
-        },
-        {
-          "id": "turf_1",
+          "id": "grass_1",
           "sprite": "grass1",
-          "anchor": "YARD_1",
+          "anchor": "YARD_2",
           "label": "Turf, overgrown",
           "first_seen": "2027-03-01"
         },
         {
-          "id": "turf_2",
+          "id": "grass_2",
           "sprite": "grass3",
-          "anchor": "YARD_3",
+          "anchor": "YARD_5",
           "label": "Turf, overgrown",
           "first_seen": "2027-03-01"
         }
@@ -78,48 +68,38 @@
       "truth": {
         "violations": [
           {
-            "object": "weeds_1",
-            "article": "R-101",
-            "why": "Unbordered weed growth in the front turf, visible from the street."
-          },
-          {
-            "object": "weeds_2",
-            "article": "R-101",
-            "why": "Unbordered weed growth in the front turf, visible from the street."
-          },
-          {
-            "object": "turf_1",
+            "object": "grass_1",
             "article": "R-102",
             "why": "Turf well past six inches across the front."
           },
           {
-            "object": "turf_2",
+            "object": "grass_2",
             "article": "R-102",
             "why": "Same lawn, same article."
           }
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "NOTICE"
     },
     {
       "lot_id": "bonerville_02",
       "address": "4404 Bonerville",
       "street": "Bonerville",
-      "seed": 40002,
+      "seed": 10002,
       "house": {
         "sprite": "house2",
         "mirror": true
       },
-      "_teaching": "The first LEAVE IT ALONE. A sound fence is a clickable object and not a finding — being able to click a thing has to stop meaning the thing is wrong.",
+      "_teaching": "Clean, and pointedly so — a sound fence is the first thing the player can click that is not a finding. Patrick and Savanna walk past, which is the other reason this address is the one they remember.",
       "props": [
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
-          "align": "left",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-01"
+          "first_seen": "2027-03-01",
+          "align": "left"
         }
       ],
       "truth": {
@@ -127,7 +107,7 @@
         "decoys": [
           {
             "object": "fence",
-            "why": "R-105 is live and this fence is intact — every member present, no lean. A fence is not a finding for being a fence."
+            "why": "Sound and complete. Age and colour are not disrepair."
           }
         ]
       },
@@ -137,47 +117,19 @@
       "lot_id": "bonerville_03",
       "address": "4408 Bonerville",
       "street": "Bonerville",
-      "seed": 40003,
+      "seed": 10003,
       "house": {
         "sprite": "house3"
       },
-      "_teaching": "The second rule, made unmissable. A collapsed fence on a lot with no weeds, so the finding cannot be confused with the article they already know.",
+      "_teaching": "The second article, alone, so it is learned rather than inferred. A collapsed panel is not a subtle thing.",
       "props": [
         {
           "id": "fence",
-          "sprite": "fence3",
+          "sprite": "fence2",
           "anchor": "FENCE_1",
-          "align": "left",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-01"
-        },
-        {
-          "id": "turf_1",
-          "sprite": "grass1",
-          "anchor": "YARD_1",
-          "label": "Turf, overgrown",
-          "first_seen": "2027-03-01"
-        },
-        {
-          "id": "turf_2",
-          "sprite": "grass2",
-          "anchor": "YARD_3",
-          "label": "Turf, overgrown",
-          "first_seen": "2027-03-01"
-        },
-        {
-          "id": "turf_3",
-          "sprite": "grass3",
-          "anchor": "YARD_4",
-          "label": "Turf, overgrown",
-          "first_seen": "2027-03-01"
-        },
-        {
-          "id": "turf_4",
-          "sprite": "grass4",
-          "anchor": "YARD_6",
-          "label": "Turf, overgrown",
-          "first_seen": "2027-03-01"
+          "first_seen": "2027-03-01",
+          "align": "left"
         }
       ],
       "truth": {
@@ -185,48 +137,35 @@
           {
             "object": "fence",
             "article": "R-105",
-            "why": "The panel has collapsed entirely — members down between the posts."
-          },
-          {
-            "object": "turf_1",
-            "article": "R-102",
-            "why": "The lawn has not been cut in weeks."
-          },
-          {
-            "object": "turf_2",
-            "article": "R-102",
-            "why": "Same lawn, same article."
-          },
-          {
-            "object": "turf_3",
-            "article": "R-102",
-            "why": "Same lawn, same article."
-          },
-          {
-            "object": "turf_4",
-            "article": "R-102",
-            "why": "Same lawn, same article."
+            "why": "Members missing and displaced — the panel has gone over."
           }
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "NOTICE"
     },
     {
       "lot_id": "bonerville_04",
       "address": "4412 Bonerville",
       "street": "Bonerville",
-      "seed": 40004,
+      "seed": 10004,
       "house": {
         "sprite": "house4",
         "mirror": true
       },
-      "_teaching": "Now discriminate. Two clickable objects, one finding. The fence draws the eye because they just learned it — and it is fine.",
+      "_teaching": "Weeds. AND THE ONE THAT COMES BACK: this address is still growing them on Wednesday, which is where the first fine of the campaign comes from — but only for a player who wrote the warning today.",
       "props": [
         {
           "id": "weeds_1",
-          "sprite": "weed3",
-          "anchor": "YARD_2",
+          "sprite": "weed1",
+          "anchor": "YARD_1",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-01"
+        },
+        {
+          "id": "weeds_2",
+          "sprite": "weed2",
+          "anchor": "YARD_4",
           "label": "Weed growth, front turf",
           "first_seen": "2027-03-01"
         },
@@ -234,9 +173,9 @@
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
-          "align": "left",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-01"
+          "first_seen": "2027-03-01",
+          "align": "left"
         }
       ],
       "truth": {
@@ -245,20 +184,21 @@
             "object": "weeds_1",
             "article": "R-101",
             "why": "Unbordered weed growth in the front turf."
+          },
+          {
+            "object": "weeds_2",
+            "article": "R-101",
+            "why": "Same turf, same article."
           }
         ],
         "decoys": [
           {
             "object": "fence",
-            "why": "Intact. The article covers missing, broken and displaced members — not age or color."
+            "why": "Sound. The fence on this lot is not the problem."
           }
         ]
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "NOTICE"
     }
-  ],
-  "artifact": {
-    "title": "In the binder",
-    "text": "The tab dividers are hand-labeled in pen. Not yours. The initials are R.M."
-  }
+  ]
 }

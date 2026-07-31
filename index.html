@@ -220,6 +220,31 @@
       }
       #flyer.found .fl-paper { opacity: .82; }
 
+      /* --- Mid-inspection events ---------------------------------------- */
+      /* Dimmed but not blacked: the lot stays visible behind it, because what
+         is being discussed is on that lot and the player is meant to be looking
+         at it while they decide. */
+      #event {
+        position: fixed; inset: 0; z-index: 80;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(12,10,8,.55);
+      }
+      #event[hidden] { display: none; }
+      .ev-card {
+        width: min(440px, 86vw);
+        background: var(--paper) url('assets/paper.png') repeat;
+        border: 2px solid #17150f;
+        box-shadow: -6px 6px 0 rgba(0,0,0,.4);
+        padding: 18px 20px 16px;
+      }
+      .ev-who {
+        font-family: var(--pixel-font); font-size: 17px; letter-spacing: .06em;
+        color: var(--ink); margin-bottom: 8px;
+      }
+      .ev-body { margin: 0 0 14px; }
+      .ev-reply { margin: 0 0 14px; color: var(--ink-soft); font-style: italic; }
+      .ev-opts { display: flex; gap: 10px; flex-wrap: wrap; }
+
       /* --- The bulletin board ------------------------------------------ */
       /* Wood frame and cork panel as two nested boxes rather than a
          border-image: border-image with a repeating pixel texture rounds its
@@ -1246,6 +1271,15 @@
     </div>
 
     <div id="overlay"><div id="sheet"></div></div>
+
+    <!-- Its own layer, not the briefing overlay: this fires mid-inspection with
+         the lot still behind it, and reusing #sheet would tear down the round. -->
+    <div id="event" hidden><div class="ev-card">
+      <div class="ev-who" id="ev-who"></div>
+      <p class="ev-body" id="ev-body"></p>
+      <p class="ev-reply" id="ev-reply" hidden></p>
+      <div class="ev-opts" id="ev-opts"></div>
+    </div></div>
 
     <div id="boot">
       <div class="box">

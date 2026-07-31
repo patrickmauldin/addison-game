@@ -1,0 +1,219 @@
+{
+  "level_id": 8,
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 8 is Monday 15 March.",
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-102",
+    "R-105",
+    "R-104",
+    "R-103",
+    "R-106",
+    "R-107",
+    "R-108",
+    "R-109"
+  ],
+  "quota": 5,
+  "pay_per_inspection": 12,
+  "verdict_mode": "full",
+  "_verdict_mode": "Pass, Warning or Fine. One warning before a fine, always.",
+  "_teaching": "The fortnight. No new article; the file on every address is long enough by now to be the game.",
+  "briefing": "Monday. A fortnight in. No new articles — this one is just the round.",
+  "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "people": [
+        "casey",
+        "jess"
+      ],
+      "dog": "pellet"
+    }
+  ],
+  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "ambient_animals": [
+    "pablo"
+  ],
+  "story": [
+    "Monday. Two weeks to the day since your first round.",
+    "The Board reviews inspectors at the fortnight. That is not a warning. It is a date."
+  ],
+  "artifact": {
+    "title": "Slipped under the office door",
+    "text": "An unsigned index card. “Ask them what a variance is. Ask them how many they granted last year.”"
+  },
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 80001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "STUB — a fortnight on from the first shift, the first address is growing weeds it has never been cited for.",
+      "props": [
+        {
+          "id": "weeds_1",
+          "sprite": "weed1",
+          "anchor": "YARD_1",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-15"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Unbordered growth through the front turf."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 80002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "STUB — the RV has gone.",
+      "props": [
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-15",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "Sound."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 80003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "STUB — the boat is on day five and still legal; the packaging from Saturday is not, and it was warned then.",
+      "props": [
+        {
+          "id": "boat",
+          "sprite": "boat1",
+          "anchor": "DRIVEWAY_3",
+          "label": "Boat on trailer, driveway",
+          "first_seen": "2027-03-11"
+        },
+        {
+          "id": "boxes",
+          "sprite": "boxes",
+          "anchor": "YARD_2",
+          "label": "Discarded packaging, front lawn",
+          "first_seen": "2027-03-13"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "boxes",
+            "article": "R-107",
+            "why": "Warned Saturday. Still on the lawn."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "boat",
+            "why": "Day five of seven."
+          }
+        ]
+      },
+      "expected_verdict": "CITATION"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 80004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "STUB — bins away, glazing sound. The address with the longest file closes clean.",
+      "props": [
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "BINS_SCREENED",
+          "label": "Refuse container, green — behind fence",
+          "first_seen": "2027-03-15"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-15",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Screened."
+          },
+          {
+            "object": "fence",
+            "why": "Sound."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 80005,
+      "house": {
+        "sprite": "house5",
+        "mirror": true,
+        "variant": "house5-christmas",
+        "variantLabel": "Seasonal lighting, still up",
+        "variantId": "lights",
+        "variantGlows": true
+      },
+      "_teaching": "STUB — the lights from Tuesday, still up on a Monday a week later.",
+      "props": [],
+      "truth": {
+        "violations": [
+          {
+            "object": "lights",
+            "article": "R-103",
+            "why": "Warned Tuesday. Still up."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "CITATION"
+    }
+  ]
+}

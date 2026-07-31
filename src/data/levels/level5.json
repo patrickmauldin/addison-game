@@ -1,0 +1,253 @@
+{
+  "level_id": 5,
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 5 is Tuesday 9 March.",
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-102",
+    "R-105",
+    "R-104",
+    "R-103",
+    "R-106",
+    "R-107",
+    "R-108"
+  ],
+  "quota": 5,
+  "pay_per_inspection": 12,
+  "verdict_mode": "full",
+  "_verdict_mode": "Pass, Warning or Fine. One warning before a fine, always.",
+  "_teaching": "The seven-day clock, taught both ways on one round: an expired dumpster and an identical pod inside its week. The date on the object is the entire case.",
+  "briefing": "Tuesday. Temporary containers are live — seven days from the date YOU recorded them, and the Association keeps no other record. Bins are within the window today.",
+  "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "people": [
+        "patrick",
+        "savanna"
+      ],
+      "dog": "juniper"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "people": [
+        "jake",
+        "sam"
+      ],
+      "dog": "gus"
+    }
+  ],
+  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "ambient_animals": [
+    "pablo"
+  ],
+  "story": [
+    "Tuesday. Containers today: dumpsters, pods, anything temporary. Seven days.",
+    "The seven days run from the date you wrote it down. Not from when it arrived — nobody knows when it arrived. Your note is the record.",
+    "Which means the file you are keeping is the only file there is. Keep it properly."
+  ],
+  "bounty": {
+    "id": "tuxedo",
+    "kind": "animal",
+    "animal": "tuxedo",
+    "sprite": "animals/cat3/Walking/rotations/south",
+    "headline": "Missing",
+    "name": "Domino",
+    "note": "Belongs to the Ruiz house on Karaoke",
+    "label": "Cat, black and white",
+    "reward": 30,
+    "eligible_lots": [
+      "bonerville_02",
+      "bonerville_03",
+      "bonerville_04",
+      "bonerville_05"
+    ]
+  },
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 50001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "A dumpster ON RECORD SINCE 1 MARCH — eight days, one past the seven the article allows. The date on the object is the whole case.",
+      "props": [
+        {
+          "id": "dumpster",
+          "sprite": "dumpster",
+          "anchor": "DRIVEWAY_3",
+          "label": "Dumpster, driveway",
+          "first_seen": "2027-03-01"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "dumpster",
+            "article": "R-108",
+            "why": "On record since 1 March. Eight days; the Article allows seven."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 50002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "THE SAME ARTICLE, THE OTHER WAY. A storage pod first recorded today is inside its week and there is nothing to cite. Marking it is a false positive — the object is identical, only the date differs.",
+      "props": [
+        {
+          "id": "storage",
+          "sprite": "storage",
+          "anchor": "DRIVEWAY_3",
+          "label": "Portable storage unit, driveway",
+          "first_seen": "2027-03-09"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-09",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "storage",
+            "why": "First recorded today. The Article allows seven days."
+          },
+          {
+            "object": "fence",
+            "why": "Sound."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 50003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "Weeds again at the address warned for them on Wednesday, with bins at the curb on a Tuesday sitting beside them looking exactly as illegal as they did on Friday. They are not.",
+      "props": [
+        {
+          "id": "weeds_1",
+          "sprite": "weed3",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "CURB_1",
+          "label": "Refuse container, green",
+          "first_seen": "2027-03-09",
+          "group": "Trash cans, at the curb"
+        },
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-09",
+          "group": "Trash cans, at the curb"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Warned Wednesday. Still growing."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Tuesday. Inside the window."
+          },
+          {
+            "object": "bin_brown",
+            "why": "Tuesday. Inside the window."
+          }
+        ]
+      },
+      "expected_verdict": "CITATION"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 50004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "Glazing replaced. Clean, on an address with a long file — the file is not the finding.",
+      "props": [
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-09",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "Sound."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 50005,
+      "house": {
+        "sprite": "house5",
+        "mirror": true,
+        "variant": "house5-christmas",
+        "variantLabel": "Seasonal lighting, still up",
+        "variantId": "lights",
+        "variantGlows": true
+      },
+      "_teaching": "Lights on a lot that has never been cited for them. Friday taught the article; this is the first time it costs somebody else.",
+      "props": [],
+      "truth": {
+        "violations": [
+          {
+            "object": "lights",
+            "article": "R-103",
+            "why": "Seasonal display in March."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    }
+  ]
+}

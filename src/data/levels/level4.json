@@ -1,19 +1,23 @@
 {
   "level_id": 4,
-  "_date": "DERIVED — Sunday 7 March 2027. Two days past collection, so a bin at the curb has been there a while.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 4 is Sunday 7 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
+    "R-102",
     "R-105",
     "R-104",
+    "R-103",
+    "R-106",
     "R-107"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
-  "verdict_mode": "notice",
-  "_teaching": "Clutter arrives (R-107) and the bins have LINGERED — Sunday is four days past the window, and one address has had them out since Wednesday. Also the first person bounty: a face on a notice you have to recognise in the street.",
-  "briefing": "Sunday. Article XII is live from today — accumulated junk and debris. Containers have been at the curb on one of these since Wednesday, which the file will show you.",
-  "_cameos": "CJ and Liz with Chaz, on the shift after the one where he was missing. Finding the cat on Shift 2 and then meeting the couple he belongs to is the payoff for having read the notice.",
+  "verdict_mode": "full",
+  "_verdict_mode": "Pass, Warning or Fine. One warning before a fine, always.",
+  "_teaching": "Clutter and glazing. Part of a HOUSE becomes clickable for the first time, which is a different kind of looking.",
+  "briefing": "Sunday. Two articles join the list: exterior condition and accumulated junk. Containers have been at the curb on one of these since Wednesday, which the file will show you.",
+  "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
   "cameos": [
     {
       "lot_id": "bonerville_01",
@@ -24,9 +28,14 @@
       "dog": "chaz"
     }
   ],
+  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "ambient_animals": [
+    "pablo"
+  ],
   "story": [
-    "Sunday round. Nobody expects you on a Sunday, which is presumably why the board schedules one.",
-    "Article XII joins the list today: clutter. Neatly stacked material for a live project is not an accumulation. A sofa is."
+    "Sunday round. Nobody expects you on a Sunday, which is presumably why the Board schedules one.",
+    "Article XII joins the list today: clutter. Neatly stacked material for a live project is not an accumulation. A sofa is.",
+    "Article VI as well — exterior condition. Cracked glazing. Dirty is not cracked."
   ],
   "artifact": {
     "title": "Clipped to the binder",
@@ -40,7 +49,7 @@
     "note": "Hangs around the gym",
     "label": "Person matching the notice",
     "reward": 50,
-    "_placement": "The character is DRAWN AT RANDOM per level, not authored — the player is meant to recognise a face off a notice, and a fixed face gets memorised instead. Whichever lot is chosen always has a resident out, and it is always them.",
+    "_placement": "DRAWN AT RANDOM per level, not authored — the player is meant to recognise a face off a notice, and a fixed face gets memorised instead.",
     "eligible_lots": [
       "bonerville_02",
       "bonerville_03",
@@ -57,7 +66,7 @@
       "house": {
         "sprite": "house1"
       },
-      "_teaching": "Clutter introduced on a lot with nothing else wrong, so the new article is met on its own.",
+      "_teaching": "Clutter, introduced on a lot with nothing else wrong so the new article is met on its own.",
       "props": [
         {
           "id": "couch",
@@ -77,7 +86,7 @@
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "NOTICE"
     },
     {
       "lot_id": "bonerville_02",
@@ -88,23 +97,23 @@
         "sprite": "house2",
         "mirror": true
       },
-      "_teaching": "The lingering bins. Out since Wednesday, four days past the window — the first_seen date on the object is the evidence.",
+      "_teaching": "Bins out since Wednesday and still out on Sunday — at the address warned for exactly this on Friday. Two facts point the same way and the player has to hold both: the file says warned, the date on the object says four days past the window.",
       "props": [
         {
           "id": "bin_green",
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "group": "Trash cans, at the curb",
-          "first_seen": "2027-03-03"
+          "first_seen": "2027-03-03",
+          "group": "Trash cans, at the curb"
         },
         {
           "id": "bin_brown",
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "group": "Trash cans, at the curb",
-          "first_seen": "2027-03-03"
+          "first_seen": "2027-03-03",
+          "group": "Trash cans, at the curb"
         }
       ],
       "truth": {
@@ -122,7 +131,7 @@
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "CITATION"
     },
     {
       "lot_id": "bonerville_03",
@@ -132,7 +141,7 @@
       "house": {
         "sprite": "house3"
       },
-      "_teaching": "The clutter decoy: boxes stacked neatly for an active project are not an accumulation. On the driveway rather than the lawn, which is where a live project actually stages — and the fence beside them is sound.",
+      "_teaching": "The clutter decoy: material stacked for a live project is not an accumulation, and it is staged on the driveway, which is where a project actually stages.",
       "props": [
         {
           "id": "boxes",
@@ -155,11 +164,11 @@
         "decoys": [
           {
             "object": "boxes",
-            "why": "Neatly stacked in support of an active project — R-107 covers accumulation, not storage."
+            "why": "Neatly stacked for an active project. R-107 covers accumulation, not storage."
           },
           {
             "object": "fence",
-            "why": "Intact."
+            "why": "Sound."
           }
         ]
       },
@@ -172,9 +181,35 @@
       "seed": 40004,
       "house": {
         "sprite": "house4",
+        "mirror": true,
+        "variant": "house4-window",
+        "variantLabel": "Glazing, cracked",
+        "variantId": "window"
+      },
+      "_teaching": "The window article, on the address the player knows best. Part of the house is the finding, which is a different kind of looking from a thing sitting on the grass.",
+      "props": [],
+      "truth": {
+        "violations": [
+          {
+            "object": "window",
+            "article": "R-106",
+            "why": "Cracked glazing, front elevation."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 40005,
+      "house": {
+        "sprite": "house5",
         "mirror": true
       },
-      "_teaching": "Weeds and a washer. Two live articles on one lot, both real — and the washer is on the driveway, so the article is not learned as 'junk on grass'.",
+      "_teaching": "Two live articles on one lot, both real, and the appliance is on the DRIVEWAY so R-107 is not learned as \"junk on grass\".",
       "props": [
         {
           "id": "washer",
@@ -206,49 +241,7 @@
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
-    },
-    {
-      "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
-      "seed": 40005,
-      "house": {
-        "sprite": "house5",
-        "mirror": true
-      },
-      "_teaching": "Clean close. Screened bins on a non-collection day, which by now should be automatic.",
-      "props": [
-        {
-          "id": "bin_green",
-          "sprite": "trash-green",
-          "anchor": "BINS_SCREENED",
-          "label": "Refuse container, green — behind fence",
-          "first_seen": "2027-03-07"
-        },
-        {
-          "id": "fence",
-          "sprite": "fence1",
-          "anchor": "FENCE_1",
-          "label": "Side-yard fence",
-          "first_seen": "2027-03-07",
-          "align": "left"
-        }
-      ],
-      "truth": {
-        "violations": [],
-        "decoys": [
-          {
-            "object": "bin_green",
-            "why": "Screened. Compliant on any day."
-          },
-          {
-            "object": "fence",
-            "why": "Intact."
-          }
-        ]
-      },
-      "expected_verdict": "PASS"
+      "expected_verdict": "NOTICE"
     }
   ]
 }

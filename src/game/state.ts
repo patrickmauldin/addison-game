@@ -19,6 +19,8 @@
  * ends up rewriting its content.
  */
 
+import { daysBetween, inSeasonWindow } from './calendar.js';
+
 export type AddressState = 'CLEAN' | 'FLAGGED' | 'ON_NOTICE' | 'UNCAUGHT' | 'LIEN';
 export type Verdict = 'PASS' | 'FAIL' | 'NOTICE' | 'CITATION';
 
@@ -150,18 +152,76 @@ export type LotOutcome = {
 };
 
 /**
- * Scoring for verdict_mode "binary" (Days 1-4).
- *
- * Error weights follow gameplan section 5: a false positive takes a strike
- * because the association pays the appeal costs; a false negative is caught by
- * audit; a missed SECOND violation on a correctly-failed house is points only
- * this early, and does not become a strike until Day 15.
+ * WHEN an article bites. Three clocks, each its own field so nothing has to be
+ * inferred from an id. See the note in rules.json.
  */
+export type ArticleTiming = {
+  weekday_window?: string[];
+  season_window?: { from: string; to: string };
+  grace_days?: number;
+};
+
+export type DayContext = { iso: string; weekday: string };
+
+/**
+ * Is this violation live TODAY, or is the thing it describes still legal?
+ *
+ * A bin at the curb on a Wednesday, lights up in December, a dumpster on its
+ * third day — all three are authored as violations of their article and none of
+ * them is a finding yet. Returns null when it bites, or the reason it does not.
+ *
+ * The grace clock runs from the player's OWN note. Section 6 of the gameplan is
+ * emphatic that the Association keeps no record of when a container arrived, so
+ * the date the inspector first wrote it down is the only date there is — which
+ * also means a container the player has never inspected before starts its seven
+ * days today, however long it has really been there. That is not a bug. It is
+ * the reason the job is worth doing.
+ */
+function excuse(
+  article: string,
+  object: string,
+  timing: Record<string, ArticleTiming>,
+  today: DayContext,
+  firstSeen: Record<string, string>,
+): string | null {
+  const a = timing[article];
+  if (!a) return null;
+  if (a.weekday_window?.includes(today.weekday)) return `Permitted on ${today.weekday}.`;
+  if (a.season_window && inSeasonWindow(today.iso, a.season_window.from, a.season_window.to))
+    return 'Inside the permitted season.';
+  if (a.grace_days) {
+    const seen = firstSeen[object];
+    const n = seen ? daysBetween(seen, today.iso) : 0;
+    if (n < a.grace_days)
+      return `On record ${n} day${n === 1 ? '' : 's'}. The Article allows ${a.grace_days}.`;
+  }
+  return null;
+}
+
+/**
+ * ONE WARNING, THEN A FINE — and the warning has to be one YOU issued.
+ *
+ * Escalation reads the player's own rulings at this address, not the level
+ * file, so a violation they never wrote up is still a first offence next time
+ * they come round. Miss the weeds on Monday and Wednesday is another warning;
+ * the address does not remember what the inspector failed to notice.
+ *
+ * Per ARTICLE, not per address. Warning someone for weeds does not license a
+ * fine for the bins you have never mentioned to them.
+ */
+function articlesAlreadyCited(rec: AddressRecord): Set<string> {
+  const out = new Set<string>();
+  for (const r of rec.rulings) {
+    if (r.verdict === 'PASS') continue;
+    for (const f of r.findings) if (f.article) out.add(f.article);
+  }
+  return out;
+}
+
 export function adjudicate(
   lot: {
     lot_id: string;
     address: string;
-    expected_verdict: string;
     truth: {
       violations: Array<{ object: string; article: string; why: string }>;
       decoys: Array<{ object: string; why: string }>;
@@ -173,10 +233,21 @@ export function adjudicate(
   flagged: Set<string>,
   stamped: Verdict,
   payPerInspection: number,
+  ctx: { today: DayContext; timing: Record<string, ArticleTiming>; rec: AddressRecord },
 ): LotOutcome {
-  const violationIds = new Set(lot.truth.violations.map((v) => v.object));
   const nameOf = (id: string) => labels.get(id) ?? id;
   const kindOf = (id: string) => kinds.get(id) ?? nameOf(id);
+
+  // Authored violations that are not violations TODAY, with the reason. They
+  // become decoys for the round: marking one is a false positive, exactly as if
+  // it had been authored clean, because on this date it IS clean.
+  const excused = new Map<string, string>();
+  const live = lot.truth.violations.filter((v) => {
+    const why = excuse(v.article, v.object, ctx.timing, ctx.today, ctx.rec.first_seen);
+    if (why) excused.set(v.object, why);
+    return !why;
+  });
+  const liveIds = new Set(live.map((v) => v.object));
 
   /**
    * ONE CITATION COVERS THE KIND.
@@ -196,17 +267,15 @@ export function adjudicate(
    * wheels are involved. Same key the Findings pad counts on, so what the player
    * is shown and what they are marked against cannot disagree.
    */
-  const citedKinds = new Set(
-    lot.truth.violations.filter((v) => flagged.has(v.object)).map((v) => kindOf(v.object)),
-  );
+  const citedKinds = new Set(live.filter((v) => flagged.has(v.object)).map((v) => kindOf(v.object)));
 
   // Hits stay the ones actually MARKED. The covered instances are not mistakes,
   // but they are not the player's work either.
-  const hits = lot.truth.violations
+  const hits = live
     .filter((v) => flagged.has(v.object))
     .map((v) => ({ object: v.object, label: nameOf(v.object), article: v.article }));
 
-  const missed = lot.truth.violations
+  const missed = live
     .filter((v) => !flagged.has(v.object) && !citedKinds.has(kindOf(v.object)))
     .map((v) => ({
       object: v.object,
@@ -216,28 +285,44 @@ export function adjudicate(
     }));
 
   const falsePositives = [...flagged]
-    .filter((id) => !violationIds.has(id))
+    .filter((id) => !liveIds.has(id))
     .map((id) => ({
       object: id,
-      label: labels.get(id) ?? id,
-      why: lot.truth.decoys.find((d) => d.object === id)?.why ?? 'No violation of any active Article.',
+      label: nameOf(id),
+      why:
+        excused.get(id)
+        ?? lot.truth.decoys.find((d) => d.object === id)?.why
+        ?? 'No violation of any active Article.',
     }));
 
-  const expected = lot.expected_verdict as Verdict;
   /**
-   * Correctness is about WHETHER the lot is clean, not how hard you hit it.
+   * The verdict is COMPUTED, not authored.
    *
-   * Once there are three stamps, PASS / NOTICE / CITATION, a lot authored as
-   * FAIL is answered correctly by either adverse stamp — a warning and a fine
-   * are both "this lot is not compliant". Choosing the wrong SEVERITY is a
-   * separate axis, and it only becomes a mistake when the escalation rules
-   * arrive with the fines.
+   * It has to be. Whether this lot earns a fine depends on what the player did
+   * here last time, and a level file written in advance cannot know that. What
+   * the file authors is what is WRONG with the lot; the date decides which of
+   * those count today, and the address's own history decides how hard.
    */
-  const adverse = (v: Verdict) => v !== 'PASS';
-  const verdictRight = adverse(stamped) === adverse(expected);
+  const repeat = live.length > 0 && (() => {
+    const cited = articlesAlreadyCited(ctx.rec);
+    return live.some((v) => cited.has(v.article));
+  })();
+  const expected: Verdict = live.length === 0 ? 'PASS' : repeat ? 'CITATION' : 'NOTICE';
 
-  // A strike comes from an adverse verdict on a clean lot, from passing a
-  // violating one, or from any finding that would survive appeal.
+  /**
+   * SEVERITY COUNTS, now that there is a severity to get wrong.
+   *
+   * It did not use to: with two stamps, any adverse mark answered a bad lot.
+   * With three, choosing between them IS the judgment — one warning before a
+   * fine is the rule the player is being taught, and a fine written straight
+   * off is the same failure as a warning written on a repeat. The address's
+   * ruling history is on the case file, so this is a thing they can look up
+   * rather than a thing they have to have memorised.
+   */
+  const verdictRight = stamped === expected;
+
+  // A strike comes from the wrong verdict, or from any finding that would
+  // survive appeal.
   const strike = !verdictRight || falsePositives.length > 0;
 
   return {

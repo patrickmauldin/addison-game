@@ -43,7 +43,8 @@ const ANIMALS = [
   // the only animal loose by daylight and turned up on half the street looking
   // like a rendering fault. Three cats is a neighbourhood; one is a bug.
   { id: 'tabby', folder: 'cat2', kind: 'cat', nocturnal: false, ambient: true },
-  { id: 'tuxedo', folder: 'cat3', kind: 'cat', nocturnal: false, ambient: true },
+  // Somebody's, as of the Shift 5 notice. Off the stray roster with the rest.
+  { id: 'tuxedo', folder: 'cat3', kind: 'cat', nocturnal: false, ambient: false },
   { id: 'gus', folder: 'dog-gus', kind: 'dog', nocturnal: false, ambient: false },
   { id: 'armadillo', folder: 'armadillo', kind: 'armadillo', nocturnal: true, ambient: true },
   { id: 'raccoon', folder: 'raccoon', kind: 'raccoon', nocturnal: true, ambient: true },

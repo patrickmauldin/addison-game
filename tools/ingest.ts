@@ -12,15 +12,26 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { analyze, decodePng, encodePng } from '../src/core/png.js';
-import { BAND, CANVAS_W } from '../src/core/scene.js';
 
 const RAW = 'assets/houses/raw';
 const OUT = 'assets/houses';
 
-// A house sits centerd, its base on the house band. Anything wildly outside
-// that envelope will not land where the driveway and walk expect it.
-const MAX_W = CANVAS_W;
-const MAX_H = BAND.houseBase - BAND.houseTop + 40;
+/**
+ * A SANITY BOUND, not a layout truth.
+ *
+ * These used to be BAND and CANVAS_W off the scene module, from back when the
+ * scene was a fixed canvas with fixed bands. It is laid out from the viewport
+ * now, those constants are gone, and this file had been failing to compile ever
+ * since — unnoticed, because tsconfig only looked at src/. It looks at tools/
+ * too now.
+ *
+ * There is no longer a fixed envelope to check against: the compositor scales a
+ * house to whatever the frame is. What is still worth catching is art delivered
+ * at an absurd size, which is a mistake rather than a style. Every house shipped
+ * so far is around 1000px wide.
+ */
+const MAX_W = 2400;
+const MAX_H = 2400;
 
 if (!existsSync(RAW)) {
   console.log(`no ${RAW}/ — nothing to ingest.`);
@@ -57,8 +68,8 @@ for (const f of files) {
     failures++;
   }
   if (bmp.w > MAX_W || bmp.h > MAX_H) {
-    console.log(`  !! ${bmp.w}x${bmp.h} exceeds the house envelope (${MAX_W}x${MAX_H}).`);
-    console.log(`     It will overhang the frame or the road band.`);
+    console.log(`  !! ${bmp.w}x${bmp.h} is far larger than any house shipped so far.`);
+    console.log(`     Check it was exported at the intended size.`);
   }
   if (rep.opaque === 0) {
     console.log(`  !! fully transparent.`);

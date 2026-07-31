@@ -1,20 +1,22 @@
 {
   "level_id": 3,
-  "_date": "DERIVED — Friday 5 March 2027. NOT a collection day, which is the point.",
-  "weather": "clear",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 3 is Friday 5 March (night).",
   "night": true,
-  "_night": "A night shift. Every couple of shifts the round runs after dark: the scene takes a flat wash, almost nobody is out on their own lawn, and the armadillo and the raccoon are abroad. Authored rather than derived from the level number — which shifts are nights is a pacing decision.",
+  "weather": "clear",
   "active_rules": [
     "R-101",
+    "R-102",
     "R-105",
-    "R-104"
+    "R-104",
+    "R-103"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
-  "verdict_mode": "notice",
-  "_teaching": "Friday. The same bins that were legal on Level 2 are now a finding — the object did not change, the day did. Also the first return visits: two addresses you have already ruled on, one fixed and one not.",
-  "briefing": "Friday. Not a collection day. Containers at the curb are outside the window today. Two of these addresses you have seen before.",
-  "_cameos": "Garret and Sonya with Lani, Scott and Rachel with Moxy. A night shift, so these are the only people crossing anything \u2014 the lawns are empty and the sidewalk is not.",
+  "verdict_mode": "full",
+  "_verdict_mode": "Pass, Warning or Fine. One warning before a fine, always.",
+  "_teaching": "Lighting, at night, when it is the brightest thing on the street. Plus the first bribe, and the same bins that were legal on Wednesday now being a finding on Friday.",
+  "briefing": "Friday, and you are running it after dark. Seasonal lighting goes live today — the window closed on 31 January. Containers are NOT within the window on a Friday.",
+  "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
   "cameos": [
     {
       "lot_id": "bonerville_01",
@@ -33,41 +35,109 @@
       "dog": "moxy"
     }
   ],
-  "story": [
-    "Second week. People are starting to recognise the clipboard.",
-    "Two addresses on today's route you have already ruled on. The file will tell you which.",
-    "It is Friday. Article IX allows Tuesday and Wednesday. It is neither."
+  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "ambient_animals": [
+    "raccoon",
+    "armadillo",
+    "tabby"
   ],
-  "artifact": {
-    "title": "On the route sheet",
-    "text": "A name has been whited out beneath yours. The correction fluid is old and slightly yellow."
+  "story": [
+    "Friday, and dark by the time you start. The Board schedules these. Nobody has explained why.",
+    "Article VIII from today: seasonal lighting comes down by 31 January. It is March.",
+    "You will be offered things on this round. What you do about that is between you and the Board."
+  ],
+  "bounty": {
+    "id": "thief",
+    "kind": "person",
+    "character": "thief",
+    "_character": "PINNED, unlike the Poop Bandit. A face drawn at random is a face you have to match; this one is the only person crossing a lawn after dark, and the notice is there to tell you what that means rather than to be searched.",
+    "headline": "Reported",
+    "name": "Prowler",
+    "note": "Seen on lawns after dark",
+    "label": "Person matching the report",
+    "reward": 40,
+    "eligible_lots": [
+      "bonerville_02",
+      "bonerville_03",
+      "bonerville_04",
+      "bonerville_05"
+    ]
+  },
+  "event": {
+    "id": "bribe_lights",
+    "lot_id": "bonerville_03",
+    "object": "lights",
+    "_when": "Fires when the lights are MARKED and before anything is stamped, so it is the player noticing that summons it rather than the lot being loaded.",
+    "speaker": "The owner, on the porch",
+    "body": "\"Forty dollars. Come on. They’re coming down Saturday, my brother-in-law has the ladder. Nobody is hurt by a string of lights in March.\"",
+    "options": [
+      {
+        "id": "take",
+        "label": "Take the $40",
+        "pay": 40,
+        "unmark": true,
+        "reply": "He counts it out twice. The lights stay up, and your pad no longer says they were ever there."
+      },
+      {
+        "id": "refuse",
+        "label": "Write it up",
+        "reply": "He goes back inside without another word. The finding stands."
+      }
+    ]
   },
   "lots": [
     {
       "lot_id": "bonerville_01",
       "address": "4400 Bonerville",
       "street": "Bonerville",
-      "seed": 40001,
+      "seed": 30001,
       "house": {
-        "sprite": "house1"
+        "sprite": "house1",
+        "variant": "house1-christmas",
+        "variantLabel": "Seasonal lighting, still up",
+        "variantId": "lights",
+        "variantGlows": true
       },
-      "_teaching": "The turn. Same lot, same bins, different day — and now they are citable.",
+      "_teaching": "Lighting in March. The article is a WINDOW, not a taste test — and at night the lights are the brightest thing on the street, which is the whole reason this rule arrives on a night shift.",
+      "props": [],
+      "truth": {
+        "violations": [
+          {
+            "object": "lights",
+            "article": "R-103",
+            "why": "Seasonal display in March. The window closed on 31 January."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 30002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "The same bins the player was told to leave alone on Wednesday. It is Friday. Nothing about the object changed; the day did.",
       "props": [
         {
           "id": "bin_green",
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "group": "Trash cans, at the curb",
-          "first_seen": "2027-03-05"
+          "first_seen": "2027-03-05",
+          "group": "Trash cans, at the curb"
         },
         {
           "id": "bin_brown",
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "group": "Trash cans, at the curb",
-          "first_seen": "2027-03-05"
+          "first_seen": "2027-03-05",
+          "group": "Trash cans, at the curb"
         }
       ],
       "truth": {
@@ -75,7 +145,7 @@
           {
             "object": "bin_green",
             "article": "R-104",
-            "why": "At the curb on a Friday. The window is Tuesday and Wednesday."
+            "why": "At the curb on a Friday."
           },
           {
             "object": "bin_brown",
@@ -85,103 +155,44 @@
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
-    },
-    {
-      "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
-      "seed": 40002,
-      "house": {
-        "sprite": "house2",
-        "mirror": true
-      },
-      "_teaching": "A return visit that FIXED it. They were cited for weeds on Level 2 and the turf is clear now — passing an address with a history is not the same as passing a clean one.",
-      "props": [
-        {
-          "id": "bin_green",
-          "sprite": "trash-green",
-          "anchor": "BINS_SCREENED",
-          "label": "Refuse container, green — behind fence",
-          "first_seen": "2027-03-05"
-        },
-        {
-          "id": "fence",
-          "sprite": "fence1",
-          "anchor": "FENCE_1",
-          "label": "Side-yard fence",
-          "first_seen": "2027-03-05",
-          "align": "left"
-        }
-      ],
-      "truth": {
-        "violations": [],
-        "decoys": [
-          {
-            "object": "bin_green",
-            "why": "Screened from the right-of-way. Compliant on any day, Friday included."
-          },
-          {
-            "object": "fence",
-            "why": "Intact."
-          }
-        ]
-      },
-      "expected_verdict": "PASS"
+      "expected_verdict": "NOTICE"
     },
     {
       "lot_id": "bonerville_03",
       "address": "4408 Bonerville",
       "street": "Bonerville",
-      "seed": 40003,
+      "seed": 30003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house3",
+        "variant": "house3-christmas",
+        "variantLabel": "Seasonal lighting, still up",
+        "variantId": "lights",
+        "variantGlows": true
       },
-      "_teaching": "A return visit that did NOT fix it. The fence they were warned about on Level 2 is still down. Under a notice-only level this is a second warning; from Level 5 it is a fine.",
-      "props": [
-        {
-          "id": "fence",
-          "sprite": "fence2",
-          "anchor": "FENCE_1",
-          "label": "Side-yard fence",
-          "first_seen": "2027-03-05",
-          "align": "left"
-        },
-        {
-          "id": "weeds_1",
-          "sprite": "weed1",
-          "anchor": "YARD_2",
-          "label": "Weed growth, front turf",
-          "first_seen": "2027-03-05"
-        }
-      ],
+      "_teaching": "THE BRIBE. Mark the lights and the owner comes out with forty dollars. Taking it un-marks the finding, which the Board will notice in the morning — the money is real and so is the audit.",
+      "props": [],
       "truth": {
         "violations": [
           {
-            "object": "fence",
-            "article": "R-105",
-            "why": "Still missing members. Warned on 3 March and unrepaired."
-          },
-          {
-            "object": "weeds_1",
-            "article": "R-101",
-            "why": "Unbordered weed growth in the front turf."
+            "object": "lights",
+            "article": "R-103",
+            "why": "Seasonal display in March."
           }
         ],
         "decoys": []
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "NOTICE"
     },
     {
       "lot_id": "bonerville_04",
       "address": "4412 Bonerville",
       "street": "Bonerville",
-      "seed": 40004,
+      "seed": 30004,
       "house": {
         "sprite": "house4",
         "mirror": true
       },
-      "_teaching": "Clean, with a car on the drive. A car is clickable and citing one is a strike — nothing live covers a vehicle parked on its own paving.",
+      "_teaching": "Cut, at last. The address that has been warned and then fined for its weeds is clean, and clicking the turf out of habit is now a false positive.",
       "props": [
         {
           "id": "fence",
@@ -197,7 +208,7 @@
         "decoys": [
           {
             "object": "fence",
-            "why": "Intact."
+            "why": "Sound."
           }
         ]
       },
@@ -207,33 +218,45 @@
       "lot_id": "bonerville_05",
       "address": "4416 Bonerville",
       "street": "Bonerville",
-      "seed": 40005,
+      "seed": 30005,
       "house": {
         "sprite": "house5",
         "mirror": true
       },
-      "_teaching": "Close on the Friday lesson stated plainly: bins out, no screening, wrong day.",
+      "_teaching": "The fence from Wednesday, unrepaired. Second sighting of the same article at the same address.",
       "props": [
         {
-          "id": "bin_brown",
-          "sprite": "trash-brown",
-          "anchor": "CURB_2",
-          "label": "Refuse container, brown",
-          "group": "Trash cans, at the curb",
+          "id": "fence",
+          "sprite": "fence3",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-03",
+          "align": "left"
+        },
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "BINS_SCREENED",
+          "label": "Refuse container, green — behind fence",
           "first_seen": "2027-03-05"
         }
       ],
       "truth": {
         "violations": [
           {
-            "object": "bin_brown",
-            "article": "R-104",
-            "why": "At the curb on a Friday."
+            "object": "fence",
+            "article": "R-105",
+            "why": "Warned Wednesday. Unrepaired Friday."
           }
         ],
-        "decoys": []
+        "decoys": [
+          {
+            "object": "bin_green",
+            "why": "Screened. Compliant on a Friday like any other day."
+          }
+        ]
       },
-      "expected_verdict": "FAIL"
+      "expected_verdict": "CITATION"
     }
   ]
 }

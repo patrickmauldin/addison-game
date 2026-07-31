@@ -24,6 +24,8 @@ import { execSync } from 'node:child_process';
 import { renderLot, type Bitmap, type LotSpec } from '../src/scene-compositor.js';
 import { ANCHOR_SURFACE, DEFAULT_ANCHORS, mergeAnchors } from '../src/core/scene.js';
 import { decodePng } from '../src/core/png.js';
+import { adjudicate, emptySave, noteFirstSeen, recordFor, type ArticleTiming } from '../src/game/state.js';
+import { dateForLevel } from '../src/game/calendar.js';
 
 import housesData from '../src/data/houses.json';
 import rulesData from '../src/data/rules.json';
@@ -33,6 +35,10 @@ import level1 from '../src/data/levels/level1.json';
 import level2 from '../src/data/levels/level2.json';
 import level3 from '../src/data/levels/level3.json';
 import level4 from '../src/data/levels/level4.json';
+import level5 from '../src/data/levels/level5.json';
+import level6 from '../src/data/levels/level6.json';
+import level7 from '../src/data/levels/level7.json';
+import level8 from '../src/data/levels/level8.json';
 
 /**
  * Levels carry their lots inline, and an ADDRESS RECURS across levels with
@@ -43,11 +49,18 @@ import level4 from '../src/data/levels/level4.json';
  * being checked against Level 4's props. Each level is validated against its
  * own lots.
  */
-const LEVELS = [level1, level2, level3, level4] as unknown as {
+const LEVELS = [level1, level2, level3, level4, level5, level6, level7, level8] as unknown as {
   level_id: number;
   active_rules: string[];
   cameos?: { lot_id: string; people?: string[]; dog?: string; animal?: string }[];
-  lots: LotSpec[];
+  ambient_animals?: string[];
+  verdict_mode: string;
+  event?: { lot_id: string; object: string };
+  bounty?: { character?: string; animal?: string; eligible_lots?: string[] };
+  lots: (LotSpec & { lot_id: string; address: string; expected_verdict: string; truth: {
+    violations: { object: string; article: string; why: string }[];
+    decoys: { object: string; why: string }[];
+  } })[];
 }[];
 
 
@@ -282,6 +295,63 @@ for (const day of LEVELS) {
     if (!placed.has(id)) warn(`animal "${id}" belongs to somebody but is on no cameo and no notice — it never appears.`);
 }
 
+/**
+ * THE CAMPAIGN, PLAYED PERFECTLY, MUST MATCH WHAT THE LEVELS CLAIM.
+ *
+ * `expected_verdict` is no longer what the game reads — the verdict is computed
+ * from the date and from the address's own history. That makes the field pure
+ * documentation, and documentation nobody checks is a lie waiting to happen. So
+ * it is checked: one save, all eight shifts in order, every real violation
+ * cited, and the computed verdict compared against the authored one.
+ *
+ * This is the only place a mistimed grace period or a broken escalation chain
+ * shows up. Authoring a lot as CITATION when the address was never warned for
+ * that article is invisible in the file and obvious here.
+ */
+{
+  const timing: Record<string, ArticleTiming> = Object.fromEntries(
+    rulesData.articles.map((a) => [
+      (a as { id: string }).id,
+      {
+        weekday_window: (a as { weekday_window?: string[] }).weekday_window,
+        season_window: (a as { season_window?: { from: string; to: string } }).season_window,
+        grace_days: (a as { grace_days?: number }).grace_days,
+      },
+    ]),
+  );
+  const save = emptySave();
+  for (const day of LEVELS) {
+    const today = dateForLevel(day.level_id);
+    for (const lot of day.lots) {
+      const rec = recordFor(save, lot.lot_id, lot.address);
+      for (const p of lot.props ?? []) noteFirstSeen(rec, p.id, p.first_seen ?? today.iso);
+      const flagged = new Set(lot.truth.violations.map((v) => v.object));
+      const labels = new Map<string, string>();
+      const o = adjudicate(lot, labels, labels, flagged, 'PASS', 0, {
+        today: { iso: today.iso, weekday: today.weekday },
+        timing,
+        rec,
+      });
+      if (o.expected !== lot.expected_verdict)
+        fail(`level ${day.level_id} ${lot.lot_id}: authored ${lot.expected_verdict}, `
+          + `a diligent run gets ${o.expected} on ${today.weekday} ${today.label}`);
+      if (o.falsePositives.length)
+        fail(`level ${day.level_id} ${lot.lot_id}: cites ${o.falsePositives.map((f) => f.object).join(', ')} `
+          + `which the date says ${o.falsePositives.map((f) => f.why).join(' / ')}`);
+      rec.rulings.push({
+        day_id: day.level_id,
+        date: today.iso,
+        verdict: o.expected,
+        findings: [...flagged].map((object) => ({
+          object,
+          article: lot.truth.violations.find((v) => v.object === object)?.article ?? null,
+        })),
+        correct: true,
+      });
+    }
+  }
+}
+
 // --- Days and lots --------------------------------------------------------
 for (const day of DAYS) {
   const active = new Set(day.active_rules);
@@ -299,7 +369,10 @@ for (const day of DAYS) {
       fail(`level ${day.level_id}: route references unknown lot "${lotId}"`);
       continue;
     }
+    // The variant id counts: a house wearing lights or cracked glazing is a
+    // clickable object that exists nowhere in `props`, because it IS the house.
     const objectIds = new Set(lot.props.map((p) => p.id));
+    if (lot.house?.variantId) objectIds.add(lot.house.variantId);
 
     for (const p of lot.props)
       if (!(p.anchor in DEFAULT_ANCHORS)) fail(`${lotId}: unknown anchor "${p.anchor}"`);

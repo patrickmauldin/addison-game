@@ -1,0 +1,240 @@
+{
+  "level_id": 6,
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 6 is Thursday 11 March (night).",
+  "night": true,
+  "weather": "clear",
+  "active_rules": [
+    "R-101",
+    "R-102",
+    "R-105",
+    "R-104",
+    "R-103",
+    "R-106",
+    "R-107",
+    "R-108",
+    "R-109"
+  ],
+  "quota": 5,
+  "pay_per_inspection": 12,
+  "verdict_mode": "full",
+  "_verdict_mode": "Pass, Warning or Fine. One warning before a fine, always.",
+  "_teaching": "The same clock on vehicles, so it is a clock and not a fact about dumpsters. Introduced expired and inside-its-week on the same night, as with the containers.",
+  "briefing": "Thursday, after dark. Recreational and inoperable vehicles join the list on the same seven-day clock as the containers. Bins are not within the window.",
+  "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
+  "cameos": [
+    {
+      "lot_id": "bonerville_01",
+      "people": [
+        "garret",
+        "sonya"
+      ],
+      "dog": "lani"
+    }
+  ],
+  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "ambient_animals": [
+    "raccoon",
+    "armadillo"
+  ],
+  "story": [
+    "Thursday, dark again. Vehicles today: recreational, inoperable, unregistered. Same seven days, same clock.",
+    "A working car on its own driveway is not within the Article, whatever the neighbours have written on the board about it."
+  ],
+  "artifact": {
+    "title": "Left in the binder pocket",
+    "text": "A photocopy of Article X with one line underlined twice, and no note. The underlining is not yours."
+  },
+  "lots": [
+    {
+      "lot_id": "bonerville_01",
+      "address": "4400 Bonerville",
+      "street": "Bonerville",
+      "seed": 60001,
+      "house": {
+        "sprite": "house1"
+      },
+      "_teaching": "The dumpster from Tuesday, still there. Warned once, and the grace period does not restart because the container did not leave.",
+      "props": [
+        {
+          "id": "dumpster",
+          "sprite": "dumpster",
+          "anchor": "DRIVEWAY_3",
+          "label": "Dumpster, driveway",
+          "first_seen": "2027-03-01"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "dumpster",
+            "article": "R-108",
+            "why": "Warned Tuesday. Ten days and counting."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "CITATION"
+    },
+    {
+      "lot_id": "bonerville_02",
+      "address": "4404 Bonerville",
+      "street": "Bonerville",
+      "seed": 60002,
+      "house": {
+        "sprite": "house2",
+        "mirror": true
+      },
+      "_teaching": "The vehicle article, introduced expired: an RV on record since 4 March is on day seven. Same clock as the container, different tab in the binder.",
+      "props": [
+        {
+          "id": "rv",
+          "sprite": "rv1",
+          "anchor": "DRIVEWAY_3",
+          "label": "Recreational vehicle, driveway",
+          "first_seen": "2027-03-04"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "rv",
+            "article": "R-109",
+            "why": "On record since 4 March. Seven days; the Article allows seven."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    },
+    {
+      "lot_id": "bonerville_03",
+      "address": "4408 Bonerville",
+      "street": "Bonerville",
+      "seed": 60003,
+      "house": {
+        "sprite": "house3"
+      },
+      "_teaching": "The other side of the same article on the same night. A boat first recorded today is inside its week, and the working car beside it was never within the Article at all.",
+      "props": [
+        {
+          "id": "boat",
+          "sprite": "boat1",
+          "anchor": "DRIVEWAY_3",
+          "label": "Boat on trailer, driveway",
+          "first_seen": "2027-03-11"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-11",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [],
+        "decoys": [
+          {
+            "object": "boat",
+            "why": "First recorded today. The Article allows seven days."
+          },
+          {
+            "object": "fence",
+            "why": "Sound."
+          }
+        ]
+      },
+      "expected_verdict": "PASS"
+    },
+    {
+      "lot_id": "bonerville_04",
+      "address": "4412 Bonerville",
+      "street": "Bonerville",
+      "seed": 60004,
+      "house": {
+        "sprite": "house4",
+        "mirror": true
+      },
+      "_teaching": "Bins on a Thursday at an address that has never been cited for them. Six shifts in, the calendar is still the whole question.",
+      "props": [
+        {
+          "id": "bin_green",
+          "sprite": "trash-green",
+          "anchor": "CURB_1",
+          "label": "Refuse container, green",
+          "first_seen": "2027-03-11",
+          "group": "Trash cans, at the curb"
+        },
+        {
+          "id": "bin_brown",
+          "sprite": "trash-brown",
+          "anchor": "CURB_2",
+          "label": "Refuse container, brown",
+          "first_seen": "2027-03-11",
+          "group": "Trash cans, at the curb"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "bin_green",
+            "article": "R-104",
+            "why": "At the curb on a Thursday."
+          },
+          {
+            "object": "bin_brown",
+            "article": "R-104",
+            "why": "Same."
+          }
+        ],
+        "decoys": []
+      },
+      "expected_verdict": "NOTICE"
+    },
+    {
+      "lot_id": "bonerville_05",
+      "address": "4416 Bonerville",
+      "street": "Bonerville",
+      "seed": 60005,
+      "house": {
+        "sprite": "house5",
+        "mirror": true
+      },
+      "_teaching": "A dead car on record since 3 March — eight days, so the clock has run out. But this address has never been cited under the VEHICLE article, and a long file under other articles does not carry over. First offence, first warning.",
+      "props": [
+        {
+          "id": "deadcar",
+          "sprite": "car1redbad",
+          "anchor": "DRIVEWAY_3",
+          "label": "Inoperable vehicle, driveway",
+          "first_seen": "2027-03-03"
+        },
+        {
+          "id": "fence",
+          "sprite": "fence1",
+          "anchor": "FENCE_1",
+          "label": "Side-yard fence",
+          "first_seen": "2027-03-11",
+          "align": "left"
+        }
+      ],
+      "truth": {
+        "violations": [
+          {
+            "object": "deadcar",
+            "article": "R-109",
+            "why": "On record since 3 March. Eight days."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "fence",
+            "why": "Replaced. Sound at last."
+          }
+        ]
+      },
+      "expected_verdict": "NOTICE"
+    }
+  ]
+}
