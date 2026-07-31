@@ -1571,8 +1571,26 @@ function overAnimal(a: { walker: Walker } | null, px: number, py: number): boole
   return px > x - w / 2 && px < x + w / 2 && py > y - h && py < y;
 }
 
-function animalHit(px: number, py: number): boolean {
-  return overAnimal(animal, px, py);
+/**
+ * Which animal is under the cursor, if any.
+ *
+ * BOTH of them: the stray wandering the yard and somebody's dog out on the
+ * walk. Only the yard one used to be tested, so a dog trotting past on a lead
+ * was the one animal in the game that ignored you — and it is the one the
+ * player is most likely to try, because it is walking beside a named couple
+ * and reads as the most alive thing on the screen.
+ *
+ * Same box for both, because drawAnimal draws both at the same scale.
+ */
+function animalAt(px: number, py: number): number | null {
+  const k = ANIMAL_UPSCALE * rendered.layout.scale;
+  const w = ANIMALS.frameW * k;
+  const h = ANIMALS.frameH * k;
+  const over = (x: number, y: number) =>
+    px > x - w / 2 && px < x + w / 2 && py > y - h && py < y;
+  if (animal && over(animal.walker.x, animal.walker.y)) return animal.which;
+  if (escort && over(escort.x, escort.y)) return escort.which;
+  return null;
 }
 
 frame.addEventListener('click', (ev) => {
@@ -1611,8 +1629,9 @@ frame.addEventListener('click', (ev) => {
     return;
   }
 
-  if (animalHit(p.x, p.y)) {
-    const kind = animalKind(animal!.which);
+  const which = animalAt(p.x, p.y);
+  if (which !== null) {
+    const kind = animalKind(which);
     // Two barks, so a dog clicked twice does not sound like a loop. The
     // armadillo and the raccoon have no line — silence is the right answer for
     // an animal with nothing to say, and better than borrowing the cat's.
