@@ -2677,9 +2677,17 @@ function briefing(): void {
        <div class="board-note">${flyerMarkup()}</div>
        <div class="board-col">${notes.slice(2).join('')}</div>
      </div></div>`);
-  // The how-to only earns its place the first time.
+  /**
+   * The how-to only earns its place the first time, and it goes BEFORE the
+   * articles rather than after them.
+   *
+   * Index 1, immediately behind her opening. What the articles say only means
+   * anything once you know that reading them is the job — shown the other way
+   * round, the first thing a new player sees after being hired is three
+   * regulations and no idea what they are for.
+   */
   if (day.level_id === 1) {
-    pages.splice(2, 0,
+    pages.splice(1, 0,
       `<h3>How this works</h3>
        <div class="howto">
          <img src="assets/binder.png" alt="" />
