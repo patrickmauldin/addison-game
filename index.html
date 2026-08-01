@@ -597,8 +597,10 @@
         background-image: url('assets/rulebook/binder-ring-mid.png');
         background-size: 27px 12px; background-repeat: repeat-y;
       }
+      /* See the note on .bk-leaf-spine .r-bot — same tile, same seam. */
       #binder-spine .r-bot {
         height: 9px; width: 15px;
+        margin-top: -1px;
         background-image: url('assets/rulebook/binder-ring-bot.png');
         background-size: 15px 9px;
       }
@@ -719,7 +721,8 @@
          sloppy rather than as lived in. */
       .bk-leaf {
         position: relative;
-        padding: 0 10px 0 18px;
+        /* The right padding IS how far the block behind protrudes. */
+        padding: 0 5px 0 18px;
         margin: 6px 0 2px;
         image-rendering: pixelated;
       }
@@ -773,8 +776,15 @@
         background-image: url('assets/rulebook/binder-ring-mid.png');
         background-size: 27px 12px; background-repeat: repeat-y;
       }
+      /* Pulled up a pixel to sit ON the last loop rather than after it.
+         The middle section is a 12px tile repeated down a flexed height, and
+         that height is whatever the content came to — 255.27px on a three-rule
+         morning. A fractional number of tiles leaves the last row landing
+         mid-pixel, which renders as a hairline gap right where the cap meets
+         the wire. Overlapping covers it whatever the height works out to. */
       .bk-leaf-spine .r-bot {
         height: 9px; width: 15px;
+        margin-top: -1px;
         background-image: url('assets/rulebook/binder-ring-bot.png');
         background-size: 15px 9px;
       }
