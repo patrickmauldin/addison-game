@@ -509,6 +509,13 @@
           0 6px, 3px 6px,
           3px 3px, 6px 3px
         );
+      }
+      /* Everything above is SHARED — the palette and the two corner shapes, and
+         nothing else. Everything below belongs to the book on the desk alone.
+         Putting the leaf on that selector handed it the desk binder's tilt, its
+         44px tab gutter and its margins, which is why it was sitting off
+         square in the middle of the briefing. */
+      #binder {
         /* Not a .card: a book is not a sheet of paper. The left padding is the
            gutter the coil hangs in, the right is where the dividers stick out. */
         background: none; border: 0; box-shadow: none;
@@ -706,17 +713,65 @@
          Height is content. Two new articles and it is short; one and it is
          shorter. Nothing here is clamped, because unlike the book on the desk
          this is not competing with anything for room. */
+      /* Square to the sheet, unlike the book on the desk. That one is tilted
+         because it was PUT DOWN somewhere; this is a page being shown to you
+         across a table, and a briefing document held at an angle reads as
+         sloppy rather than as lived in. */
       .bk-leaf {
+        position: relative;
+        padding: 0 10px 0 18px;
+        margin: 6px 0 2px;
+        image-rendering: pixelated;
+      }
+      /* The block of leaves behind it, sticking out on the fore edge. Same
+         construction as the book's: one navy slab with the white inset inside
+         it, because a stack of hairlines reads as a rendering seam. Painted
+         first, so the page in front covers all of it but the protrusion. */
+      .bk-leaf-edge {
+        position: absolute; left: 18px; right: 0; top: 4px; bottom: 4px;
+        background: var(--binder-ink);
+        clip-path: var(--leaf-corner);
+        filter: drop-shadow(-5px 5px 0 rgba(0,0,0,.22));
+      }
+      .bk-leaf-edge::before {
+        content: ''; position: absolute; inset: 2px;
+        background: #fff;
+        clip-path: var(--leaf-corner);
+      }
+      .bk-leaf-book {
+        position: relative;
         background: var(--binder-ink);
         clip-path: var(--leaf-corner);
         padding: 2px;
-        margin: 4px 0 2px;
         filter: drop-shadow(-5px 5px 0 rgba(0,0,0,.22));
       }
+      /* Wound round the outside, overshooting top and bottom the way a real
+         wire does — the same three sprites the book uses, at the same size. */
+      .bk-leaf-spine {
+        position: absolute; left: -18px; top: -5px; bottom: -5px; width: 27px;
+        display: flex; flex-direction: column; z-index: 2;
+      }
+      .bk-leaf-spine i { display: block; background-repeat: no-repeat; }
+      .bk-leaf-spine .r-top {
+        height: 12px; background-image: url('assets/rulebook/binder-ring-top.png');
+        background-size: 27px 12px;
+      }
+      .bk-leaf-spine .r-mid {
+        flex: 1; min-height: 0;
+        background-image: url('assets/rulebook/binder-ring-mid.png');
+        background-size: 27px 12px; background-repeat: repeat-y;
+      }
+      .bk-leaf-spine .r-bot {
+        height: 9px; width: 15px;
+        background-image: url('assets/rulebook/binder-ring-bot.png');
+        background-size: 15px 9px;
+      }
+      /* Left padding clears the wire, which bites into the page the same way it
+         does in the book. */
       .bk-leaf-page {
         background: #fff;
         clip-path: var(--leaf-corner);
-        padding: 13px 15px;
+        padding: 13px 15px 13px 22px;
         font-size: 12px; color: var(--ink);
       }
       /* Art to the RIGHT of the words here, which is the whole reason the

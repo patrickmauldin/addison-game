@@ -2371,7 +2371,15 @@ function briefing(): void {
     `<h3>New today</h3>
      <p class="muted" style="margin-bottom:12px">Added to the binder as of this morning.
         Everything already in there still applies — look it up before you stamp.</p>
-     <div class="bk-leaf"><div class="bk-leaf-page">${exhibits()}</div></div>`);
+     <div class="bk-leaf">
+       <div class="bk-leaf-edge" aria-hidden="true"></div>
+       <div class="bk-leaf-book">
+         <div class="bk-leaf-spine" aria-hidden="true">
+           <i class="r-top"></i><i class="r-mid"></i><i class="r-bot"></i>
+         </div>
+         <div class="bk-leaf-page">${exhibits()}</div>
+       </div>
+     </div>`);
   pages.push(`<h3>Today's round</h3>
      <div class="today-line"><span>Inspections</span><b>${day.lots.length} on Bonerville</b></div>
      <div class="today-line"><span>Pay</span><b>$${day.pay_per_inspection} each</b></div>
