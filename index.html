@@ -250,9 +250,12 @@
         background-repeat: no-repeat;
         clip-path: inset(6px 18px 6px 18px);
       }
+      /* Tight, because it wraps. "POOP BANDIT" runs to two lines at this width
+         and the body default put a gap between them wide enough to read as two
+         separate things rather than one name. */
       .fl-name {
         font-family: var(--pixel-font); font-size: 17px; letter-spacing: .08em;
-        text-transform: uppercase; margin-top: 2px;
+        text-transform: uppercase; margin-top: 2px; line-height: 1.05;
       }
       .fl-reward {
         font-family: var(--pixel-font); font-size: 14px; color: var(--stamp-red);
