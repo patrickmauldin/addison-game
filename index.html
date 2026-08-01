@@ -466,7 +466,9 @@
          Palette is fixed by the art, not by the theme variables: the ring
          sprites are drawn in these exact colors and a near-miss reads as a
          rendering fault rather than a design choice. */
-      #binder {
+      /* The briefing's leaf is the same book, so it takes the same palette and
+         the same corner off one declaration rather than a copy that can drift. */
+      #binder, .bk-leaf {
         --cover: #96a9c1;
         --cover-dark: #6c81a1;
         --binder-ink: #303843;
@@ -489,6 +491,23 @@
           calc(100% - 6px) calc(100% - 3px),
           calc(100% - 6px) 100%,
           0 100%
+        );
+        /* The same staircase on all FOUR corners, for a leaf that is not bound
+           to anything. The book leaves its spine side square because a bound
+           edge has no corner to round; a panel floating in the middle of the
+           briefing has two, and squaring them off reads as a rendering fault
+           rather than as a binding. */
+        --leaf-corner: polygon(
+          6px 0, calc(100% - 6px) 0,
+          calc(100% - 6px) 3px, calc(100% - 3px) 3px,
+          calc(100% - 3px) 6px, 100% 6px,
+          100% calc(100% - 6px), calc(100% - 3px) calc(100% - 6px),
+          calc(100% - 3px) calc(100% - 3px), calc(100% - 6px) calc(100% - 3px),
+          calc(100% - 6px) 100%, 6px 100%,
+          6px calc(100% - 3px), 3px calc(100% - 3px),
+          3px calc(100% - 6px), 0 calc(100% - 6px),
+          0 6px, 3px 6px,
+          3px 3px, 6px 3px
         );
         /* Not a .card: a book is not a sheet of paper. The left padding is the
            gutter the coil hangs in, the right is where the dividers stick out. */
@@ -620,7 +639,22 @@
       /* One ruled line per RULE, so the divider means "next article" and
          nothing else. Nothing inside an entry is separated by a rule. */
       .bk-rule + .bk-rule { margin-top: 9px; }
-      .bk-rule { padding-bottom: 9px; border-bottom: 1px solid rgba(122,88,89,.45); }
+      /* GRID AREAS, not source order. An entry is written once and laid out
+         twice: stacked in the book, which is a narrow card, and with the art
+         beside the text in the briefing, which is a wide sheet. Areas mean that
+         is a stylesheet decision — binderEntry emits identical markup either
+         way, so the page you are shown at the meeting is the page you will turn
+         to at the third house. */
+      .bk-rule {
+        display: grid;
+        grid-template-areas: 'head' 'gist' 'pics' 'more' 'full';
+        padding-bottom: 9px; border-bottom: 1px solid rgba(122,88,89,.45);
+      }
+      .bk-head { grid-area: head; }
+      .bk-gist { grid-area: gist; }
+      .bk-pics { grid-area: pics; }
+      .bk-more { grid-area: more; }
+      .bk-full { grid-area: full; }
       .bk-rule:last-child { padding-bottom: 0; border-bottom: 0; }
       .bk-head { display: flex; align-items: baseline; gap: 8px; }
       .bk-code {
@@ -644,8 +678,12 @@
       .bk-pics img { height: 38px; width: auto; image-rendering: pixelated; }
       /* A text link, not a button — it is a way of reading further, and a
          second control with a border would compete with the page arrows. */
+      /* justify-self, because a grid cell stretches its child and a stretched
+         <button> centres its own label — which put "read more" in the middle of
+         the column the moment these entries became a grid. */
       .bk-more {
-        display: block; margin-top: 4px; padding: 0;
+        display: block; justify-self: start; text-align: left;
+        margin-top: 4px; padding: 0;
         background: none; border: 0; cursor: pointer;
         font: inherit; font-size: 11px; color: #7a5859;
         text-decoration: underline; text-underline-offset: 2px;
@@ -659,6 +697,38 @@
         margin: 2px 0 0; font-style: italic; line-height: 1.5;
         color: var(--ink); opacity: .42;
       }
+
+      /* --- The briefing's leaf ------------------------------------------ */
+      /* A page out of the book, set into the morning briefing: same white
+         stock, same navy outline drawn as a slab with the surface 2px inside
+         it, same stepped corners. No coil and no dividers — it is one leaf,
+         not the book, and there is nothing to turn to.
+         Height is content. Two new articles and it is short; one and it is
+         shorter. Nothing here is clamped, because unlike the book on the desk
+         this is not competing with anything for room. */
+      .bk-leaf {
+        background: var(--binder-ink);
+        clip-path: var(--leaf-corner);
+        padding: 2px;
+        margin: 4px 0 2px;
+        filter: drop-shadow(-5px 5px 0 rgba(0,0,0,.22));
+      }
+      .bk-leaf-page {
+        background: #fff;
+        clip-path: var(--leaf-corner);
+        padding: 13px 15px;
+        font-size: 12px; color: var(--ink);
+      }
+      /* Art to the RIGHT of the words here, which is the whole reason the
+         briefing gets its own layout: three thumbnails stacked under every
+         entry pushed a two-article morning onto a second screen. The expanded
+         text runs under both columns — it is a paragraph, not a caption. */
+      .bk-leaf .bk-rule {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: 'head pics' 'gist pics' 'more pics' 'full full';
+        column-gap: 16px;
+      }
+      .bk-leaf .bk-pics { margin-top: 0; align-self: start; }
       #binder-nav {
         margin-top: auto; padding-top: 8px;
         display: flex; align-items: center; justify-content: space-between;
