@@ -2413,12 +2413,17 @@ function briefing(): void {
   if (day.level_id === 1) {
     pages.splice(2, 0,
       `<h3>How this works</h3>
-       <p><b>Click anything on the lot</b> to mark it as a finding. Click it again to unmark.
-          Plenty of what you can click is perfectly compliant — being able to click a thing
-          is not the game telling you it is wrong.</p>
-       <p><b>Read the binder before you stamp.</b> Every article carries an enforcement-limits
-          note folded underneath it, and it is load-bearing.</p>
-       <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>`);
+       <div class="howto">
+         <img src="assets/camera-cursor.png" alt="" />
+         <p><b>Click anything on the lot</b> to mark it as a finding. Click it again to unmark.
+            Plenty of what you can click is perfectly compliant — being able to click a thing
+            is not the game telling you it is wrong.</p>
+         <img src="assets/binder.png" alt="" />
+         <p><b>Read the binder before you stamp.</b> Every article carries an enforcement-limits
+            note folded underneath it, and it is load-bearing.</p>
+         <img src="assets/pass.png" alt="" />
+         <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>
+       </div>`);
   }
     return pages;
   };

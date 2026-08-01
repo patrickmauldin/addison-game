@@ -707,6 +707,33 @@
         color: var(--ink); opacity: .42;
       }
 
+      /* Three things you do, each beside the thing you do it with. ONE grid
+         rather than three rows, so every image shares a column and every
+         paragraph starts on the same left edge — three separately-sized icons
+         would otherwise each set their own indent and the text would step. */
+      #sheet .howto {
+        display: grid;
+        grid-template-columns: 62px minmax(0, 1fr);
+        column-gap: 18px; row-gap: 15px;
+        align-items: start;
+        margin: 12px 0 4px;
+      }
+      /* Sized by a BOX, not by a scale factor: the three are 118, 48 and 214
+         pixels across as delivered, and anything that fits them to a common
+         width would blow the small one up to four times its size. Each sits at
+         its natural size unless it is bigger than the box. */
+      #sheet .howto img {
+        justify-self: center; align-self: center;
+        max-width: 58px; max-height: 52px;
+        width: auto; height: auto; display: block;
+        /* Smoothed, unusually for this game. Two of these land on fractions of
+           their delivered size — the viewfinder at 0.44 — and nearest-neighbour
+           at that ratio drops most of the rows in a reticle drawn from
+           one-pixel lines, which reads as damage rather than as pixel art. */
+        image-rendering: auto;
+      }
+      #sheet .howto p { margin: 0; }
+
       /* --- The briefing's leaf ------------------------------------------ */
       /* A page out of the book, set into the morning briefing: same white
          stock, same navy outline drawn as a slab with the surface 2px inside
