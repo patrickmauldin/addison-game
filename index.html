@@ -284,61 +284,78 @@
       }
 
       /* --- The application ----------------------------------------------- */
-      /* No pixel face, no paper texture, no tilt. Everything else in this game
-         is a prop on a desk; this is a form, and the point of it is that it
-         looks like every form. The only thing it shares with the rest of the
-         game is the submit button, because that is the moment it stops being
-         a form and starts being a job. */
+      /* A form, on the Association's own stock. Still the most ordinary screen
+         in the game — no tilt, no shadow of a prop, everything square and
+         ruled — but it is printed on the same paper as everything else they
+         hand you, and its headings are in the same face. This is the first
+         thing they ever gave you; it should look like it came from them.
+         The DISPLAY FACE is for headings and labels only. It is illegible at
+         fine-print sizes, so the questions themselves, the fields and anything
+         the player types stay in the monospace — see the note on .card h2. */
       #apply {
         position: fixed; inset: 0; z-index: 75;
         display: flex; align-items: center; justify-content: center; padding: 24px;
         background: #2a2722;
-        font: 13px/1.5 -apple-system, "Segoe UI", Arial, sans-serif;
+        font: 13px/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        color: var(--ink);
         overflow-y: auto;
       }
       #apply[hidden] { display: none; }
       #apply-form {
-        background: #fff; color: #222;
+        background: var(--paper) url('assets/paper.png') repeat;
+        image-rendering: pixelated;
+        color: var(--ink);
         width: min(520px, 100%); max-height: 100%;
-        border: 1px solid #b9b9b9;
+        border: 2px solid #17150f;
         box-shadow: 0 10px 40px rgba(0,0,0,.5);
         padding: 26px 30px 22px;
       }
-      .ap-head { border-bottom: 1px solid #d8d8d8; padding-bottom: 12px; margin-bottom: 18px; }
+      .ap-head { border-bottom: 1px solid var(--rule); padding-bottom: 12px; margin-bottom: 18px; }
       .ap-org {
-        font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
-        color: #777; margin-bottom: 6px;
+        font-family: var(--pixel-font); font-size: 13px; letter-spacing: .14em;
+        text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px;
       }
-      #apply h1 { margin: 0 0 4px; font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
-      .ap-role { font-size: 13px; color: #444; }
-      .ap-role span { color: #888; }
+      #apply h1 {
+        margin: 0 0 5px; font-family: var(--pixel-font); font-weight: 400;
+        font-size: 28px; letter-spacing: .04em; line-height: 1.1;
+      }
+      .ap-role { font-family: var(--pixel-font); font-size: 16px; letter-spacing: .03em; }
+      .ap-role span { color: var(--ink-soft); }
       /* Label on the left, field on the right, and the fields line up because a
          form that does not line up is a form somebody made. */
       .ap-row {
-        display: grid; grid-template-columns: 92px 1fr; align-items: center;
+        display: grid; grid-template-columns: 104px 1fr; align-items: center;
         gap: 10px; margin-bottom: 12px;
       }
-      .ap-row > span { font-size: 13px; color: #333; }
-      .ap-addr { grid-template-columns: 92px 84px 1fr; }
+      .ap-row > span {
+        font-family: var(--pixel-font); font-size: 16px; letter-spacing: .04em;
+      }
+      .ap-addr { grid-template-columns: 104px 84px 1fr; }
+      /* What the player types stays monospace: it is their handwriting on the
+         form, not the Association's printing. */
       #apply input[type="text"], #apply select {
-        font: inherit; color: #222; background: #fff;
-        border: 1px solid #a9a9a9; border-radius: 2px;
+        font: inherit; color: var(--ink);
+        background: rgba(255,255,255,.55);
+        border: 1px solid #8a7d63;
         padding: 6px 8px; width: 100%; min-width: 0;
       }
-      #apply input:focus, #apply select:focus { outline: 2px solid #7aa7d8; outline-offset: -1px; }
+      #apply input:focus, #apply select:focus { outline: 2px solid #7a5859; outline-offset: -1px; }
       .ap-quals { border: 0; padding: 0; margin: 18px 0 6px; }
-      .ap-quals legend { padding: 0; font-size: 13px; color: #333; margin-bottom: 8px; }
+      .ap-quals legend {
+        padding: 0; margin-bottom: 9px;
+        font-family: var(--pixel-font); font-size: 16px; letter-spacing: .03em;
+      }
+      /* The answers are prose and stay monospace — seven lines of display face
+         at this size is a wall. */
       .ap-quals label {
         display: grid; grid-template-columns: 18px 1fr; gap: 8px;
-        align-items: start; padding: 3px 0; cursor: pointer; color: #333;
+        align-items: start; padding: 3px 0; cursor: pointer;
       }
-      .ap-quals input { margin: 3px 0 0; }
+      .ap-quals input { margin: 3px 0 0; accent-color: #7a5859; }
       .ap-foot {
-        border-top: 1px solid #d8d8d8; margin-top: 18px; padding-top: 16px;
+        border-top: 1px solid var(--rule); margin-top: 18px; padding-top: 16px;
         display: flex; justify-content: flex-end;
       }
-      /* The one pixel-art thing on the page. */
-      #ap-submit { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 
       /* --- Mute ---------------------------------------------------------- */
       /* Fixed to the corner of the window rather than placed in the desk: it is
