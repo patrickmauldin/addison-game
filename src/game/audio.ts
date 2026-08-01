@@ -22,6 +22,14 @@
  */
 export type BedName = 'ambiance' | 'ambiance-night' | 'office' | 'theme';
 /**
+ * A CUE is a bed that ends.
+ *
+ * It takes the room over from whatever was playing, runs once, and hands it
+ * back. The dart hunt is the only one so far and it is what the type is shaped
+ * around: a fixed stretch of music that IS the clock the player is racing.
+ */
+export type CueName = 'thief';
+/**
  * One-shots, and the file each comes from.
  *
  * The name is NOT the filename: the delivered effects are a mix of mp3 and
@@ -37,6 +45,8 @@ export const ONESHOT_FILES = {
   camera: 'camera.mp3',
   /** The rulebook opened, and every leaf turned after that. */
   page: 'page-turn.mp3',
+  /** The dart gun going off. Fires on every shot, hit or miss. */
+  hit: 'hit.mp3',
   meow: 'meow.wav',
   bark1: 'bark1.wav',
   bark2: 'bark2.wav',
@@ -58,9 +68,12 @@ export class Sound {
   private current: BedName | null = null;
   private unlocked = false;
   private fades = new Map<HTMLAudioElement, number>();
+  private cueEl: HTMLAudioElement | null = null;
+  private cb: string;
   muted: boolean;
 
   constructor(cacheBust = '') {
+    this.cb = cacheBust;
     this.muted = localStorage.getItem('addison.muted') === '1';
     for (const name of ['ambiance', 'ambiance-night', 'office', 'theme'] as BedName[]) {
       const a = new Audio(`assets/${name}.mp3${cacheBust}`);
@@ -137,6 +150,41 @@ export class Sound {
         this.fade(a, BED_VOLUME);
       }
     }
+  }
+
+  /**
+   * Play a cue, ducking the bed under it, and hand the room back when it ends.
+   *
+   * `onEnd` is NOT the caller's clock. It fires when the audio finishes, which
+   * does not happen at all if the player is muted or the browser never
+   * unlocked — so the hunt runs its own timer and treats this as sound. Wiring
+   * a 30-second window to an `ended` event would mean a muted player waits
+   * forever on a lot with a thief on it.
+   */
+  playCue(name: CueName, onEnd?: () => void): void {
+    this.stopCue();
+    const a = new Audio(`assets/${name}.mp3${this.cb}`);
+    a.loop = false;
+    a.volume = 0;
+    this.cueEl = a;
+    a.addEventListener('ended', () => { if (this.cueEl === a) this.cueEl = null; onEnd?.(); }, { once: true });
+    const bed = this.current ? this.beds.get(this.current) : undefined;
+    if (bed) this.fade(bed, 0);
+    if (this.muted || !this.unlocked) return;
+    void a.play().catch(() => {});
+    this.fade(a, BED_VOLUME);
+  }
+
+  /** Cut the cue short and bring the bed back up. Safe to call when idle. */
+  stopCue(): void {
+    const a = this.cueEl;
+    this.cueEl = null;
+    if (a) {
+      clearInterval(this.fades.get(a));
+      a.pause();
+    }
+    const bed = this.current ? this.beds.get(this.current) : undefined;
+    if (bed && !this.muted && this.unlocked) this.fade(bed, BED_VOLUME);
   }
 
   /** Crossfade to a bed. Passing the one already playing does nothing. */

@@ -54,6 +54,18 @@ export type SaveFile = {
     strikes_today: number;
     reprimands: number;
     /**
+     * THE THIEF, who does not belong to a level.
+     *
+     * Every other bounty is settled on the round it appears. This one is only
+     * out after dark and only for as long as the music runs, so missing him
+     * does not end him — the notice stays up through the daylight rounds and he
+     * is on the street again the next night. Which means his state cannot live
+     * in a level file; it lives here, with everything else that outlasts a day.
+     *
+     * Absent means he has not been seen yet.
+     */
+    thief?: 'outstanding' | 'caught';
+    /**
      * Which street the inspector lives on, by id. Asked in the first briefing
      * and never again.
      *

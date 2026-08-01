@@ -157,10 +157,36 @@ let today = dateForLevel(day.level_id);
 /** This level's lots by id, so the route can stay a list of addresses. */
 let LOTS: Record<string, LotSpec> = {};
 
+/**
+ * The notice that outlives its level.
+ *
+ * A bounty is normally the level's own — authored in the file, settled that
+ * round. The thief is not: miss him and he is still out there, so the notice
+ * stays up through the daylight rounds and he is back on the street the next
+ * night. This copies him forward onto any later level that has not authored a
+ * bounty of its own, which is the whole of the mechanism.
+ *
+ * Copied, not mutated: LEVELS holds the imported JSON and writing to it would
+ * make the campaign different on a second playthrough within the session.
+ */
+const THIEF_BOUNTY = (level3 as { bounty?: Bounty }).bounty!;
+
+/**
+ * Loaded HERE, above the first loadLevel, and not down with the round state.
+ *
+ * loadLevel runs once at module scope to set up level 1, and it now asks the
+ * save whether the thief is still outstanding. A save initialised further down
+ * the file is undefined at that point, which took the whole game down on boot
+ * with "cannot read properties of undefined".
+ */
+let saveFile: SaveFile = load();
+
 function loadLevel(i: number): void {
   levelIndex = i;
   day = LEVELS[i];
   today = dateForLevel(day.level_id);
+  if (!day.bounty && saveFile.inspector.thief === 'outstanding' && day.level_id > 3)
+    day = { ...day, bounty: THIEF_BOUNTY };
   LOTS = Object.fromEntries(day.lots.map((l) => [l.lot_id, l]));
 }
 loadLevel(0);
@@ -294,6 +320,10 @@ function placeBounty(): void {
   if (!pool.length) return;
   const rnd = seedFrom(`level${day.level_id}:bounty`);
   bountyLot = pool[Math.floor(rnd() * pool.length)];
+  // THE NOTICE OUTLIVES THE MAN. He is a night animal, so on a daylight round
+  // the flyer is up and he is simply not on the street — bountyLot stays null
+  // and nothing places him, while the face is still drawn below for the poster.
+  if (b.id === 'thief' && !day.night) bountyLot = null;
   // Drawn, not authored. The player is meant to RECOGNISE a face off a notice,
   // and a face that is the same every playthrough gets memorised instead.
   // Pinned if the level names one, drawn otherwise. The Poop Bandit is a face
@@ -543,7 +573,6 @@ let bountyAnimal: { which: number; walker: Walker } | null = null;
 let barkCtx: BarkContext = { facts: new Set() };
 let walkerLast = 0;
 let walkerRaf = 0;
-let saveFile: SaveFile = load();
 let routeIndex = 0;
 let current: LotSpec;
 let rendered: RenderedLot;
@@ -852,7 +881,10 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
     if (edge > L.house.x + L.house.w / 2) x1 = Math.max(x0 + 1, edge - margin);
     else x0 = Math.min(x1 - 1, edge + margin);
   }
-  const speed = L.house.w * 0.085;
+  // Three times a walking pace on the hunt lot. He is not strolling: the music
+  // is running and he knows it. Also the only thing that makes four darts a
+  // real budget rather than four chances to click a slow-moving target.
+  const speed = L.house.w * 0.085 * (thieving ? 3 : 1);
   // Weighted, not uniform — see pickCharacter for why the skin mix depends on it.
   // The wanted face is whatever the notice printed, pinned or drawn.
   const character = wanted ? bountyCharacter! : pickCharacter(rnd);
@@ -1322,6 +1354,7 @@ function loadLot(index: number): void {
   bountyAnimal = makeBountyAnimal(current, rendered);
   passersby = makeTraffic(current, rendered, resident ? [resident.walker.character] : []);
   startWalkerLoop();
+  startHunt();
   renderCaseFile(rec);
   paint();
   syncDesk();
@@ -1647,6 +1680,10 @@ frame.addEventListener('click', (ev) => {
   if (stamping || sliding) return;
   const p = toLotPixel(ev as MouseEvent);
 
+  // While the drawer is out the lot is not an inspection, it is a target. No
+  // marking, no citations, no id buffer — one thing to do and four goes at it.
+  if (hunt) { shoot(p); return; }
+
   // The wanted person, if this is a person bounty and you have found them.
   // Same rule as the animals: checked before the id buffer, never a finding.
   const pb = day.bounty;
@@ -1720,6 +1757,102 @@ frame.addEventListener('click', (ev) => {
   // point: the resident comes out because they saw you photograph it.
   maybeEvent(obj.id);
 });
+
+/**
+ * THE DART HUNT.
+ *
+ * Thirty seconds of music, four darts, and a man crossing a dark lawn at three
+ * times walking pace. Everything else about a night round is looking carefully
+ * at things that are not moving; this is the one minute of it that is not, and
+ * it is deliberately the only place in the game with a clock on screen and a
+ * resource that runs out.
+ *
+ * The window is a TIMER, not the audio's `ended` event. A muted player, or one
+ * whose browser never unlocked sound, would otherwise stand on that lot
+ * forever. The music is the clock the player HEARS; this is the clock the game
+ * keeps.
+ */
+const HUNT_MS = 30_000;
+const HUNT_DARTS = 4;
+/** A beat after the last dart, so the miss reads before the drawer goes. */
+const HUNT_SPENT_MS = 900;
+
+let hunt: { darts: number; timer: number } | null = null;
+
+function huntTarget(): Bounty | null {
+  const b = day.bounty;
+  if (!b || b.id !== 'thief' || !day.night) return null;
+  if (!current || current.lot_id !== bountyLot || claimed.has(b.id)) return null;
+  return b;
+}
+
+function startHunt(): void {
+  const b = huntTarget();
+  // Once per round. Missing him closes the lot for the night, and walking back
+  // onto it must not hand out four more darts.
+  if (!b || hunt || saveFile.inspector.thief === 'caught' || firedEvents.has('hunt')) return;
+  firedEvents.add('hunt');
+  hunt = { darts: HUNT_DARTS, timer: 0 };
+  const drawer = $('drawer');
+  drawer.hidden = false;
+  drawer.setAttribute('aria-hidden', 'false');
+  syncDarts();
+  // Next frame, so the transform has a value to animate FROM. Setting hidden
+  // and the class in the same tick lands the drawer open with no slide.
+  requestAnimationFrame(() => drawer.classList.add('open'));
+  frame.classList.add('aiming');
+  sound.playCue('thief');
+  hunt.timer = setTimeout(() => endHunt(false), HUNT_MS) as unknown as number;
+}
+
+function syncDarts(): void {
+  const left = hunt?.darts ?? 0;
+  $('dr-darts').innerHTML = Array.from({ length: HUNT_DARTS }, (_, i) =>
+    `<img src="assets/dart.png${CB}" alt="" class="${i < left ? '' : 'spent'}" />`).join('');
+}
+
+function endHunt(caught: boolean): void {
+  if (!hunt) return;
+  clearTimeout(hunt.timer);
+  hunt = null;
+  sound.stopCue();
+  frame.classList.remove('aiming');
+  const drawer = $('drawer');
+  drawer.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  setTimeout(() => { if (!hunt) drawer.hidden = true; }, 460);
+  saveFile.inspector.thief = caught ? 'caught' : 'outstanding';
+  save(saveFile);
+  if (!caught) {
+    // Gone for the night. The lot goes quiet, which is the point — you had him
+    // and the music ran out.
+    resident = null;
+    bountyLot = null;
+    paint();
+  }
+  syncFlyer();
+  syncDesk();
+}
+
+/**
+ * A shot. Costs a dart whether or not it lands, and makes a noise either way —
+ * a gun that only sounded on a hit would tell the player what happened before
+ * they could see it.
+ */
+function shoot(p: { x: number; y: number }): void {
+  if (!hunt || hunt.darts <= 0) return;
+  hunt.darts--;
+  syncDarts();
+  sound.play('hit');
+  const b = day.bounty!;
+  if (bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
+    const w = resident?.walker;
+    endHunt(true);
+    claimBounty(b, w ? { x: w.x, y: w.y - RESIDENTS.frameH * RESIDENT_UPSCALE * rendered.layout.scale / 2 } : p);
+    return;
+  }
+  if (hunt.darts === 0) setTimeout(() => endHunt(false), HUNT_SPENT_MS);
+}
 
 /**
  * A resident with something to say about what you just marked.
@@ -2008,6 +2141,7 @@ function slideToLot(index: number): void {
     bountyAnimal = makeBountyAnimal(current, rendered);
     passersby = makeTraffic(current, rendered, resident ? [resident.walker.character] : []);
     startWalkerLoop();
+    startHunt();
     renderCaseFile(rec);
     paint();
     syncDesk();
@@ -2552,17 +2686,28 @@ function postItMarkup(): string[] {
  *
  * Returns classes and no ids, so it can be dropped in twice.
  */
-function flyerMarkup(): string {
-  const b = day.bounty;
+function flyerMarkup(b: Bounty | undefined = day.bounty): string {
   if (!b) return '';
+  /**
+   * Whose face, for a notice that may not be this level's.
+   *
+   * A pinned character is the same man whatever round it is. A drawn one is
+   * only known for the bounty the level actually placed — so a second notice
+   * for somebody the level did not place shows their sprite if the notice
+   * names one and nothing if it does not, rather than borrowing the face of
+   * whoever this round happens to be looking for.
+   */
+  const character = b.character ? characterNamed(b.character)
+    : b === day.bounty ? bountyCharacter
+      : null;
   // A prop shows its own sprite; a person is a window onto the resident sheet,
   // so the face on the notice IS the sprite to spot and cannot drift from it.
-  const isPerson = b.kind === 'person' && bountyCharacter !== null;
+  const isPerson = b.kind === 'person' && character !== null;
   let pic = '';
   if (isPerson) {
     // Their south-facing idle frame, at 2x, positioned by row and column.
     const Z = 2;
-    const row = bountyCharacter! * RESIDENTS.rowsPerCharacter;
+    const row = character! * RESIDENTS.rowsPerCharacter;
     pic = `<div class="fl-face" style="background-image:url('${RESIDENTS.sheet}${CB}');`
       + `background-size:${RESIDENTS.sheetW * Z}px ${RESIDENTS.sheetH * Z}px;`
       + `background-position:-${RESIDENTS.idleCol * RESIDENTS.frameW * Z}px -${row * RESIDENTS.frameH * Z}px;`
@@ -2589,13 +2734,29 @@ function flyerMarkup(): string {
  * that vanished the moment you claimed it would take the reminder away at the
  * exact point it becomes a receipt. Claimed just stamps a tick across it.
  */
+/**
+ * Every notice currently posted, which is not always one.
+ *
+ * The level's own, plus the thief if he is still outstanding and is not that
+ * notice already. He stays up through the daylight rounds — the Association
+ * does not take a notice down because it is Tuesday — and on those rounds the
+ * paper is all there is of him: placeBounty leaves him off the street until it
+ * is dark again.
+ */
+function postedNotices(): Bounty[] {
+  const out: Bounty[] = [];
+  if (day.bounty) out.push(day.bounty);
+  if (saveFile.inspector.thief === 'outstanding' && day.bounty?.id !== 'thief') out.push(THIEF_BOUNTY);
+  return out;
+}
+
 function syncFlyer(): void {
   const el = $('flyer');
-  const b = day.bounty;
-  if (!b) { el.hidden = true; return; }
-  el.hidden = false;
-  el.innerHTML = flyerMarkup();
-  el.classList.toggle('found', claimed.has(b.id));
+  const notes = postedNotices();
+  el.hidden = notes.length === 0;
+  el.innerHTML = notes
+    .map((b) => `<div class="fl-note${claimed.has(b.id) ? ' found' : ''}">${flyerMarkup(b)}</div>`)
+    .join('');
 }
 
 /** Leave the briefing and put the player on the first lot. */
@@ -2609,6 +2770,9 @@ function startRound(): void {
   // the used set is cleared per level rather than per lot.
   resetBarkHistory();
   claimed.clear();
+  // Cancels an in-flight hunt too: leaving the round mid-music must put the
+  // drawer away and give the pointer back.
+  if (hunt) endHunt(false);
   firedEvents.clear();
   bountyPay = 0;
   bountyMark = null;

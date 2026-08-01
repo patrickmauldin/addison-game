@@ -155,11 +155,18 @@
       /* --- Pinned notice ------------------------------------------------ */
       /* Never intercepts a click: the thing you click is the cat in the yard,
          and a notice that eats clicks over the scene would be a trap. */
+      /* A column, because there can be more than one notice up. The thief's
+         stays posted through the daylight rounds while the round's own bounty
+         comes and goes underneath it. */
       #flyer {
         position: absolute; top: 14px; left: 14px; z-index: 6;
-        pointer-events: none; user-select: none; width: 152px;
+        pointer-events: none; user-select: none;
+        display: flex; flex-direction: column; gap: 12px;
       }
       #flyer[hidden] { display: none; }
+      /* Each notice needs its own positioned box: the pin hangs off the top of
+         it and the paper is tacked at an angle inside it. */
+      .fl-note { position: relative; width: 152px; }
       .fl-paper {
         background: var(--paper) url('assets/paper.png') repeat;
         image-rendering: pixelated;
@@ -218,7 +225,7 @@
         transform: rotate(-8deg);
         filter: drop-shadow(0 2px 3px rgba(0,0,0,.5));
       }
-      #flyer.found .fl-paper { opacity: .82; }
+      .fl-note.found .fl-paper { opacity: .82; }
 
       /* A control set into the manager's dialogue. Indented like a reply and
          given the paperwork's own stock, so it reads as part of the exchange
@@ -229,6 +236,52 @@
         background: var(--paper-2); border: 1px solid var(--rule);
         padding: 4px 8px; cursor: pointer;
       }
+
+      /* --- The dart drawer ---------------------------------------------- */
+      /* Pulled out over the desk from the right. Same board as the desk itself,
+         because it IS the desk — a drawer under the paperwork you did not know
+         was there until the night you needed it.
+         Sized and positioned off #app's second column so it covers the sidebar
+         exactly, whatever the window is doing. */
+      #drawer {
+        position: fixed; top: 30px; right: 0; bottom: 0; width: 380px;
+        z-index: 30;
+        background: #4a453c url('assets/wood.png') repeat;
+        image-rendering: pixelated;
+        border-left: 2px solid #17150f;
+        box-shadow: -10px 0 24px rgba(0,0,0,.55);
+        display: flex; flex-direction: column; align-items: center;
+        gap: 10px; padding: 22px 12px;
+        /* Off screen until it is wanted. The transition is on transform alone,
+           so the wood does not reflow the desk on its way past. */
+        transform: translateX(100%);
+        transition: transform .42s cubic-bezier(.22,.61,.36,1);
+      }
+      #drawer.open { transform: translateX(0); }
+      #drawer[hidden] { display: none; }
+      /* The darts, stacked as they are in the reference, and spent from the
+         bottom up — the row you look at last is the one that vanishes. */
+      .dr-darts {
+        display: flex; flex-direction: column; align-items: flex-end;
+        gap: 6px; width: 100%; padding-right: 26px; min-height: 216px;
+      }
+      .dr-darts img {
+        width: 132px; height: auto; display: block; image-rendering: pixelated;
+        filter: drop-shadow(2px 3px 0 rgba(0,0,0,.45));
+        transition: opacity .18s, transform .18s;
+      }
+      /* Spent rather than removed: the row keeps its height, so the remaining
+         darts do not jump up the drawer every time one is fired. */
+      .dr-darts img.spent { opacity: 0; transform: translateX(14px); }
+      .dr-gun {
+        width: auto; max-height: calc(100% - 240px); max-width: 100%;
+        display: block; image-rendering: pixelated;
+        filter: drop-shadow(3px 4px 0 rgba(0,0,0,.45));
+      }
+      /* Aiming. The reticle is a generated PNG rather than a stylesheet circle
+         because a cursor needs a hotspot and cannot be an element — see
+         tools/make-reticle.ts. 48 48 is dead centre of the 96px image. */
+      #frame.aiming { cursor: url('assets/dart-reticle.png') 48 48, crosshair; }
 
       /* --- Mid-inspection events ---------------------------------------- */
       /* Dimmed but not blacked: the lot stays visible behind it, because what
@@ -1494,6 +1547,14 @@
       <div id="menu">
         <button class="btn primary" id="btn-start-game">START GAME</button>
       </div>
+    </div>
+
+    <!-- Slides across the desk when the thief is on the lot. Not a dialog: the
+         player is still looking at the street the whole time, and the only
+         thing that changes is what the sidebar is for. -->
+    <div id="drawer" hidden aria-hidden="true">
+      <div class="dr-darts" id="dr-darts"></div>
+      <img class="dr-gun" src="assets/dart-gun.png" alt="" />
     </div>
 
     <div id="overlay"><div id="sheet"></div></div>
