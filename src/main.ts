@@ -1151,10 +1151,13 @@ function drawAnimal(x: number, y: number, sx: number, sy: number, flip: boolean)
 const BOUNTY_TICK_MS = 1800;
 let bountyTickTimer = 0;
 
-function claimBounty(b: Bounty, mark: { x: number; y: number }): void {
+function claimBounty(b: Bounty, mark: { x: number; y: number } | null): void {
+  // A null mark means the claim shows itself some other way. The thief takes a
+  // dart and blinks out where he stood, and a tick over the top of that would
+  // be the game explaining a thing the player just watched happen.
   bountyMark = mark;
   clearTimeout(bountyTickTimer);
-  bountyTickTimer = setTimeout(() => {
+  if (mark) bountyTickTimer = setTimeout(() => {
     bountyMark = null;
     // Explicit repaint: with the claimed animal gone, the lot may have nothing
     // moving on it, and then no frame would be asked for.
@@ -1200,7 +1203,14 @@ function drawWalker(): void {
   if (resident) {
     const { walker, work } = resident;
     const f = residentFrame(walker, work);
-    queue.push({ y: walker.y, draw: () => drawPerson(walker.x, walker.y, f.sx, f.sy, k) });
+    const a = thiefBlink ? blinkAlpha(performance.now()) : 1;
+    queue.push({ y: walker.y, draw: () => {
+      if (a >= 1) { drawPerson(walker.x, walker.y, f.sx, f.sy, k); return; }
+      ctx.save();
+      ctx.globalAlpha = a;
+      drawPerson(walker.x, walker.y, f.sx, f.sy, k);
+      ctx.restore();
+    } });
   }
   for (const p of passersby) {
     const f = walkFrame(p.character, p.dir, p.t);
@@ -1788,6 +1798,26 @@ const HUNT_SPENT_MS = 900;
 
 let hunt: { darts: number; timer: number } | null = null;
 
+/**
+ * HIT. He does not vanish on the frame the dart lands.
+ *
+ * A blink, slow enough to read and dimming as it goes — a tranquilliser taking
+ * hold rather than a sprite being deleted. It is also the only feedback the
+ * shot gets: there is no tick over him, because a mark explaining a thing the
+ * player just watched happen is the game talking over itself.
+ */
+const BLINK_MS = 2200;
+/** One half-cycle. Slow: this should read as unsteady, not as a strobe. */
+const BLINK_HALF = 260;
+let thiefBlink = 0;
+
+/** Fades 1 to 0 across the blink, and is 0 outright on the off beat. */
+function blinkAlpha(now: number): number {
+  const e = now - thiefBlink;
+  if (e >= BLINK_MS) return 0;
+  return Math.floor(e / BLINK_HALF) % 2 === 0 ? 1 - (e / BLINK_MS) * 0.75 : 0;
+}
+
 function huntTarget(): Bounty | null {
   const b = day.bounty;
   if (!b || b.id !== 'thief' || !day.night) return null;
@@ -1839,6 +1869,8 @@ function endHunt(caught: boolean): void {
     bountyLot = null;
     paint();
   }
+  // On a catch he is deliberately left standing: shoot() is mid-blink and owns
+  // him until it ends. Clearing him here would cut the dart's only feedback.
   syncFlyer();
   syncDesk();
 }
@@ -1855,9 +1887,17 @@ function shoot(p: { x: number; y: number }): void {
   sound.play('shot');
   const b = day.bounty!;
   if (bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
-    const w = resident?.walker;
     endHunt(true);
-    claimBounty(b, w ? { x: w.x, y: w.y - RESIDENTS.frameH * RESIDENT_UPSCALE * rendered.layout.scale / 2 } : p);
+    // He stays on his feet and stays walking; only the drawing goes. The walker
+    // is torn down when the blink finishes, not when the dart lands — which is
+    // also what keeps the frame loop alive long enough to draw it.
+    thiefBlink = performance.now();
+    setTimeout(() => {
+      thiefBlink = 0;
+      resident = null;
+      paint();
+    }, BLINK_MS);
+    claimBounty(b, null);
     return;
   }
   if (hunt.darts === 0) setTimeout(() => endHunt(false), HUNT_SPENT_MS);
