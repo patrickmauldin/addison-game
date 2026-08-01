@@ -727,29 +727,41 @@
          construction as the book's: one navy slab with the white inset inside
          it, because a stack of hairlines reads as a rendering seam. Painted
          first, so the page in front covers all of it but the protrusion. */
+      /* Carries the shadow the WHOLE book casts on the sheet, because it is the
+         hindmost piece and the one that reaches furthest right. */
       .bk-leaf-edge {
         position: absolute; left: 18px; right: 0; top: 4px; bottom: 4px;
         background: var(--binder-ink);
         clip-path: var(--leaf-corner);
-        filter: drop-shadow(-5px 5px 0 rgba(0,0,0,.22));
+        filter: drop-shadow(-4px 7px 0 rgba(0,0,0,.2));
       }
       .bk-leaf-edge::before {
         content: ''; position: absolute; inset: 2px;
         background: #fff;
         clip-path: var(--leaf-corner);
       }
+      /* The front page, and the shadow it throws onto the leaves behind it —
+         down and to the RIGHT, which is the only side they show on. It sits
+         proud of the block top and bottom, so the same shadow falls on the
+         sheet under the foot of the book. */
       .bk-leaf-book {
         position: relative;
         background: var(--binder-ink);
         clip-path: var(--leaf-corner);
         padding: 2px;
-        filter: drop-shadow(-5px 5px 0 rgba(0,0,0,.22));
+        filter: drop-shadow(4px 5px 0 rgba(0,0,0,.22));
       }
       /* Wound round the outside, overshooting top and bottom the way a real
          wire does — the same three sprites the book uses, at the same size. */
+      /* OUTSIDE the book, not inside it. clip-path clips descendants, so a coil
+         parented to the page was being cut off flat at the page's own edge —
+         losing the overhang top, bottom and left, which is the entire thing
+         that makes it read as wire wound round the outside rather than as a
+         pattern printed on the paper. */
       .bk-leaf-spine {
-        position: absolute; left: -18px; top: -5px; bottom: -5px; width: 27px;
+        position: absolute; left: 0; top: -5px; bottom: -5px; width: 27px;
         display: flex; flex-direction: column; z-index: 2;
+        filter: drop-shadow(2px 2px 0 rgba(0,0,0,.22));
       }
       .bk-leaf-spine i { display: block; background-repeat: no-repeat; }
       .bk-leaf-spine .r-top {

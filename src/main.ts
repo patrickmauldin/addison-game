@@ -2374,10 +2374,12 @@ function briefing(): void {
      <div class="bk-leaf">
        <div class="bk-leaf-edge" aria-hidden="true"></div>
        <div class="bk-leaf-book">
-         <div class="bk-leaf-spine" aria-hidden="true">
-           <i class="r-top"></i><i class="r-mid"></i><i class="r-bot"></i>
-         </div>
          <div class="bk-leaf-page">${exhibits()}</div>
+       </div>
+       <!-- A sibling of the page, never a child: the page is clipped to its
+            stepped corners and a clip-path takes its descendants with it. -->
+       <div class="bk-leaf-spine" aria-hidden="true">
+         <i class="r-top"></i><i class="r-mid"></i><i class="r-bot"></i>
        </div>
      </div>`);
   pages.push(`<h3>Today's round</h3>
