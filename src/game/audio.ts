@@ -46,7 +46,7 @@ export const ONESHOT_FILES = {
   /** The rulebook opened, and every leaf turned after that. */
   page: 'page-turn.mp3',
   /** The dart gun going off. Fires on every shot, hit or miss. */
-  hit: 'hit.mp3',
+  shot: 'shot.mp3',
   meow: 'meow.wav',
   bark1: 'bark1.wav',
   bark2: 'bark2.wav',

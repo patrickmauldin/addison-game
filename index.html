@@ -155,18 +155,61 @@
       /* --- Pinned notice ------------------------------------------------ */
       /* Never intercepts a click: the thing you click is the cat in the yard,
          and a notice that eats clicks over the scene would be a trap. */
-      /* A column, because there can be more than one notice up. The thief's
-         stays posted through the daylight rounds while the round's own bounty
-         comes and goes underneath it. */
+      /* One tack, however many sheets are on it. The thief's notice stays
+         posted through the daylight rounds while the round's own bounty comes
+         and goes underneath it, so this corner has to hold more than one — and
+         a stack is what a corner of a wall people keep pinning paper to
+         actually looks like. */
       #flyer {
         position: absolute; top: 14px; left: 14px; z-index: 6;
         pointer-events: none; user-select: none;
-        display: flex; flex-direction: column; gap: 12px;
+        width: 152px;
       }
       #flyer[hidden] { display: none; }
       /* Each notice needs its own positioned box: the pin hangs off the top of
          it and the paper is tacked at an angle inside it. */
       .fl-note { position: relative; width: 152px; }
+      /* Stacked, the sheets come out of the flow and sit on each other, each
+         one nudged down and right of the sheet in front. --depth is 0 for the
+         one on top, counting back. */
+      #flyer.stacked .fl-note {
+        position: absolute; top: 0; left: 0;
+        transform: translate(calc(var(--depth) * 7px), calc(var(--depth) * 9px));
+      }
+      /* The stack needs a height of its own once its children are absolute. */
+      #flyer.stacked { min-height: 220px; }
+      /* A hard shadow from each sheet onto the one under it. Only while
+         stacked: a lone notice already casts one from .fl-paper, and doubling
+         it just thickens the edge. */
+      #flyer.stacked .fl-paper {
+        box-shadow: 4px 5px 0 rgba(0,0,0,.45), 2px 3px 0 rgba(0,0,0,.35);
+      }
+      /* The same arrows the binder turns its pages with, because it is the same
+         gesture. Hidden until the pointer is over the stack — the notice is
+         something you read, and a control parked on it permanently would make
+         it look like a widget. */
+      .fl-flip {
+        position: absolute; left: 0; right: 0; bottom: -26px; z-index: 4;
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+        opacity: 0; transition: opacity .14s;
+        /* The stack itself never takes a click — see #flyer. These do. */
+        pointer-events: auto;
+        font-size: 11px; color: #f0e8d2;
+        text-shadow: 0 1px 2px rgba(0,0,0,.9);
+      }
+      #flyer.stacked:hover .fl-flip, .fl-flip:focus-within { opacity: 1; }
+      .fl-flip button {
+        background: none; border: 0; cursor: pointer; padding: 2px 4px; line-height: 0;
+      }
+      .fl-flip img {
+        width: 22px; height: auto; display: block; image-rendering: pixelated;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,.8));
+      }
+      /* Mirrored rather than a second sprite — same trick as the binder. */
+      .fl-flip img.flip { transform: scaleX(-1); }
+      .fl-flip button:hover img { filter: brightness(1.2) drop-shadow(0 1px 2px rgba(0,0,0,.8)); }
+      /* The stack must be hoverable even though the notices never take clicks. */
+      #flyer.stacked { pointer-events: auto; }
       .fl-paper {
         background: var(--paper) url('assets/paper.png') repeat;
         image-rendering: pixelated;

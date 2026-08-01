@@ -35,6 +35,16 @@ export class Walker {
   private readonly bounds: Bounds;
   private readonly rnd: () => number;
 
+  /**
+   * How long this walker stands about, as a multiple of the usual.
+   *
+   * Standing about is most of what people in a front yard do, and the default
+   * says so. Somebody who does not want to be seen is a different problem: at
+   * the usual rate the thief spent about half the hunt motionless, which on a
+   * thirty-second clock is not a pause, it is most of the round.
+   */
+  dwell = 1;
+
   constructor(character: number, bounds: Bounds, rnd: () => number, speed: number) {
     this.character = character;
     this.bounds = bounds;
@@ -64,7 +74,7 @@ export class Walker {
     const d = Math.hypot(dx, dy);
     if (d < 2) {
       // Standing about is most of what people in a front yard actually do.
-      this.pause = 1 + this.rnd() * 3;
+      this.pause = (1 + this.rnd() * 3) * this.dwell;
       this.retarget();
       return;
     }

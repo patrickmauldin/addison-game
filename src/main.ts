@@ -763,7 +763,7 @@ function stageSize(): { w: number; h: number } {
  * cannot read in the dark is not atmosphere, it is a bug — the same reason the
  * Findings pad sits in the DOM above the canvas entirely.
  */
-function washNight(w: number, h: number): void {
+function washNight(w: number, h: number, glows: Array<[HTMLCanvasElement | null, number]> = [[currentGlow, 0]]): void {
   if (!day.night) return;
   ctx.fillStyle = 'rgba(5, 11, 25, .7)';
   ctx.fillRect(0, 0, w, h);
@@ -777,8 +777,14 @@ function washNight(w: number, h: number): void {
    *
    * Inside washNight rather than beside it, so the pan between lots gets it
    * too — the wash and the glow are one effect and cannot come apart.
+   *
+   * PLACED, not pinned. The layer is drawn for a lot sitting at the origin,
+   * which is true right up until two lots are on the canvas at once and both
+   * are moving. Defaulting to the current lot at zero kept it nailed to the
+   * screen through the pan, so a lit house left its lights hanging in the air
+   * over the one that followed it.
    */
-  if (currentGlow) ctx.drawImage(currentGlow, 0, 0);
+  for (const [g, x] of glows) if (g) ctx.drawImage(g, x, 0);
 }
 
 function paint(): void {
@@ -893,6 +899,9 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   // which is what the tool animation cuts its frames from.
   const walker = new Walker(character, { x0, x1, y0: top, y1: bottom }, rnd,
     tool === null ? speed : 0);
+  // He barely stops. Three times the pace is not much use if he spends the
+  // clock standing in the middle of the lawn being easy to hit.
+  if (thieving) walker.dwell = 0.15;
   const work = tool === null ? null : new ToolWork(tool, seedFrom(`${lot.lot_id}:work`));
   // Not everybody has anything to say. Two thirds do; the rest just get on
   // with it, which is what stops the street sounding like a chorus. The thief
@@ -1843,7 +1852,7 @@ function shoot(p: { x: number; y: number }): void {
   if (!hunt || hunt.darts <= 0) return;
   hunt.darts--;
   syncDarts();
-  sound.play('hit');
+  sound.play('shot');
   const b = day.bounty!;
   if (bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
     const w = resident?.walker;
@@ -2111,6 +2120,10 @@ function slideToLot(index: number): void {
   }
 
   const from = currentCanvas;
+  // Built once, before the first frame: rebuilding a full-frame layer inside
+  // the animation would cost more than the pan is worth.
+  const fromGlow = currentGlow;
+  const nextGlow = glowLayerFor(next.rl, LOTS[day.lots[index].lot_id]);
   // Half the previous speed. A slower pan reads less like a UI transition and
   // more like actually rolling down the block to the next address.
   const DURATION = 1800;
@@ -2167,8 +2180,9 @@ function slideToLot(index: number): void {
     ctx.clearRect(0, 0, sz.w, sz.h);
     ctx.drawImage(from, dx, 0);
     ctx.drawImage(next.cv, dx + sz.w, 0);
-    // Both lots are scene, so both go under the same wash — see washNight.
-    washNight(sz.w, sz.h);
+    // Both lots are scene, so both go under the same wash — and each carries
+    // its own lights at its own offset. See washNight.
+    washNight(sz.w, sz.h, [[fromGlow, dx], [nextGlow, dx + sz.w]]);
     if (t < 1) {
       requestAnimationFrame(frame);
     } else {
@@ -2686,7 +2700,7 @@ function postItMarkup(): string[] {
  *
  * Returns classes and no ids, so it can be dropped in twice.
  */
-function flyerMarkup(b: Bounty | undefined = day.bounty): string {
+function flyerMarkup(b: Bounty | undefined = day.bounty, pinned = true): string {
   if (!b) return '';
   /**
    * Whose face, for a notice that may not be this level's.
@@ -2717,7 +2731,7 @@ function flyerMarkup(b: Bounty | undefined = day.bounty): string {
   }
   return `
     <div class="fl-paper">
-      <img class="fl-pin" src="assets/pin.png" alt="" />
+      ${pinned ? '<img class="fl-pin" src="assets/pin.png" alt="" />' : ''}
       <div class="fl-head">${b.headline ?? 'Missing'}</div>
       ${pic}
       <div class="fl-name">${b.name}</div>
@@ -2750,13 +2764,56 @@ function postedNotices(): Bounty[] {
   return out;
 }
 
+/**
+ * Which of the posted notices is on top. Loops, and survives a re-render.
+ */
+let flyerTop = 0;
+
 function syncFlyer(): void {
   const el = $('flyer');
   const notes = postedNotices();
   el.hidden = notes.length === 0;
-  el.innerHTML = notes
-    .map((b) => `<div class="fl-note${claimed.has(b.id) ? ' found' : ''}">${flyerMarkup(b)}</div>`)
-    .join('');
+  if (!notes.length) { el.innerHTML = ''; return; }
+  flyerTop %= notes.length;
+
+  /**
+   * STACKED, not listed. Two notices side by side is a noticeboard; two pinned
+   * through the same tack, one a few pixels off the other, is what actually
+   * happens to a corner of a wall that people keep putting paper on.
+   *
+   * Only the front sheet gets the pin — the ones underneath are behind it, and
+   * a second tack floating over a sheet it does not hold reads as a mistake.
+   * Each sheet casts a hard shadow onto the one below, which is the only thing
+   * telling the player there is more than one.
+   */
+  el.classList.toggle('stacked', notes.length > 1);
+  const order = notes.map((_, i) => (flyerTop + i) % notes.length);
+  el.innerHTML = order
+    .map((n, depth) => {
+      const b = notes[n];
+      // `order` runs front to back, so depth IS the depth. Reversed on the way
+      // out so the front sheet is last in the DOM and needs no z-index.
+      return `<div class="fl-note${claimed.has(b.id) ? ' found' : ''}${depth === 0 ? ' top' : ''}"
+                   style="--depth:${depth}">${flyerMarkup(b, depth === 0)}</div>`;
+    })
+    .reverse()
+    .join('')
+    + (notes.length > 1
+      ? `<div class="fl-flip">
+           <button type="button" data-flip="-1" aria-label="Previous notice">
+             <img class="flip" src="assets/rulebook/next-page.png${CB}" alt="" /></button>
+           <span>${flyerTop + 1}/${notes.length}</span>
+           <button type="button" data-flip="1" aria-label="Next notice">
+             <img src="assets/rulebook/next-page.png${CB}" alt="" /></button>
+         </div>`
+      : '');
+
+  el.querySelectorAll<HTMLButtonElement>('[data-flip]').forEach((b) => {
+    b.onclick = () => {
+      flyerTop = (flyerTop + Number(b.dataset.flip) + notes.length) % notes.length;
+      syncFlyer();
+    };
+  });
 }
 
 /** Leave the briefing and put the player on the first lot. */
