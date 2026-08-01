@@ -33,12 +33,10 @@
     "pablo"
   ],
   "story": [
-    "Welcome to the Addison Master Community Association. You are the Compliance Inspector. There is one.",
-    {
-      "ask": "street",
-      "text": "You live in Addison yourself, though — I have that right? Which street was it again.",
-      "after": "Short commute, then. And yes, your own street is on the route. The Association does not consider that a conflict."
-    },
+    "Congratulations. You can fill out a form.",
+    "You're hired.",
+    "Welcome to the Addison Master Community Association, {name}. You are the Compliance Inspector. There is one.",
+    "You're at {address}, yes? Good. Short commute. Your own street is on the route — the Association does not consider that a conflict.",
     "Your predecessor also lived in the community. We won’t be discussing that.",
     "Today you may pass an address or issue a warning. Nothing you do can cost anybody money.",
     "Three errors ends your day. Three reprimands ends the arrangement."
@@ -205,5 +203,5 @@
       "expected_verdict": "NOTICE"
     }
   ],
-  "_story_ask": "A story beat may be an object instead of a string. `ask` names a question the briefing puts inline — a control in the middle of the manager’s dialogue rather than a settings screen — and `after` is the line she says once it has been answered. Answering is optional; she moves on either way."
+  "_story_tokens": "{name} and {address} come off the application. Both fall back to something impersonal when the save has neither, which is what a mid-campaign save written before the form existed looks like — the Association addressing you as \"you\" is in character anyway."
 }

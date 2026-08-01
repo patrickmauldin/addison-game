@@ -66,8 +66,21 @@ export type SaveFile = {
      */
     thief?: 'outstanding' | 'caught';
     /**
-     * Which street the inspector lives on, by id. Asked in the first briefing
-     * and never again.
+     * What they put on the application, which is the only thing the Association
+     * ever asks them about themselves.
+     *
+     * All optional: a save written before the form existed has none of it, and
+     * the briefing degrades to the impersonal wording rather than printing
+     * "undefined" at somebody.
+     */
+    name?: string;
+    /** House number. Text, not a number — nobody validates an address here. */
+    house?: string;
+    /** Ticked boxes, by id. Nothing reads them yet. That is the joke. */
+    quals?: string[];
+    /**
+     * Which street the inspector lives on, by id. Asked on the application and
+     * never again.
      *
      * Optional because a save written before the question existed does not have
      * it, and because the player can walk past the dropdown without answering —

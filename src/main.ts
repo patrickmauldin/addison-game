@@ -2464,6 +2464,79 @@ function calendarMarkup(extraClass = ''): string {
 }
 
 /**
+ * SHE TALKS. The briefing's opening beats type themselves in.
+ *
+ * A paragraph that is already on the page has been said; a paragraph arriving a
+ * character at a time is being said, and that is the difference between a wall
+ * of exposition and somebody addressing you. The pauses are where the timing
+ * lives — a beat between paragraphs, and a longer one after a line that lands.
+ *
+ * SKIPPABLE, always. A player on their second run should not have to sit
+ * through it, so any click or key finishes the whole thing instantly. An
+ * unskippable cutscene is a worse crime than a silent one.
+ *
+ * Runs once per level. The sheet re-renders whenever a read-more is toggled,
+ * and retyping the manager's dialogue every time would be maddening.
+ */
+const TYPE_MS = 16;
+/** Between paragraphs. */
+const BEAT_MS = 380;
+/** Extra, after a paragraph that ends on a full stop and wants to land. */
+const LAND_MS = 320;
+let typedLevel = -1;
+let typeCancel: (() => void) | null = null;
+
+function typeStory(root: HTMLElement): void {
+  const ps = [...root.querySelectorAll<HTMLElement>('p[data-type]')];
+  if (!ps.length) return;
+  const full = () => { for (const p of ps) { p.textContent = p.dataset.type ?? ''; } };
+  if (typedLevel === day.level_id) { full(); return; }
+  typedLevel = day.level_id;
+
+  let stopped = false;
+  const stop = () => {
+    if (stopped) return;
+    stopped = true;
+    typeCancel = null;
+    window.removeEventListener('pointerdown', stop, true);
+    window.removeEventListener('keydown', stop, true);
+    full();
+  };
+  typeCancel = stop;
+  window.addEventListener('pointerdown', stop, true);
+  window.addEventListener('keydown', stop, true);
+
+  void (async () => {
+    const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    for (const p of ps) {
+      const text = p.dataset.type ?? '';
+      for (let i = 0; i < text.length; i++) {
+        if (stopped) return;
+        p.textContent = text.slice(0, i + 1);
+        await wait(TYPE_MS);
+      }
+      if (stopped) return;
+      await wait(BEAT_MS + (text.endsWith('.') ? LAND_MS : 0));
+    }
+    stop();
+  })();
+}
+
+/**
+ * What the Association knows about you, dropped into her dialogue.
+ *
+ * Both fall back to something impersonal, because a save written before the
+ * application existed has neither — and "you" is in character for her anyway.
+ */
+function fillTokens(t: string): string {
+  const ins = saveFile.inspector;
+  const st = HOME_STREETS.find((x) => x.id === ins.street)?.name;
+  return t
+    .replace(/\{name\}/g, ins.name || 'Inspector')
+    .replace(/\{address\}/g, ins.house && st ? `${ins.house} ${st}` : 'the address on your form');
+}
+
+/**
  * The streets the player may claim as home.
  *
  * Everything on the map with a character written for it. Whistling Sparrow is
@@ -2473,18 +2546,6 @@ function calendarMarkup(extraClass = ''): string {
  */
 const HOME_STREETS = (streetsData.streets as Array<{ id: string; name: string; role: string }>)
   .filter((s) => s.role !== 'unassigned');
-
-function askBeat(b: { ask: string; text: string; after?: string }): string {
-  if (b.ask !== 'street') return `<p>${b.text}</p>`;
-  const chosen = saveFile.inspector.street ?? '';
-  const opts = [`<option value=""${chosen ? '' : ' selected'}>— pick one —</option>`]
-    .concat(HOME_STREETS.map((s) =>
-      `<option value="${s.id}"${s.id === chosen ? ' selected' : ''}>${s.name}</option>`))
-    .join('');
-  return `<p>${b.text}</p>
-     <p class="ask"><select id="ask-street" aria-label="Your street">${opts}</select></p>
-     ${chosen && b.after ? `<p>${b.after}</p>` : ''}`;
-}
 
 function briefing(): void {
   /**
@@ -2537,9 +2598,16 @@ function briefing(): void {
    * of the game on a dropdown would be a worse first impression than not
    * knowing the answer.
    */
-  type Beat = string | { ask: string; text: string; after?: string };
-  const storyBeats = () => ((day as { story?: Beat[] }).story ?? [day.briefing])
-    .map((t) => (typeof t === 'string' ? `<p>${t}</p>` : askBeat(t)))
+  const beats = () => ((day as { story?: string[] }).story ?? [day.briefing]).map(fillTokens);
+  /**
+   * Rendered EMPTY, with the words in a data attribute.
+   *
+   * typeStory fills them in afterwards. Putting the text in the markup and
+   * hiding it would mean a screen reader, or anyone who lands mid-animation,
+   * gets the paragraph twice.
+   */
+  const storyBeats = () => beats()
+    .map((t) => `<p data-type="${t.replace(/"/g, '&quot;')}"></p>`)
     .join('');
 
   // Backstory is FOUND, never told. The artifact is a thing on the desk, in a
@@ -2656,15 +2724,9 @@ function briefing(): void {
       if (page < pages.length - 1) { page++; render(); return; }
       startRound();
     };
-    const askStreet = document.getElementById('ask-street') as HTMLSelectElement | null;
-    if (askStreet) askStreet.onchange = () => {
-      saveFile.inspector.street = askStreet.value || undefined;
-      save(saveFile);
-      // Re-rendered rather than patched, so her follow-up line lands as part of
-      // the same conversation. `page` lives in the closure; the sheet does not
-      // jump back to the front.
-      render();
-    };
+    const story = sheet.querySelector<HTMLElement>('.pg.on .story');
+    if (story) typeStory(story);
+    else typeCancel?.();
     // Same read-more as the binder's, against the briefing's own open set.
     sheet.querySelectorAll<HTMLButtonElement>('[data-more]').forEach((b) => {
       b.onclick = () => {
@@ -2899,6 +2961,81 @@ function startRound(): void {
  * desk on screen with no indication of why.
  */
 /**
+ * The qualifications. None of them is read by anything, ever.
+ *
+ * That is the joke and it has to survive contact with the temptation to make
+ * one of them do something: the Association asked, the answer is on file, and
+ * the file is never opened again. Ticking all seven and ticking none produces
+ * the same job.
+ */
+const QUALIFICATIONS = [
+  ['pretty', 'I want to make the world a prettier place'],
+  ['hungry', "I haven't eaten in 3 days"],
+  ['mulch', 'I have opinions about mulch'],
+  ['fence', "My neighbor's fence has been leaning for two years"],
+  ['cart', 'I was told there would be a golf cart'],
+  ['covenants', 'I have read the covenants recreationally'],
+  ['feared', 'I want to be feared in a small way'],
+];
+
+/**
+ * THE FORM, and the last moment before the Association has any hold on you.
+ *
+ * It comes before the first briefing rather than being part of it, because the
+ * briefing is already the job — the manager is talking to somebody who works
+ * there. This is the paperwork that made that true, and it is deliberately the
+ * least game-looking screen in the game.
+ *
+ * Submit is gated on a name and an address. Not to be strict, but because the
+ * first thing she says is that you can fill out a form, and she should be
+ * right about that.
+ */
+function application(done: () => void): void {
+  const box = $('apply');
+  const form = $<HTMLFormElement>('apply-form');
+  const name = $<HTMLInputElement>('ap-name');
+  const house = $<HTMLInputElement>('ap-house');
+  const street = $<HTMLSelectElement>('ap-street');
+  const submit = $<HTMLButtonElement>('ap-submit');
+
+  street.innerHTML = '<option value="">— street —</option>'
+    + HOME_STREETS.map((st) => `<option value="${st.id}">${st.name}</option>`).join('');
+  $('ap-qual-list').innerHTML = QUALIFICATIONS
+    .map(([id, text]) => `<label><input type="checkbox" value="${id}" /><span>${text}</span></label>`)
+    .join('');
+
+  // Pre-filled from the save, so replaying does not make you type it again.
+  const ins = saveFile.inspector;
+  name.value = ins.name ?? '';
+  house.value = ins.house ?? '';
+  street.value = ins.street ?? '';
+  for (const cb of form.querySelectorAll<HTMLInputElement>('.ap-quals input'))
+    cb.checked = (ins.quals ?? []).includes(cb.value);
+
+  const check = () => {
+    submit.disabled = !name.value.trim() || !house.value.trim() || !street.value;
+  };
+  form.oninput = check;
+  check();
+
+  form.onsubmit = (ev) => {
+    ev.preventDefault();
+    if (submit.disabled) return;
+    ins.name = name.value.trim();
+    ins.house = house.value.trim();
+    ins.street = street.value;
+    ins.quals = [...form.querySelectorAll<HTMLInputElement>('.ap-quals input')]
+      .filter((cb) => cb.checked).map((cb) => cb.value);
+    save(saveFile);
+    box.hidden = true;
+    done();
+  };
+
+  box.hidden = false;
+  name.focus();
+}
+
+/**
  * Title screen. Start Game leads into the morning briefing rather than
  * straight to the route, because the briefing is a beat of the day loop
  * (gameplan section 2) and not just a how-to-play panel.
@@ -2925,7 +3062,9 @@ function titleScreen(): void {
     // the briefing — the handover is the route, not this button.
     sound.unlock();
     title.classList.remove('on');
-    briefing();
+    // Only once. Somebody replaying Shift 1 has already been hired.
+    if (saveFile.inspector.name) briefing();
+    else application(briefing);
   };
 }
 

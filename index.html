@@ -283,6 +283,63 @@
         padding: 4px 8px; cursor: pointer;
       }
 
+      /* --- The application ----------------------------------------------- */
+      /* No pixel face, no paper texture, no tilt. Everything else in this game
+         is a prop on a desk; this is a form, and the point of it is that it
+         looks like every form. The only thing it shares with the rest of the
+         game is the submit button, because that is the moment it stops being
+         a form and starts being a job. */
+      #apply {
+        position: fixed; inset: 0; z-index: 75;
+        display: flex; align-items: center; justify-content: center; padding: 24px;
+        background: #2a2722;
+        font: 13px/1.5 -apple-system, "Segoe UI", Arial, sans-serif;
+        overflow-y: auto;
+      }
+      #apply[hidden] { display: none; }
+      #apply-form {
+        background: #fff; color: #222;
+        width: min(520px, 100%); max-height: 100%;
+        border: 1px solid #b9b9b9;
+        box-shadow: 0 10px 40px rgba(0,0,0,.5);
+        padding: 26px 30px 22px;
+      }
+      .ap-head { border-bottom: 1px solid #d8d8d8; padding-bottom: 12px; margin-bottom: 18px; }
+      .ap-org {
+        font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+        color: #777; margin-bottom: 6px;
+      }
+      #apply h1 { margin: 0 0 4px; font-size: 21px; font-weight: 600; letter-spacing: -.01em; }
+      .ap-role { font-size: 13px; color: #444; }
+      .ap-role span { color: #888; }
+      /* Label on the left, field on the right, and the fields line up because a
+         form that does not line up is a form somebody made. */
+      .ap-row {
+        display: grid; grid-template-columns: 92px 1fr; align-items: center;
+        gap: 10px; margin-bottom: 12px;
+      }
+      .ap-row > span { font-size: 13px; color: #333; }
+      .ap-addr { grid-template-columns: 92px 84px 1fr; }
+      #apply input[type="text"], #apply select {
+        font: inherit; color: #222; background: #fff;
+        border: 1px solid #a9a9a9; border-radius: 2px;
+        padding: 6px 8px; width: 100%; min-width: 0;
+      }
+      #apply input:focus, #apply select:focus { outline: 2px solid #7aa7d8; outline-offset: -1px; }
+      .ap-quals { border: 0; padding: 0; margin: 18px 0 6px; }
+      .ap-quals legend { padding: 0; font-size: 13px; color: #333; margin-bottom: 8px; }
+      .ap-quals label {
+        display: grid; grid-template-columns: 18px 1fr; gap: 8px;
+        align-items: start; padding: 3px 0; cursor: pointer; color: #333;
+      }
+      .ap-quals input { margin: 3px 0 0; }
+      .ap-foot {
+        border-top: 1px solid #d8d8d8; margin-top: 18px; padding-top: 16px;
+        display: flex; justify-content: flex-end;
+      }
+      /* The one pixel-art thing on the page. */
+      #ap-submit { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+
       /* --- Mute ---------------------------------------------------------- */
       /* Fixed to the corner of the window rather than placed in the desk: it is
          not paperwork, it is a setting, and it should not move when the desk
@@ -1629,6 +1686,35 @@
     <div id="drawer" hidden aria-hidden="true">
       <div class="dr-darts" id="dr-darts"></div>
       <img class="dr-gun" src="assets/dart-gun.png" alt="" />
+    </div>
+
+    <!-- The form. Deliberately the least game-looking thing in the game: it is
+         the last moment before the Association has any hold on you, and it
+         should feel like a Tuesday afternoon at a desk. -->
+    <div id="apply" hidden>
+      <form id="apply-form" novalidate>
+        <div class="ap-head">
+          <div class="ap-org">Addison Master Community Association</div>
+          <h1>Job Application</h1>
+          <div class="ap-role">Role: Compliance Inspector <span>(Junior level)</span></div>
+        </div>
+
+        <label class="ap-row" for="ap-name"><span>Name</span>
+          <input id="ap-name" name="name" type="text" autocomplete="off" maxlength="28" /></label>
+
+        <div class="ap-row ap-addr"><span>Address</span>
+          <input id="ap-house" type="text" inputmode="numeric" maxlength="5" aria-label="House number" />
+          <select id="ap-street" aria-label="Street"></select></div>
+
+        <fieldset class="ap-quals">
+          <legend>What are your qualifications? Check all that apply.</legend>
+          <div id="ap-qual-list"></div>
+        </fieldset>
+
+        <div class="ap-foot">
+          <button type="submit" class="btn primary" id="ap-submit">Submit Application</button>
+        </div>
+      </form>
     </div>
 
     <div id="overlay"><div id="sheet"></div></div>
