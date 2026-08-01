@@ -2216,7 +2216,7 @@ function endDay(): void {
        ${acc < 70 ? '<br><span class="muted">Below 70%. In the full campaign this triggers probation at the bi-weekly review.</span>' : ''}</p>
 
     <p style="margin-top:18px">
-      <button class="btn" id="btn-after">${hasNext ? `Begin Level ${LEVELS[levelIndex + 1].level_id}` : 'Run this level again'}</button>
+      <button class="btn primary" id="btn-after">${hasNext ? `Begin Level ${LEVELS[levelIndex + 1].level_id}` : 'Run this level again'}</button>
     </p>
   `;
   overlay.classList.add('on');
@@ -2424,7 +2424,7 @@ function briefing(): void {
       <div class="pg-nav">
         <div class="pg-dots">${pages.map((_, i) => `<i class="${i === page ? 'on' : ''}"></i>`).join('')}</div>
         <button class="btn" id="pg-prev"${page === 0 ? ' disabled' : ''}>&larr; Back</button>
-        <button class="btn" id="pg-next">${page === pages.length - 1 ? 'Begin route' : 'Next &rarr;'}</button>
+        <button class="btn primary" id="pg-next">${page === pages.length - 1 ? 'Begin route' : 'Next &rarr;'}</button>
       </div>`;
     $('pg-prev').onclick = () => { if (page > 0) { page--; render(); } };
     $('pg-next').onclick = () => {

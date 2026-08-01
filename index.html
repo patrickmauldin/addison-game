@@ -795,10 +795,31 @@
         filter: drop-shadow(0 1px 1px rgba(0,0,0,.6));
       }
       #stamps button:disabled { opacity: .45; cursor: default; filter: none; }
+      /* ONE metric for both weights, so a Back and a Next standing next to each
+         other are the same height and sit on the same baseline. Only the colour
+         says which one carries the page forward. */
       .btn {
-        background: var(--paper-2); border: 1px solid #8a7d63; color: var(--ink);
-        padding: 5px 10px; cursor: pointer; font: inherit;
+        padding: 8px 15px; cursor: pointer;
+        font: 700 13px/1 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+        letter-spacing: .12em;
+        color: var(--ink); background: var(--paper-2);
+        border: 2px solid #8a7d63;
+        box-shadow: 0 3px 0 rgba(0,0,0,.18);
       }
+      .btn:hover:not(:disabled) { background: var(--manila); }
+      .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.18); }
+      .btn:disabled { opacity: .45; cursor: default; box-shadow: none; }
+      /* The button that moves you on, in the title screen's green. Exactly one
+         per panel: the briefing has a Back beside it and the audit has nothing
+         beside it, and in both cases it should be obvious without reading which
+         one ends the screen. */
+      .btn.primary {
+        color: #f2e9cf; background: #2f4a2c;
+        border-color: #101a10;
+        box-shadow: 0 3px 0 #1b2c1a, 0 6px 16px rgba(0,0,0,.28);
+      }
+      .btn.primary:hover:not(:disabled) { background: #3b5c37; }
+      .btn.primary:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #1b2c1a; }
 
       /* --- Overlays ---------------------------------------------------- */
       #overlay {
@@ -1063,15 +1084,13 @@
         font: 700 17px/1 ui-monospace, monospace; letter-spacing: .16em;
       }
       #menu { display: flex; flex-direction: column; gap: 10px; min-width: 268px; }
+      /* The same green as every other primary button — it is where the style
+         comes from. Only the SIZE differs: this one is the whole screen's
+         business, not a control at the foot of a panel. */
       #menu button {
-        padding: 14px 0; cursor: pointer;
-        font: 700 15px/1 ui-monospace, monospace; letter-spacing: .2em;
-        color: #f2e9cf; background: #2f4a2c;
-        border: 2px solid #101a10;
+        padding: 14px 0; font-size: 15px; letter-spacing: .2em;
         box-shadow: 0 3px 0 #1b2c1a, 0 6px 16px rgba(0,0,0,.45);
       }
-      #menu button:hover { background: #3b5c37; }
-      #menu button:active { transform: translateY(2px); box-shadow: 0 1px 0 #1b2c1a; }
 
       /* Boot guard. Visible by default; main.ts removes it once the module has
          actually executed. If the script never runs — the usual cause is
@@ -1278,7 +1297,7 @@
         <div class="b">LAWN &amp; ORDER</div>
       </div>
       <div id="menu">
-        <button id="btn-start-game">START GAME</button>
+        <button class="btn primary" id="btn-start-game">START GAME</button>
       </div>
     </div>
 
