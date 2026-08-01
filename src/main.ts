@@ -2418,21 +2418,20 @@ function briefing(): void {
          <p><b>Read the binder first.</b> It holds every article you have been trained on, and
             each one carries an enforcement-limits note folded underneath it. Those notes are
             load-bearing: most of what looks wrong on this street is allowed.</p>
-         <img src="assets/camera-cursor.png" alt="" />
+         <img src="assets/camera.png" alt="" />
          <p><b>Then click anything on the lot</b> to mark it as a finding. Click it again to
             unmark. Plenty of what you can click is perfectly compliant — being able to click a
             thing is not the game telling you it is wrong.</p>
-         <img src="assets/pass.png" alt="" />
+         <div class="hw-stamps">
+           <img src="assets/pass.png" alt="" />
+           <img src="assets/warning.png" alt="" />
+         </div>
          <div>
            <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>
            <ul class="hw-verdicts">
              <li><b>Nothing wrong with it</b> — pass.</li>
              <li><b>Something wrong you have not written up here before</b> — warning.</li>
-             <li><b>Something you already warned this address about</b> — fine.</li>
            </ul>
-           <p class="muted">One warning first, always. A fine on a first sighting will not
-              survive appeal, and the Association pays the costs. Your stamps for an address
-              are on its case file — look before you decide which one it is.</p>
          </div>
        </div>`);
   }

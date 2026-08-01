@@ -736,6 +736,15 @@
            one-pixel lines, which reads as damage rather than as pixel art. */
         image-rendering: auto;
       }
+      /* Both stamps the player has today, stacked in the one image column so
+         the paragraph beside them still starts where the other two do. */
+      #sheet .howto .hw-stamps {
+        justify-self: center; align-self: start; margin-top: 2px;
+        display: flex; flex-direction: column; align-items: center; gap: 5px;
+      }
+      /* Smaller than a lone icon, because there are two of them and the pair
+         should not outweigh the step it belongs to. */
+      #sheet .howto .hw-stamps img { margin-top: 0; max-width: 52px; max-height: 42px; }
       #sheet .howto p { margin: 0; }
       #sheet .howto p + p, #sheet .howto ul + p { margin-top: 8px; }
       /* The three-way rule as an actual list, because it is one. No bullets:
