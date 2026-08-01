@@ -141,6 +141,12 @@ export class Sound {
     } catch {
       /* private browsing; the setting simply does not persist */
     }
+    // A cue is audio too. It is not in `beds`, so muting used to leave the
+    // thief's music playing over a silenced game.
+    if (this.cueEl) {
+      if (m) this.cueEl.pause();
+      else if (this.unlocked) { void this.cueEl.play().catch(() => {}); this.fade(this.cueEl, BED_VOLUME); }
+    }
     for (const [name, a] of this.beds) {
       if (m) {
         a.pause();

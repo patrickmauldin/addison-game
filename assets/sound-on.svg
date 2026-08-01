@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" width=".333in" height=".2778in" version="1.1" viewBox="0 0 23.979 20">
+  <!-- Generator: Adobe Illustrator 30.6.0, SVG Export Plug-In . SVG Version: 2.1.4 Build 109)  -->
+  <polygon points="13 0 13 20 10 20 10 19 9 19 9 18 8 18 8 17 7 17 7 16 6 16 6 15 5 15 5 14 0 14 0 6 5 6 5 5 6 5 6 4 7 4 7 3 8 3 8 2 9 2 9 1 10 1 10 0 13 0" fill="#fff"/>
+  <g>
+    <polygon points="16 13 16 12 15 12 15 11 16 11 16 9 15 9 15 8 16 8 16 7 17 7 17 8 18 8 18 12 17 12 17 13 16 13" fill="#fff"/>
+    <path d="M22,8v4h-1v2h-1v1h-1v1h-1v-1h-1v-1h1v-1h1v-1h1v-4h-1v-1h-1v-1h-1v-1h1v-1h1v1h1v1h1v2h1Z" fill="#fff"/>
+  </g>
+  <g display="none">
+    <g>
+      <rect x="14.3907" y="4.7059" width="1.3698" height="1.3698" fill="#fff"/>
+      <rect x="15.7605" y="6.0756" width="1.3698" height="1.3698" fill="#fff"/>
+      <rect x="17.1302" y="7.4454" width="1.3698" height="1.3698" fill="#fff"/>
+      <rect x="18.5" y="8.8151" width="1.3698" height="1.3698" fill="#fff"/>
+      <rect x="19.8698" y="10.1849" width="1.3698" height="1.3698" fill="#fff"/>
+      <rect x="21.2395" y="11.5546" width="1.3698" height="1.3698" fill="#fff"/>
+      <rect x="22.6093" y="12.9244" width="1.3698" height="1.3698" fill="#fff"/>
+    </g>
+    <g>
+      <rect x="22.6093" y="4.7059" width="1.3698" height="1.3698" transform="translate(46.5883 10.7815) rotate(-180)" fill="#fff"/>
+      <rect x="21.2395" y="6.0756" width="1.3698" height="1.3698" transform="translate(43.8488 13.521) rotate(-180)" fill="#fff"/>
+      <rect x="19.8698" y="7.4454" width="1.3698" height="1.3698" transform="translate(41.1093 16.2605) rotate(-180)" fill="#fff"/>
+      <rect x="18.5" y="8.8151" width="1.3698" height="1.3698" transform="translate(38.3698 19) rotate(-180)" fill="#fff"/>
+      <rect x="17.1302" y="10.1849" width="1.3698" height="1.3698" transform="translate(35.6302 21.7395) rotate(-180)" fill="#fff"/>
+      <rect x="15.7605" y="11.5546" width="1.3698" height="1.3698" transform="translate(32.8907 24.479) rotate(-180)" fill="#fff"/>
+      <rect x="14.3907" y="12.9244" width="1.3698" height="1.3698" transform="translate(30.1512 27.2185) rotate(-180)" fill="#fff"/>
+    </g>
+  </g>
+</svg>

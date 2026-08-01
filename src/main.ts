@@ -2002,13 +2002,25 @@ function gotoLevel(i: number): void {
   briefing();
 }
 
+/**
+ * TWO CONTROLS, ONE STATE. The corner icon and the Tools entry are the same
+ * switch, so both are written from `sound.muted` rather than either of them
+ * tracking a flag of its own.
+ */
 function syncMute(): void {
-  $('mi-mute').innerHTML = `Sound<span class="when">${sound.muted ? 'off' : 'on'}</span>`;
+  const off = sound.muted;
+  $('mi-mute').innerHTML = `Sound<span class="when">${off ? 'off' : 'on'}</span>`;
+  $<HTMLImageElement>('mute-icon').src = `assets/sound-${off ? 'off' : 'on'}.svg${CB}`;
+  const btn = $('mute');
+  btn.setAttribute('aria-pressed', String(off));
+  btn.setAttribute('aria-label', off ? 'Sound off' : 'Sound on');
 }
-$('mi-mute').onclick = () => {
+const toggleMute = () => {
   sound.setMuted(!sound.muted);
   syncMute();
 };
+$('mi-mute').onclick = toggleMute;
+$('mute').onclick = toggleMute;
 syncMute();
 
 $('mi-reset').onclick = () => {

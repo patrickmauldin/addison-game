@@ -280,6 +280,28 @@
         padding: 4px 8px; cursor: pointer;
       }
 
+      /* --- Mute ---------------------------------------------------------- */
+      /* Fixed to the corner of the window rather than placed in the desk: it is
+         not paperwork, it is a setting, and it should not move when the desk
+         scrolls. Faint until you go looking for it — 20% is legible without
+         asking for attention.
+         BOTTOM LEFT, where the road is. The other corner is the stamps, and
+         they run the full width of the desk right to the window edge — an icon
+         there sits on the WARNING button, and on a three-stamp round there is
+         even less room. */
+      #mute {
+        position: fixed; left: 12px; bottom: 8px; z-index: 50;
+        background: none; border: 0; padding: 6px; cursor: pointer;
+        line-height: 0; opacity: .2; transition: opacity .14s;
+      }
+      #mute:hover, #mute:focus-visible { opacity: .7; }
+      #mute img {
+        width: 20px; height: auto; display: block;
+        /* The artwork is white and the road is dark, but a night wash or a pale
+           kerb is one resize away — the shadow keeps it legible on either. */
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,.9));
+      }
+
       /* --- The dart drawer ---------------------------------------------- */
       /* Pulled out over the desk from the right. Same board as the desk itself,
          because it IS the desk — a drawer under the paperwork you did not know
@@ -1570,6 +1592,12 @@
           </div>
 
         </div>
+
+        <!-- Bottom right of everything, and deliberately almost invisible: a
+             control you want findable once and then out of your way. -->
+        <button id="mute" aria-label="Sound on" aria-pressed="false">
+          <img id="mute-icon" src="assets/sound-on.svg" alt="" />
+        </button>
 
         <!-- Which of these is present depends on the level's verdict_mode.
              Early on there is no fine to give, so there is no button for one. -->
