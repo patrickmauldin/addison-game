@@ -722,8 +722,12 @@
          pixels across as delivered, and anything that fits them to a common
          width would blow the small one up to four times its size. Each sits at
          its natural size unless it is bigger than the box. */
+      /* Aligned to the TOP of its paragraph, not the middle of it. The stamp
+         cell runs several times the height of the other two, and an icon
+         floating halfway down it stops reading as a label for the line it
+         belongs to. The nudge optically centres it on that first line. */
       #sheet .howto img {
-        justify-self: center; align-self: center;
+        justify-self: center; align-self: start; margin-top: 2px;
         max-width: 58px; max-height: 52px;
         width: auto; height: auto; display: block;
         /* Smoothed, unusually for this game. Two of these land on fractions of
@@ -733,6 +737,14 @@
         image-rendering: auto;
       }
       #sheet .howto p { margin: 0; }
+      #sheet .howto p + p, #sheet .howto ul + p { margin-top: 8px; }
+      /* The three-way rule as an actual list, because it is one. No bullets:
+         the bold clause is the marker, and a disc in front of it would put a
+         second one on the same line. */
+      #sheet .howto .hw-verdicts {
+        list-style: none; margin: 7px 0 0; padding: 0;
+      }
+      #sheet .howto .hw-verdicts li + li { margin-top: 4px; }
 
       /* --- The briefing's leaf ------------------------------------------ */
       /* A page out of the book, set into the morning briefing: same white

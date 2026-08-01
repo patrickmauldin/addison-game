@@ -2414,15 +2414,26 @@ function briefing(): void {
     pages.splice(2, 0,
       `<h3>How this works</h3>
        <div class="howto">
-         <img src="assets/camera-cursor.png" alt="" />
-         <p><b>Click anything on the lot</b> to mark it as a finding. Click it again to unmark.
-            Plenty of what you can click is perfectly compliant — being able to click a thing
-            is not the game telling you it is wrong.</p>
          <img src="assets/binder.png" alt="" />
-         <p><b>Read the binder before you stamp.</b> Every article carries an enforcement-limits
-            note folded underneath it, and it is load-bearing.</p>
+         <p><b>Read the binder first.</b> It holds every article you have been trained on, and
+            each one carries an enforcement-limits note folded underneath it. Those notes are
+            load-bearing: most of what looks wrong on this street is allowed.</p>
+         <img src="assets/camera-cursor.png" alt="" />
+         <p><b>Then click anything on the lot</b> to mark it as a finding. Click it again to
+            unmark. Plenty of what you can click is perfectly compliant — being able to click a
+            thing is not the game telling you it is wrong.</p>
          <img src="assets/pass.png" alt="" />
-         <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>
+         <div>
+           <p><b>Then stamp.</b> The verdict is about the lot, not the object.</p>
+           <ul class="hw-verdicts">
+             <li><b>Nothing wrong with it</b> — pass.</li>
+             <li><b>Something wrong you have not written up here before</b> — warning.</li>
+             <li><b>Something you already warned this address about</b> — fine.</li>
+           </ul>
+           <p class="muted">One warning first, always. A fine on a first sighting will not
+              survive appeal, and the Association pays the costs. Your stamps for an address
+              are on its case file — look before you decide which one it is.</p>
+         </div>
        </div>`);
   }
     return pages;
