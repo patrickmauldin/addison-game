@@ -1513,6 +1513,54 @@ function binderEntry(a: Article, expanded: Set<string> = binderExpanded): string
  * the book telling you the job is bigger than today. What is withheld is the
  * CONTENT, not the existence of the section.
  */
+/**
+ * THE MAP DIVIDER. A page of the binder rather than a section of the
+ * declaration: it holds no articles, so it is never locked and never shows the
+ * "not yet trained" note.
+ */
+const MAP_TAB = 'Map';
+
+/**
+ * Street names on the drawing do not all match the ones in streets.json.
+ *
+ * Only where they genuinely differ. Eyezetta is "Eyezeta" in the game and was
+ * exported as "ibetta"; rather than edit somebody's artwork, the mismatch is
+ * recorded here where it can be seen and deleted once the file is redrawn.
+ */
+const MAP_ALIASES: Record<string, string> = { eyezeta: 'ibetta' };
+
+/**
+ * Fetched once and kept, because it is markup rather than a picture.
+ *
+ * It has to be INLINE for any of this to work: an <img> is an opaque document
+ * and neither CSS nor script can reach a path inside it, so dimming a street
+ * would be impossible. 2.8KB, so holding the text costs nothing.
+ */
+let mapSvg: string | null = null;
+let mapFetching = false;
+
+function loadMap(): void {
+  if (mapSvg !== null || mapFetching) return;
+  mapFetching = true;
+  void fetch(`assets/map.svg${CB}`)
+    .then((r) => (r.ok ? r.text() : ''))
+    .then((t) => {
+      // Illustrator leaves the tracing template it was drawn over in the file,
+      // pointing at a PNG that was never shipped. It is display:none, so it
+      // shows nothing and 404s every time the page is opened.
+      mapSvg = t.replace(/<g id="moIwjp"[\s\S]*?<\/g>/, '');
+      mapFetching = false;
+      syncBinder();
+    })
+    .catch(() => { mapSvg = ''; mapFetching = false; });
+}
+
+/** Which street the player is standing on, as an id the drawing would know. */
+function currentStreetId(): string {
+  const id = (current?.street ?? '').toLowerCase().replace(/\s+/g, '_');
+  return MAP_ALIASES[id] ?? id;
+}
+
 function syncBinder(): void {
   const active = ARTICLES.filter((a) => day.active_rules.includes(a.id)) as Article[];
   const cats = CATEGORIES;
@@ -1547,13 +1595,24 @@ function syncBinder(): void {
   cover.onclick = () => { binderOpen = true; sound.play('page'); syncBinder(); };
 
   const here = active.filter((a) => a.category === cat);
-  // An untrained section is not empty — it is withheld. Saying so in the
-  // Association's own voice is worth more than a blank leaf, and it tells the
-  // player the tab will be worth something later without spoiling what.
-  body.innerHTML = here.length
-    ? here.map((a) => binderEntry(a)).join('')
-    : `<p class="bk-locked">These rules will be revealed to you once you have
-         completed the relevant job training.</p>`;
+  if (cat === MAP_TAB) {
+    loadMap();
+    body.innerHTML = mapSvg
+      ? `<div class="bk-map">${mapSvg}</div>`
+      : '<p class="bk-locked">Unfolding the map…</p>';
+    // Marked AFTER the markup lands, because the class goes on a path inside
+    // the drawing rather than on anything this file wrote.
+    const street = body.querySelector<SVGElement>(`.bk-map #${CSS.escape(currentStreetId())}`);
+    street?.classList.add('here');
+  } else {
+    // An untrained section is not empty — it is withheld. Saying so in the
+    // Association's own voice is worth more than a blank leaf, and it tells the
+    // player the tab will be worth something later without spoiling what.
+    body.innerHTML = here.length
+      ? here.map((a) => binderEntry(a)).join('')
+      : `<p class="bk-locked">These rules will be revealed to you once you have
+           completed the relevant job training.</p>`;
+  }
   body.querySelectorAll<HTMLButtonElement>('[data-more]').forEach((b) => {
     b.onclick = () => {
       const id = b.dataset.more!;
@@ -1584,7 +1643,8 @@ function syncBinder(): void {
   $('binder-tabs').innerHTML = cats
     .map((c) => {
       // Dimmed, not disabled. You can pull the tab and read WHY it is empty.
-      const locked = !active.some((a) => a.category === c);
+      // The map is never dimmed: it has no articles to be waiting for.
+      const locked = c !== MAP_TAB && !active.some((a) => a.category === c);
       // The icon file IS the category name, lowercased — no lookup table to
       // fall out of step with the data when a section is added.
       return `<button type="button" role="tab" data-cat="${c}"

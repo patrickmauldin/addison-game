@@ -1,12 +1,13 @@
 {
   "_note": "CC&R articles. Text is placeholder phrasing in the register of a real Texas HOA declaration; the actual Addison E-Binder wording is not used here.",
-  "_categories_note": "Binder tabs, in the order they are stapled into the book. An article's `category` decides which tab it lives behind; a category with no ACTIVE article grows no tab, so the book only ever advertises sections the player has actually been taught. Order is fixed rather than alphabetical: the tabs must not reshuffle when a new article is introduced, because the player learns where a tab IS.",
+  "_categories_note": "Binder tabs, in the order they are stapled into the book. An article's `category` decides which tab it lives behind; a category with no ACTIVE article grows no tab, so the book only ever advertises sections the player has actually been taught. Order is fixed rather than alphabetical: the tabs must not reshuffle when a new article is introduced, because the player learns where a tab IS. The last divider is the MAP, which holds no articles at all — it is a page of the binder rather than a section of the declaration, and is never locked.",
   "categories": [
     "Plants",
     "Objects",
     "Trash",
     "Cars",
-    "Pets"
+    "Pets",
+    "Map"
   ],
   "articles": [
     {

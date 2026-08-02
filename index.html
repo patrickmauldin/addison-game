@@ -919,6 +919,25 @@
       .bk-more:hover { color: var(--binder-ink); }
       .bk-full[hidden] { display: none; }
       .bk-full { margin-top: 6px; }
+      /* --- The map divider ---------------------------------------------- */
+      /* Inlined, not an <img>: the whole point is reaching a street inside it,
+         and an image is an opaque document to both CSS and script. */
+      .bk-map {
+        background: #d3f8e1;
+        border: 1px solid rgba(122,88,89,.45);
+        padding: 3px; margin-top: 2px;
+      }
+      .bk-map svg { display: block; width: 100%; height: auto; }
+      /* Everything faded, then two things brought back. Dimming is the default
+         so a street added to the drawing later is handled without touching
+         this — it simply starts faded like the rest. */
+      .bk-map svg path, .bk-map svg polyline, .bk-map svg line { opacity: .5; }
+      /* The creek is geography, not a street. It is never the place you are and
+         never the place you are not, so it does not take part. */
+      .bk-map svg #creek { opacity: 1; }
+      /* Where you are standing. */
+      .bk-map svg .here { opacity: 1; }
+
       /* A section you have not been trained on. Faint and italic so it reads as
          a note on an otherwise blank leaf rather than as a rule. */
       .bk-locked {
