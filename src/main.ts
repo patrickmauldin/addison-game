@@ -425,9 +425,35 @@ const ARTICLE_TIMING: Record<string, ArticleTiming> = Object.fromEntries(
 );
 
 const HOUSE_VARIANTS = ['window', 'christmas'];
+/**
+ * Every house image that could exist. Used to resolve a PATH, not to decide
+ * what to fetch — see HOUSE_LOADS.
+ */
 const HOUSE_SPRITES = [
   ...HOUSE_PLANS,
   ...HOUSE_PLANS.flatMap((h) => HOUSE_VARIANTS.map((v) => `${h}-${v}`)),
+];
+
+/**
+ * THE HOUSES ACTUALLY FETCHED AT BOOT: every base, plus only the variants some
+ * level asks for.
+ *
+ * The cross-product was 18 images and 4.5MB, all of it downloaded before the
+ * title screen, and two thirds of the variants were referenced by nothing. This
+ * reads the content instead, so an unused variant costs nothing and the moment
+ * a level names one it loads without anybody touching this list.
+ *
+ * The BASE is always loaded, and the base is the compliant house — renderLot
+ * falls back to it with `variant ?? baseHouse`. So a lot that had lights and
+ * has taken them down just omits the field; there is no "fixed" model to ship
+ * and no pairing to keep straight. What a missing variant costs is only that
+ * THAT house can never show THAT violation.
+ */
+const HOUSE_LOADS = [
+  ...HOUSE_PLANS,
+  ...new Set(
+    LEVELS.flatMap((l) => l.lots.map((lot) => lot.house?.variant)).filter(Boolean) as string[],
+  ),
 ];
 
 /** Subfolder for a sprite key, '' for the ones at the top of assets/. */
@@ -437,7 +463,7 @@ function assetDir(name: string): string {
 
 const ASSET_FILES = [
   'grass', 'road', 'sidewalk',
-  ...HOUSE_SPRITES,
+  ...HOUSE_LOADS,
   'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
   // Overgrown turf. Four tufts so a lawn that has got away from its owner does

@@ -374,6 +374,23 @@ for (const day of DAYS) {
     const objectIds = new Set(lot.props.map((p) => p.id));
     if (lot.house?.variantId) objectIds.add(lot.house.variantId);
 
+    /**
+     * A NAMED VARIANT MUST BE ON DISK, and this is the only place that notices.
+     *
+     * The loader fails soft and the compositor falls back to the base house, so
+     * a variant that is missing or misspelled renders a perfectly ordinary
+     * house with no violation on it and no error anywhere — the lot simply
+     * cannot be solved. Now that only referenced variants are fetched, a typo
+     * here means the file is never even requested.
+     */
+    if (lot.house?.variant) {
+      const v = lot.house.variant;
+      if (!['jpg', 'png'].some((e) => existsSync(`assets/houses/${v}.${e}`)))
+        fail(`${lotId}: house variant "${v}" is not in assets/houses/ — the lot would render as the plain house`);
+      if (!lot.house.variantId)
+        fail(`${lotId}: house variant "${v}" has no variantId, so nothing on it can be clicked`);
+    }
+
     for (const p of lot.props)
       if (!(p.anchor in DEFAULT_ANCHORS)) fail(`${lotId}: unknown anchor "${p.anchor}"`);
 
