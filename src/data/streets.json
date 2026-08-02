@@ -1,7 +1,6 @@
 {
   "_note": "The eight streets of Addison. Each keeps the character its real counterpart has on the map, because those characters carry the difficulty ramp and Act III's flood geography.",
   "_source_note": "Characters below are read off the actual Addison street map rather than inherited from gameplan section 7's list, which did not include Bananalise or Whistling Sparrow. Two corrections follow from the map. Bananalise (<- Bananalise) is the southern arterial, not an interior street. And the the creek frontage is the NORTH ARC OF BONERVILLE plus the top of the Zingersoll block, not a separate greenbelt street — so Act III floods Bonerville and Zingersoll and needs no extra street name.",
-  "_open_question": "Whistling Sparrow is drawn on the map but still has no phase, role or position here, so it stays out of the streets a player may claim as home. Give it those three and it joins the list.",
   "streets": [
     {
       "id": "bonerville",
@@ -88,10 +87,11 @@
       "id": "whistling_sparrow",
       "name": "Whistling Sparrow",
       "was": "Whistling Sparrow",
-      "phase": "unassigned",
-      "role": "unassigned",
+      "phase": "new",
+      "role": "residential",
       "creek_frontage": false,
-      "character": "UNASSIGNED. Whistling Sparrow is not on the map extract on hand, so no character has been inferred rather than one being invented. Needs a phase, a role and a position before it can carry a day."
+      "character": "The far south-west corner, and the shortest street in Addison — one run, no through traffic, nothing beyond it. South of the arterial like Goodish, so it belongs to the newest section; unlike Goodish it never grew past its first block. The quietest address on the map, and the furthest from anywhere the Board looks.",
+      "_inferred": "Phase and role are READ OFF THE MAP rather than authored: it sits south of Bananalise, which the file already treats as the newest section, and it is a short stub rather than a loop, a spine or an arterial. Change them if the intent was different — nothing else depends on these two fields except whether it is offered as a home street."
     }
   ]
 }
