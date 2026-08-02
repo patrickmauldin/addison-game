@@ -396,7 +396,24 @@ const TALL_GRASS = ['grass1', 'grass2', 'grass3', 'grass4'];
  * between folders should not rewrite every level. assetDir() is the one place
  * that knows the difference.
  */
-const HOUSE_PLANS = ['house1', 'house2', 'house3', 'house4', 'house5', 'house6'];
+/**
+ * The numbered plans. Each is a distinct building with its own driveway, walk
+ * and fence line, and each has one measured anchor table in houses.json.
+ */
+const HOUSE_PLANS = [
+  'house1', 'house2', 'house3', 'house4', 'house5', 'house6', 'house7',
+  'house8', 'house9', 'house10', 'house11', 'house12', 'house13',
+];
+
+/**
+ * Second dressings of a plan — the same house with the garage standing open.
+ *
+ * PURELY DECORATIVE. Nothing cites them and nothing behaves differently on
+ * them; they exist so a street of thirteen plans does not read as thirteen
+ * houses repeated. Listed here rather than derived, because only some plans
+ * were drawn a second way.
+ */
+const HOUSE_ALTS = ['house7b', 'house8b', 'house10b', 'house13b'];
 
 /**
  * Repainted versions of each plan — the same house with one thing wrong.
@@ -431,6 +448,7 @@ const HOUSE_VARIANTS = ['window', 'christmas'];
  */
 const HOUSE_SPRITES = [
   ...HOUSE_PLANS,
+  ...HOUSE_ALTS,
   ...HOUSE_PLANS.flatMap((h) => HOUSE_VARIANTS.map((v) => `${h}-${v}`)),
 ];
 
@@ -451,6 +469,7 @@ const HOUSE_SPRITES = [
  */
 const HOUSE_LOADS = [
   ...HOUSE_PLANS,
+  ...HOUSE_ALTS,
   ...new Set(
     LEVELS.flatMap((l) => l.lots.map((lot) => lot.house?.variant)).filter(Boolean) as string[],
   ),

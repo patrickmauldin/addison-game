@@ -19,10 +19,10 @@
  * "is this exportable" rather than "is this on my palette".
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { renderLot, type Bitmap, type LotSpec } from '../src/scene-compositor.js';
-import { ANCHOR_SURFACE, DEFAULT_ANCHORS, mergeAnchors } from '../src/core/scene.js';
+import { ANCHOR_SURFACE, DEFAULT_ANCHORS, housePlan, mergeAnchors, surfaceOf } from '../src/core/scene.js';
 import { decodePng } from '../src/core/png.js';
 import { adjudicate, emptySave, noteFirstSeen, recordFor, type ArticleTiming } from '../src/game/state.js';
 import { dateForLevel } from '../src/game/calendar.js';
@@ -126,7 +126,17 @@ checkTile('assets/sidewalk.png', 'sidewalk strip', 'x');
 // Load everything the lots can reference, so the click-target checks below
 // measure the real thing rather than an empty scene.
 const SPRITES = new Map<string, Bitmap>();
-for (const name of ['grass','road','sidewalk','house1','house2','house3','house4','house5','house6','fence1','fence2','fence3','weed1','weed2','weed3','trash-green','trash-brown']) {
+/**
+ * Every house image on disk, so a plan added to assets/ is checked without
+ * anybody remembering to add it here — and so the "b" dressings and the
+ * repaints are checked against the plan table they share.
+ */
+const HOUSE_ART = readdirSync('assets/houses')
+  .filter((f) => /^house[\w-]*\.(jpg|png)$/.test(f))
+  .map((f) => f.replace(/\.(jpg|png)$/, ''))
+  .sort();
+
+for (const name of ['grass','road','sidewalk',...HOUSE_ART,'fence1','fence2','fence3','weed1','weed2','weed3','trash-green','trash-brown']) {
   // Houses are filed in their own folder; everything else sits at the top.
   const dir = name.startsWith('house') ? 'houses/' : '';
   for (const ext of ['png','jpg']) {
@@ -181,8 +191,14 @@ if (g && h1) {
  * the walk was rerouted to meet the driveway, and YARD_6 sitting on the driveway
  * edge — neither of which was visible because no lot happened to use them yet.
  */
+/**
+ * Keyed on the PLAN. house7b and house1-christmas are the same building drawn
+ * again, so they are checked against house7's and house1's measurements — which
+ * is exactly the claim being made by sharing them, and worth testing rather
+ * than assuming.
+ */
 function anchorTableFor(houseId: string) {
-  const raw = (housesData as any).houses?.[houseId]?.anchors ?? {};
+  const raw = (housesData as any).houses?.[housePlan(houseId)]?.anchors ?? {};
   const clean: Record<string, { hx: number; hy: number }> = {};
   for (const [k, v] of Object.entries(raw as Record<string, any>))
     if (v && typeof v.hx === 'number' && typeof v.hy === 'number') clean[k] = { hx: v.hx, hy: v.hy };
@@ -209,11 +225,8 @@ function checkAnchorSurfaces(houseId: string, used: Set<string>): void {
     const i = (y * art.w + x) << 2;
     return [art.rgba[i], art.rgba[i + 1], art.rgba[i + 2]];
   };
-  // Grass is strongly green-over-blue; paving is pale and near-neutral. On this
-  // art grass reads ~100 on green-minus-blue and paving ~40, so 60 splits them
-  // with room on both sides.
-  const classify = (c: number[]) =>
-    c[1] - c[2] > 60 ? 'grass' : c[0] > 150 && c[1] > 130 ? 'paving' : 'bed';
+  /** Shared with tools/map-houses.ts — see surfaceOf. */
+  const classify = (c: number[]) => surfaceOf(c[0], c[1], c[2]);
 
   for (const name of Object.keys(ANCHOR_SURFACE)) {
     const want = ANCHOR_SURFACE[name];
@@ -254,8 +267,25 @@ function checkAnchorSurfaces(houseId: string, used: Set<string>): void {
 // Placed here, below the helpers: fail/warn and surfaceChecked are const, so
 // calling this any earlier dies in the temporal dead zone before validating
 // anything — which is how a validator ends up silently passing.
-for (const hid of Object.keys((housesData as any).houses ?? {}))
-  if (SPRITES.has(hid)) checkAnchorSurfaces(hid, new Set());
+/**
+ * WHICH ANCHORS ARE ACTUALLY USED, gathered before anything is checked.
+ *
+ * checkAnchorSurfaces reports a used anchor as an error and an unused one as a
+ * warning, and it memoises per house so a plan on five lots is sampled once.
+ * The memo was the problem: the sweep over every house ran FIRST with an empty
+ * used-set, so by the time the lots were walked every house was already marked
+ * done and the per-lot call returned immediately. Nothing could ever escalate,
+ * and the distinction the function is built around had quietly stopped
+ * existing. Collect first, check once, with the real set.
+ */
+const usedAnchors = new Map<string, Set<string>>();
+for (const day of LEVELS)
+  for (const lot of day.lots)
+    if (lot.house?.sprite) {
+      const set = usedAnchors.get(lot.house.sprite) ?? new Set<string>();
+      for (const p of lot.props ?? []) set.add(p.anchor);
+      usedAnchors.set(lot.house.sprite, set);
+    }
 
 /**
  * PINNED CAST. A cameo names people and animals as strings, and both lookups
@@ -407,9 +437,8 @@ for (const day of DAYS) {
     if (day.verdict_mode === 'binary' && lot.expected_verdict !== derived)
       fail(`${lotId}: expected_verdict is ${lot.expected_verdict} but truth implies ${derived}`);
 
-    // Every anchor this lot actually uses must land on the surface it claims.
-    if (lot.house?.sprite)
-      checkAnchorSurfaces(lot.house.sprite, new Set(lot.props.map((p) => p.anchor)));
+    // Anchor surfaces are checked once per house AFTER this loop, against the
+    // anchors every lot between them uses — see usedAnchors.
 
     const { raster, objects } = renderLot(
       lot,
@@ -439,6 +468,9 @@ for (const day of DAYS) {
     if (!anyDecoy)
       fail(`day ${day.level_id}: rule ${a.id} is introduced with no decoy on the route. Every rule ships with a near-miss.`);
 }
+
+for (const hid of HOUSE_ART)
+  if (SPRITES.has(hid)) checkAnchorSurfaces(hid, usedAnchors.get(hid) ?? new Set());
 
 for (const w of warnings) console.log(`  warn   ${w}`);
 for (const e of errors) console.log(`  FAIL   ${e}`);

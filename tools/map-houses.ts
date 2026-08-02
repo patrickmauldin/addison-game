@@ -9,8 +9,16 @@
 import { readFileSync } from 'node:fs';
 import { execSync } from 'node:child_process';
 import { decodePng, type Bitmap } from '../src/core/png.js';
+import { surfaceOf } from '../src/core/scene.js';
 
-const HOUSES = ['house1','house2','house3','house4','house5','house6'];
+/**
+ * THE NUMBERED PLANS ONLY. A "b" dressing or a repaint is the same building
+ * photographed the same way, so it shares this table — see housePlan().
+ * Measuring them separately would produce a second set of numbers that could
+ * drift from the first for no reason.
+ */
+const HOUSES = ['house1','house2','house3','house4','house5','house6','house7',
+  'house8','house9','house10','house11','house12','house13'];
 
 function load(id: string): Bitmap {
   execSync(`sips -s format png "assets/houses/${id}.jpg" --out /tmp/${id}.png`, { stdio: 'ignore' });
@@ -20,8 +28,8 @@ const at = (b: Bitmap, x: number, y: number) => {
   const i = (Math.min(b.h-1,Math.max(0,y)) * b.w + Math.min(b.w-1,Math.max(0,x))) << 2;
   return [b.rgba[i], b.rgba[i+1], b.rgba[i+2]];
 };
-const kind = (c: number[]): 'grass'|'paving'|'structure' =>
-  c[1] - c[2] > 60 ? 'grass' : (c[0] > 150 && c[1] > 130 && c[2] > 95) ? 'paving' : 'structure';
+/** Shared with the validator — see surfaceOf. 'bed' is this file's 'structure'. */
+const kind = (c: number[]): 'grass'|'paving'|'bed' => surfaceOf(c[0], c[1], c[2]);
 
 function runs(b: Bitmap, y: number, want: string, min = 30): Array<[number,number]> {
   const out: Array<[number,number]> = [];
@@ -33,6 +41,17 @@ function runs(b: Bitmap, y: number, want: string, min = 30): Array<[number,numbe
   if (s >= 0 && b.w - s >= min) out.push([s, b.w]);
   return out;
 }
+
+/**
+ * How far inside a house's widest point still counts as its right wall.
+ *
+ * Tight on purpose. Loose enough and the ROOF OVERHANG qualifies on its own —
+ * house7 lands at 0.738 instead of 0.814 at 0.10, house13 at 0.677 instead of
+ * 0.794 at 0.14 — and the fence floats off the building. 0.06 reproduces all
+ * six original measurements exactly while also finding a wall on the two plans
+ * that are narrower than house1, which a fixed fraction of the canvas missed.
+ */
+const FENCE_SLACK = 0.06;
 
 type Row = { id:string; drive:[number,number]; walk:[number,number]|null; fenceX:number; fenceY:number; garageY:number };
 const rows: Row[] = [];
@@ -58,16 +77,30 @@ for (const id of HOUSES) {
   // Fence line. The fence butts the house's RIGHT WALL, not the roof overhang,
   // so find the lowest row whose rightmost structure still reaches far right —
   // below that the built mass has ended and the side yard begins.
-  let fenceY = 0;
-  for (let y = Math.round(b.h*0.30); y < Math.round(b.h*0.72); y++) {
-    const r = runs(b, y, 'structure', 40);
-    if (!r.length) continue;
-    if (r[r.length-1][1] >= b.w * 0.84) fenceY = y;
+  /**
+   * Measured against THIS HOUSE'S own right edge, not a fixed fraction of the
+   * image. The threshold used to be 0.84 of the canvas, which assumed every
+   * plan is about as wide as house1 — house7 and house13 reach only 0.81 and
+   * 0.79, so neither had a fence row at all and both anchored their fence and
+   * their screened bins at the top of the rect.
+   */
+  const band = { from: Math.round(b.h*0.30), to: Math.round(b.h*0.72) };
+  const rightAt: number[] = [];
+  let maxRight = 0;
+  for (let y = band.from; y < band.to; y++) {
+    const r = runs(b, y, 'bed', 40);
+    rightAt[y] = r.length ? r[r.length-1][1] : 0;
+    if (rightAt[y] > maxRight) maxRight = rightAt[y];
   }
+  // The LOWEST row still within a whisker of that edge: below it the built mass
+  // has ended and the side yard begins.
+  let fenceY = 0;
+  for (let y = band.from; y < band.to; y++)
+    if (rightAt[y] >= maxRight - b.w*FENCE_SLACK) fenceY = y;
   // Rightmost structure ON THE FENCE ROW. Taking the widest point of the whole
   // built mass instead picks the roof overhang, which sits further right than
   // the wall beneath it and leaves the fence floating clear of the house.
-  const fr = runs(b, fenceY, 'structure', 40);
+  const fr = runs(b, fenceY, 'bed', 40);
   const fenceX = fr.length ? fr[fr.length-1][1] : Math.round(b.w*0.9);
 
   // Garage apron: where the driveway meets the building, i.e. the top of the
@@ -94,7 +127,9 @@ function surfaceAt(b: Bitmap, hx: number, hy: number) {
   return kind(at(b, Math.round(hx*b.w), Math.round(hy*b.h)));
 }
 function ok(want: string, got: string) {
-  return want === 'bed' ? got === 'structure' : got === want;
+  // Same rule the validator applies: a bed anchor takes mulch or lawn, anything
+  // but pavement.
+  return want === 'bed' ? got !== 'paving' : got === want;
 }
 /** Spiral out from a point for the nearest spot on the required surface. */
 function settle(b: Bitmap, hx: number, hy: number, want: string) {
@@ -160,7 +195,16 @@ const PLANS: Record<string,string> = {
   house5: 'Garage right.',
   house6: 'Three-car garage — the widest driveway of the set. Walk is far left.',
 };
-for (const id of Object.keys(houses)) houses[id]._plan = PLANS[id] ?? '';
+/** Filled in from the measurements below for anything PLANS does not describe. */
+function describe(r: Row): string {
+  const dc = (r.drive[0] + r.drive[1]) / 2;
+  const side = dc > 0.58 ? 'Garage right' : dc < 0.42 ? 'MIRRORED PLAN — garage and driveway LEFT' : 'Garage centred';
+  const width = r.drive[1] - r.drive[0] > 0.30 ? 'wide driveway'
+    : r.drive[1] - r.drive[0] < 0.20 ? 'narrow single-width driveway' : 'two-car driveway';
+  const walk = r.walk ? `walk at ${((r.walk[0] + r.walk[1]) / 2).toFixed(2)}` : 'no separate walk found';
+  return `MEASURED — ${side}, ${width}, ${walk}.`;
+}
+for (const r of rows) houses[r.id]._plan = PLANS[r.id] ?? describe(r);
 
 writeFileSync('src/data/houses.json', JSON.stringify({
   _note: 'Per-house anchor overrides. Anything omitted falls back to DEFAULT_ANCHORS in core/scene.ts.',

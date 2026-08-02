@@ -12,7 +12,7 @@
  * draws, and a click resolves in O(1) with no geometry.
  */
 
-import { anchor, layout, mergeAnchors, WALK_NATIVE_H, type AnchorTable, type Layout } from './core/scene.js';
+import { anchor, housePlan, layout, mergeAnchors, WALK_NATIVE_H, type AnchorTable, type Layout } from './core/scene.js';
 import { PALETTE, type Rgb } from './core/palette.js';
 import { Raster } from './core/raster.js';
 
@@ -424,7 +424,7 @@ export function renderLot(
   // one measured table serves both handednesses — there is no second set of
   // numbers to keep in step with the first.
   const base = mergeAnchors(
-    spec.house?.sprite ? assets.houseAnchors?.[spec.house.sprite] : undefined,
+    spec.house?.sprite ? assets.houseAnchors?.[housePlan(spec.house.sprite)] : undefined,
   );
   const anchors: AnchorTable = mirror
     ? Object.fromEntries(Object.entries(base).map(([k, a]) => [k, { hx: 1 - a.hx, hy: a.hy }]))

@@ -187,8 +187,8 @@
           "hy": 0.96
         },
         "BED_FRONT": {
-          "hx": 0.206,
-          "hy": 0.626
+          "hx": 0.21,
+          "hy": 0.64
         },
         "BINS_SCREENED": {
           "hx": 0.898,
@@ -216,15 +216,15 @@
       "_plan": "Garage right, narrow single-width driveway.",
       "anchors": {
         "DRIVEWAY_1": {
-          "hx": 0.75,
+          "hx": 0.677,
           "hy": 0.7
         },
         "DRIVEWAY_2": {
-          "hx": 0.75,
+          "hx": 0.677,
           "hy": 0.82
         },
         "DRIVEWAY_3": {
-          "hx": 0.75,
+          "hx": 0.677,
           "hy": 0.95
         },
         "WALK_1": {
@@ -260,7 +260,7 @@
           "hy": 0.64
         },
         "BINS_SCREENED": {
-          "hx": 0.92,
+          "hx": 0.919,
           "hy": 0.583
         },
         "PORCH_1": {
@@ -268,15 +268,15 @@
           "hy": 0.62
         },
         "APRON_1": {
-          "hx": 0.707,
+          "hx": 0.591,
           "hy": 0.515
         },
         "APRON_2": {
-          "hx": 0.769,
+          "hx": 0.714,
           "hy": 0.515
         },
         "FENCE_1": {
-          "hx": 0.866,
+          "hx": 0.865,
           "hy": 0.613
         }
       }
@@ -325,11 +325,11 @@
           "hy": 0.96
         },
         "BED_FRONT": {
-          "hx": 0.21,
+          "hx": 0.22,
           "hy": 0.64
         },
         "BINS_SCREENED": {
-          "hx": 0.959,
+          "hx": 0.966,
           "hy": 0.566
         },
         "PORCH_1": {
@@ -345,7 +345,7 @@
           "hy": 0.5
         },
         "FENCE_1": {
-          "hx": 0.905,
+          "hx": 0.912,
           "hy": 0.596
         }
       }
@@ -398,8 +398,8 @@
           "hy": 0.64
         },
         "BINS_SCREENED": {
-          "hx": 0.943,
-          "hy": 0.621
+          "hx": 0.95,
+          "hy": 0.62
         },
         "PORCH_1": {
           "hx": 0.47,
@@ -414,8 +414,491 @@
           "hy": 0.532
         },
         "FENCE_1": {
-          "hx": 0.889,
-          "hy": 0.651
+          "hx": 0.896,
+          "hy": 0.65
+        }
+      }
+    },
+    "house7": {
+      "_plan": "MEASURED — Garage right, wide driveway, walk at 0.34.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.581,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.581,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.581,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.335,
+          "hy": 0.64
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.28,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.3,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.864,
+          "hy": 0.499
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.494,
+          "hy": 0.532
+        },
+        "APRON_2": {
+          "hx": 0.619,
+          "hy": 0.532
+        },
+        "FENCE_1": {
+          "hx": 0.81,
+          "hy": 0.529
+        }
+      }
+    },
+    "house8": {
+      "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.49.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.73,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.73,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.73,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.487,
+          "hy": 0.66
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.28,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.3,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.961,
+          "hy": 0.569
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.65,
+          "hy": 0.5
+        },
+        "APRON_2": {
+          "hx": 0.765,
+          "hy": 0.5
+        },
+        "FENCE_1": {
+          "hx": 0.907,
+          "hy": 0.599
+        }
+      }
+    },
+    "house9": {
+      "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.31.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.697,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.697,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.697,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.311,
+          "hy": 0.61
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.28,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.3,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.911,
+          "hy": 0.597
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.619,
+          "hy": 0.533
+        },
+        "APRON_2": {
+          "hx": 0.73,
+          "hy": 0.533
+        },
+        "FENCE_1": {
+          "hx": 0.857,
+          "hy": 0.627
+        }
+      }
+    },
+    "house10": {
+      "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.47.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.689,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.689,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.689,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.466,
+          "hy": 0.66
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.28,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.3,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.923,
+          "hy": 0.563
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.61,
+          "hy": 0.516
+        },
+        "APRON_2": {
+          "hx": 0.723,
+          "hy": 0.516
+        },
+        "FENCE_1": {
+          "hx": 0.869,
+          "hy": 0.593
+        }
+      }
+    },
+    "house11": {
+      "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.46.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.694,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.694,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.694,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.455,
+          "hy": 0.66
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.28,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.3,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.913,
+          "hy": 0.558
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.623,
+          "hy": 0.58
+        },
+        "APRON_2": {
+          "hx": 0.725,
+          "hy": 0.58
+        },
+        "FENCE_1": {
+          "hx": 0.859,
+          "hy": 0.588
+        }
+      }
+    },
+    "house12": {
+      "_plan": "MEASURED — Garage centred, two-car driveway, walk at 0.64.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.421,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.421,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.421,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.643,
+          "hy": 0.64
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.27,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.27,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.907,
+          "hy": 0.505
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.338,
+          "hy": 0.5
+        },
+        "APRON_2": {
+          "hx": 0.456,
+          "hy": 0.5
+        },
+        "FENCE_1": {
+          "hx": 0.853,
+          "hy": 0.535
+        }
+      }
+    },
+    "house13": {
+      "_plan": "MEASURED — Garage centred, two-car driveway, walk at 0.71.",
+      "anchors": {
+        "DRIVEWAY_1": {
+          "hx": 0.464,
+          "hy": 0.7
+        },
+        "DRIVEWAY_2": {
+          "hx": 0.464,
+          "hy": 0.82
+        },
+        "DRIVEWAY_3": {
+          "hx": 0.464,
+          "hy": 0.95
+        },
+        "WALK_1": {
+          "hx": 0.711,
+          "hy": 0.66
+        },
+        "YARD_1": {
+          "hx": 0.12,
+          "hy": 0.76
+        },
+        "YARD_2": {
+          "hx": 0.28,
+          "hy": 0.84
+        },
+        "YARD_3": {
+          "hx": 0.14,
+          "hy": 0.95
+        },
+        "YARD_4": {
+          "hx": 0.3,
+          "hy": 0.97
+        },
+        "YARD_5": {
+          "hx": 0.92,
+          "hy": 0.8
+        },
+        "YARD_6": {
+          "hx": 0.9,
+          "hy": 0.96
+        },
+        "BED_FRONT": {
+          "hx": 0.22,
+          "hy": 0.64
+        },
+        "BINS_SCREENED": {
+          "hx": 0.844,
+          "hy": 0.594
+        },
+        "PORCH_1": {
+          "hx": 0.47,
+          "hy": 0.62
+        },
+        "APRON_1": {
+          "hx": 0.397,
+          "hy": 0.565
+        },
+        "APRON_2": {
+          "hx": 0.496,
+          "hy": 0.568
+        },
+        "FENCE_1": {
+          "hx": 0.79,
+          "hy": 0.624
         }
       }
     }

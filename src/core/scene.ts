@@ -103,6 +103,39 @@ export type AnchorTable = Record<string, Anchor>;
  * and fail the build instead. `road` anchors sit below the house sprite
  * entirely, so they are checked by position rather than by pixel.
  */
+/**
+ * What is under a pixel of house art: grass, paving, or neither.
+ *
+ * ONE definition, used by the tool that measures the anchors and the tool that
+ * checks them. They had a copy each, differing by a single term — one required
+ * blue > 95 for paving and the other did not — and on house9 that landed either
+ * side of a driveway pixel at rgb(161,130,99). The measurer wrote an anchor it
+ * considered valid and the checker rejected it, which is the one disagreement
+ * this pair of tools must never have.
+ *
+ * 'bed' is the catch-all: mulch, structure, roof, anything that is not lawn and
+ * not pavement. An anchor declared as `bed` accepts any of them.
+ */
+export function surfaceOf(r: number, g: number, b: number): 'grass' | 'paving' | 'bed' {
+  // Grass is strongly green-over-blue; paving is pale and near-neutral. On this
+  // art grass reads ~100 on green-minus-blue and paving ~40, so 60 splits them.
+  if (g - b > 60) return 'grass';
+  return r > 150 && g >= 130 ? 'paving' : 'bed';
+}
+
+/**
+ * The PLAN a house sprite belongs to: "house7b" and "house1-christmas" both
+ * resolve to the numbered house they are a repaint of.
+ *
+ * Every variation of a plan is the same building photographed the same way —
+ * an open garage, a smashed pane, a string of lights — so the driveway, the
+ * walk and the fence line are in exactly the same place. One measured table
+ * serves all of them, and there is no second set of numbers to keep in step.
+ */
+export function housePlan(sprite: string): string {
+  return /^house\d+/.exec(sprite)?.[0] ?? sprite;
+}
+
 export const ANCHOR_SURFACE: Record<string, 'paving' | 'grass' | 'bed' | 'road' | 'attach'> = {
   DRIVEWAY_1: 'paving', DRIVEWAY_2: 'paving', DRIVEWAY_3: 'paving',
   APRON_1: 'paving', APRON_2: 'paving',
