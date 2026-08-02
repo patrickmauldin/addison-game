@@ -922,16 +922,14 @@
       /* --- The map divider ---------------------------------------------- */
       /* Inlined, not an <img>: the whole point is reaching a street inside it,
          and an image is an opaque document to both CSS and script. */
-      .bk-map {
-        background: #d3f8e1;
-        border: 1px solid rgba(122,88,89,.45);
-        padding: 3px; margin-top: 2px;
-      }
+      /* No frame and no padding. The drawing runs to its own edges, so the top
+         of the map is the creek and not a green border with a creek under it. */
+      .bk-map { background: #d3f8e1; margin-top: 2px; }
       .bk-map svg { display: block; width: 100%; height: auto; }
       /* Everything faded, then two things brought back. Dimming is the default
          so a street added to the drawing later is handled without touching
          this — it simply starts faded like the rest. */
-      .bk-map svg path, .bk-map svg polyline, .bk-map svg line { opacity: .5; }
+      .bk-map svg path, .bk-map svg polyline, .bk-map svg line { opacity: .3; }
       /* The creek is geography, not a street. It is never the place you are and
          never the place you are not, so it does not take part. */
       .bk-map svg #creek { opacity: 1; }
