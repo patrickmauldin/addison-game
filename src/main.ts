@@ -1521,15 +1521,6 @@ function binderEntry(a: Article, expanded: Set<string> = binderExpanded): string
 const MAP_TAB = 'Map';
 
 /**
- * Street names on the drawing do not all match the ones in streets.json.
- *
- * Only where they genuinely differ. Eyezetta is "Eyezeta" in the game and was
- * exported as "ibetta"; rather than edit somebody's artwork, the mismatch is
- * recorded here where it can be seen and deleted once the file is redrawn.
- */
-const MAP_ALIASES: Record<string, string> = { eyezeta: 'ibetta' };
-
-/**
  * Fetched once and kept, because it is markup rather than a picture.
  *
  * It has to be INLINE for any of this to work: an <img> is an opaque document
@@ -1561,10 +1552,16 @@ function loadMap(): void {
     .catch(() => { mapSvg = ''; mapFetching = false; });
 }
 
-/** Which street the player is standing on, as an id the drawing would know. */
+/**
+ * Which street the player is standing on, as an id the drawing would know.
+ *
+ * A straight transliteration, with no lookup table in the middle. There was one
+ * for a while, holding a single entry because the map called Eyezetta "ibetta" —
+ * every id on the drawing matches streets.json now, so the street name IS the
+ * shape name and there is nothing to keep in step.
+ */
 function currentStreetId(): string {
-  const id = (current?.street ?? '').toLowerCase().replace(/\s+/g, '_');
-  return MAP_ALIASES[id] ?? id;
+  return (current?.street ?? '').toLowerCase().replace(/\s+/g, '_');
 }
 
 function syncBinder(): void {
@@ -2709,7 +2706,7 @@ function briefing(): void {
    *
    * Asked inline, in the middle of what the manager is already saying, because
    * that is what it is — she is making conversation while she reads your file,
-   * not opening a settings screen. It sits where "You're at 2118 Eyezeta, yes?"
+   * not opening a settings screen. It sits where "You're at 2118 Eyezetta, yes?"
    * used to, which told the player where they lived instead of asking.
    *
    * Answering is optional and she moves on either way. Gating the first round

@@ -1,7 +1,7 @@
 {
   "_note": "The eight streets of Addison. Each keeps the character its real counterpart has on the map, because those characters carry the difficulty ramp and Act III's flood geography.",
   "_source_note": "Characters below are read off the actual Addison street map rather than inherited from gameplan section 7's list, which did not include Bananalise or Whistling Sparrow. Two corrections follow from the map. Bananalise (<- Bananalise) is the southern arterial, not an interior street. And the the creek frontage is the NORTH ARC OF BONERVILLE plus the top of the Zingersoll block, not a separate greenbelt street — so Act III floods Bonerville and Zingersoll and needs no extra street name.",
-  "_open_question": "Whistling Sparrow now appears on the map but still has no phase, role or position in this file, so it stays out of the streets a player may claim as home. Drahma and Llama Alta both occupy the south-west corner and only Drahma is drawn — worth settling whether they are neighbours or the same street under two names.",
+  "_open_question": "Whistling Sparrow is drawn on the map but still has no phase, role or position here, so it stays out of the streets a player may claim as home. Give it those three and it joins the list.",
   "streets": [
     {
       "id": "bonerville",
@@ -40,8 +40,8 @@
       "character": "The interior. Standard mid-range Addison. Your baseline."
     },
     {
-      "id": "eyezeta",
-      "name": "Eyezeta",
+      "id": "eyezetta",
+      "name": "Eyezetta",
       "was": "Eyezetta",
       "phase": "interior",
       "role": "residential",
