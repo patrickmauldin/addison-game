@@ -1548,7 +1548,13 @@ function loadMap(): void {
       // Illustrator leaves the tracing template it was drawn over in the file,
       // pointing at a PNG that was never shipped. It is display:none, so it
       // shows nothing and 404s every time the page is opened.
-      mapSvg = t.replace(/<g id="moIwjp"[\s\S]*?<\/g>/, '');
+      mapSvg = t
+        .replace(/<g id="moIwjp"[\s\S]*?<\/g>/, '')
+        // Illustrator escapes an underscore in a layer name as _x5F_, so
+        // "whistling_sparrow" ships as "whistling_x5F_sparrow" and matches
+        // nothing. Undone here rather than in the artwork, which would only be
+        // re-exported the same way next time.
+        .replace(/_x5F_/g, '_');
       mapFetching = false;
       syncBinder();
     })
@@ -1600,10 +1606,17 @@ function syncBinder(): void {
     body.innerHTML = mapSvg
       ? `<div class="bk-map">${mapSvg}</div>`
       : '<p class="bk-locked">Unfolding the map…</p>';
-    // Marked AFTER the markup lands, because the class goes on a path inside
-    // the drawing rather than on anything this file wrote.
-    const street = body.querySelector<SVGElement>(`.bk-map #${CSS.escape(currentStreetId())}`);
-    street?.classList.add('here');
+    // Marked AFTER the markup lands, because the class goes on paths inside the
+    // drawing rather than on anything this file wrote.
+    //
+    // EVERY segment of it. A street that bends is drawn as more than one shape
+    // — Goodish is "goodish" plus "goodish1" — and lighting only the first
+    // leaves half a road bright and half of it faded, which reads as two
+    // streets rather than one.
+    const id = currentStreetId();
+    const seg = new RegExp(`^${id}\\d*$`);
+    for (const el of body.querySelectorAll<SVGElement>('.bk-map [id]'))
+      if (seg.test(el.id)) el.classList.add('here');
   } else {
     // An untrained section is not empty — it is withheld. Saying so in the
     // Association's own voice is worth more than a blank leaf, and it tells the
