@@ -1,0 +1,43 @@
+# What does NOT ship, and why each one is safe to leave out.
+# rsync patterns, relative to assets/. See tools/site.sh.
+#
+# LEADING SLASHES MATTER. A bare `foo.png` matches that basename at ANY depth —
+# which is how `addison-letterhead1.png`, meant to drop three unused duplicates
+# from the top level, also deleted the one the waiver actually reads out of
+# Letterhead/. Anchor anything that names a specific file or folder.
+
+# 40MB of paper-doll layers. tools/pack-residents.ts composited the ten
+# residents out of these into assets/residents.png, which is what the game
+# fetches; nothing reads this folder at runtime.
+/char-pack/
+
+# ~1400 per-frame exports, flattened into assets/animals.png by
+# tools/pack-animals.ts. Three individual frames ARE fetched for the notices —
+# site.sh copies those back explicitly.
+/animals/
+
+# Delivered but not placed by anything yet.
+/boss/
+
+# The reputation bars were pulled out and kept for later; the markup comes back
+# with `git show ff17710 -- index.html`. Art only, referenced by a comment.
+/reputation/
+
+# Superseded by the current top-down scene.
+/_deprecated-iso/
+
+# Source material for the house art, not the house art.
+/houses/raw/
+
+# Layered and flattened reference for the binder, kept beside what it produced.
+/rulebook/rulebook reference*
+
+# Duplicates. The waiver reads Letterhead/addison-letterhead1.png; these three
+# at the top level are byte-identical copies that nothing references.
+/addison-letterhead1.png
+/addison-letterhead2.png
+/addison-letterhead3.png
+
+# Editor and OS litter.
+.DS_Store
+*.psd

@@ -1,7 +1,7 @@
 {
   "name": "addison-game",
   "version": "1.0.0",
-  "description": "ADDISON \u2014 Compliance Inspector. Vertical slice: Day 1, Bonerville.",
+  "description": "ADDISON — Compliance Inspector. Vertical slice: Day 1, Bonerville.",
   "scripts": {
     "build": "./build.sh",
     "watch": "./build.sh --watch",
@@ -15,7 +15,8 @@
     "pack-animals": "npx esbuild tools/pack-animals.ts --bundle --platform=node --outfile=dist/pack-animals.cjs --loader:.json=json --log-level=warning && node dist/pack-animals.cjs",
     "rotate-rings": "npx esbuild tools/rotate-rings.ts --bundle --platform=node --outfile=dist/rotate-rings.cjs --log-level=warning && node dist/rotate-rings.cjs",
     "make-reticle": "npx esbuild tools/make-reticle.ts --bundle --platform=node --outfile=dist/make-reticle.cjs --log-level=warning && node dist/make-reticle.cjs",
-    "make-note": "npx esbuild tools/make-note.ts --bundle --platform=node --outfile=dist/make-note.cjs --log-level=warning && node dist/make-note.cjs"
+    "make-note": "npx esbuild tools/make-note.ts --bundle --platform=node --outfile=dist/make-note.cjs --log-level=warning && node dist/make-note.cjs",
+    "site": "sh tools/site.sh"
   },
   "keywords": [],
   "author": "",

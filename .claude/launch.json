@@ -7,6 +7,14 @@
       "runtimeArgs": ["-c", "python3 -m http.server \"${PORT:-8123}\""],
       "port": 8123,
       "autoPort": true
+    },
+    {
+      "name": "addison-site",
+      "_note": "The DEPLOYED build, served the way a host serves it. Run `sh tools/site.sh` first.",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd _site && python3 -m http.server \"${PORT:-8124}\""],
+      "port": 8124,
+      "autoPort": true
     }
   ]
 }

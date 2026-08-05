@@ -11,3 +11,6 @@ out/
 # the pack's premade sheets instead (see tools/pack-residents.ts). Its
 # instructions.txt IS tracked; only the huge image is skipped.
 assets/char-pack/Guides/guide.png
+
+# Assembled by tools/site.sh for deployment. Built, never committed.
+_site/

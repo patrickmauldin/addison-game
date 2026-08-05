@@ -1,0 +1,69 @@
+# Build the game and publish it to GitHub Pages.
+#
+# The bundle is NOT committed — dist/ is gitignored, and index.html loads
+# ./dist/bundle.js — so a repo served raw is a site that shows the boot guard to
+# every visitor. It is built here instead, which also means the deployed bundle
+# always matches the source it was built from.
+name: Pages
+
+on:
+  push:
+    branches: [master, main]
+  # So a deploy can be re-run from the Actions tab without an empty commit.
+  workflow_dispatch:
+
+# Pages needs to write the artifact and claim the deployment; nothing else.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time, and a newer push wins. `cancel-in-progress: false`
+# because cancelling mid-deploy can leave the site half-written.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # `npm ci` rather than `npm install`: the lockfile is the point of a
+      # reproducible deploy, and esbuild is the only thing being installed.
+      - run: npm ci
+
+      # The content checks run BEFORE the deploy, not after. A level that cites
+      # a rule which is not live, or an anchor that puts a bin through a wall,
+      # is a broken game — and it is cheaper to fail here than to ship it.
+      - name: Validate content
+        run: npm run validate
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Assembles _site/: the bundle, index.html, and the assets the game
+      # actually fetches. Fails if an exclusion has dropped something the code
+      # references. See tools/site.sh.
+      - name: Build site
+        run: sh tools/site.sh _site
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
