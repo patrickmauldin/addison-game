@@ -45,6 +45,10 @@ export type Layout = {
   house: { x: number; y: number; w: number; h: number };
 };
 
+/** How far the player may step off the auto-fit scale, in SCALE_STEPS notches. */
+export const ZOOM_MIN = -1;
+export const ZOOM_MAX = 2;
+
 /**
  * Compose a layout for a given stage size.
  *
@@ -52,22 +56,38 @@ export type Layout = {
  * house. The house is scaled to fit that remainder, so a short window shows a
  * smaller house rather than a cropped roof — losing the roofline reads as a
  * bug, losing resolution reads as a zoom.
+ *
+ * `zoom` moves that answer along SCALE_STEPS: +1 is one notch bigger than the
+ * fit, -1 one notch smaller. It is expressed in NOTCHES rather than as a
+ * multiplier on purpose — the steps are snapped (see SCALE_STEPS) because
+ * arbitrary fractional scaling of pixel art destroys it differently at every
+ * size, and a zoom control that multiplied the result would throw that away on
+ * the first click. Zooming here lands on the same ladder the auto fit uses.
+ *
+ * Above the fit the house no longer fits, and the excess comes off the TOP,
+ * which is roof and back yard: it is anchored to the sidewalk, and no anchor in
+ * the table sits above hy 0.499. So a zoomed-in lot can lose roofline but
+ * cannot hide a violation off the top of the frame.
  */
-export function layout(w: number, h: number): Layout {
+export function layout(w: number, h: number, zoom = 0): Layout {
   const roadH = Math.max(90, Math.round(h * 0.2));
   const roadTop = h - roadH;
 
   // Pick the largest step whose house plus sidewalk still fits above the road,
   // leaving a little grass at the top so the roof never touches the frame.
   const TOP_GAP = 12;
-  let scale = SCALE_STEPS[SCALE_STEPS.length - 1];
-  for (const s of SCALE_STEPS) {
+  let fit = SCALE_STEPS.length - 1;
+  for (let i = 0; i < SCALE_STEPS.length; i++) {
+    const s = SCALE_STEPS[i];
     const need = HOUSE_NATIVE.h * s + WALK_NATIVE_H * s + TOP_GAP;
     if (need <= roadTop + WALK_NATIVE_H * s) {
-      scale = s;
+      fit = i;
       break;
     }
   }
+  // Index 0 is the biggest step, so zooming IN counts down.
+  const step = Math.max(0, Math.min(SCALE_STEPS.length - 1, fit - zoom));
+  const scale = SCALE_STEPS[step];
 
   const walkH = Math.round(WALK_NATIVE_H * scale);
   const walkTop = roadTop - walkH;

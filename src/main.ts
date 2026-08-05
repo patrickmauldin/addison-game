@@ -8,7 +8,7 @@
 
 
 import { renderLot, solidHeight, type LotSpec, type PropSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
-import { DEFAULT_ANCHORS, HOUSE_NATIVE, housePlan } from './core/scene.js';
+import { DEFAULT_ANCHORS, HOUSE_NATIVE, ZOOM_MAX, ZOOM_MIN, housePlan } from './core/scene.js';
 
 import {
   adjudicate,
@@ -996,7 +996,7 @@ function phoneOnArrival(): void {
  */
 function renderToCanvas(lot: LotSpec, worldX: number): { rl: RenderedLot; cv: HTMLCanvasElement } {
   const { w, h } = stageSize();
-  const rl = renderLot(withParkedCar(lot), assets, w, h, worldX);
+  const rl = renderLot(withParkedCar(lot), assets, w, h, worldX, zoom);
   const cv = document.createElement('canvas');
   cv.width = w;
   cv.height = h;
@@ -1120,6 +1120,43 @@ function propLayerFor(rl: RenderedLot): HTMLCanvasElement {
 function stageSize(): { w: number; h: number } {
   const r = frame.getBoundingClientRect();
   return { w: Math.max(320, Math.round(r.width)), h: Math.max(320, Math.round(r.height)) };
+}
+
+/**
+ * How far off the auto-fit house scale the player has asked to be.
+ *
+ * The fit is chosen for the window (see layout()), and on a laptop it is often
+ * a whole notch smaller than the room actually allows — the ladder is coarse,
+ * so a stage that could take 0.44 gets 1/3 and the house sits in a field of
+ * grass. This is the manual override for that, and it is per-machine rather
+ * than per-save: it describes the screen the game is being played on, not the
+ * inspector.
+ */
+const ZOOM_KEY = 'addison.zoom';
+let zoom = (() => {
+  const n = Number(localStorage.getItem(ZOOM_KEY));
+  return Number.isFinite(n) ? Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, Math.trunc(n))) : 0;
+})();
+
+function setZoom(next: number): void {
+  const z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, next));
+  if (z === zoom) return;
+  zoom = z;
+  try {
+    localStorage.setItem(ZOOM_KEY, String(z));
+  } catch {
+    /* private browsing; the setting simply does not persist */
+  }
+  syncZoomButtons();
+  relayout();
+}
+
+/** Greyed at the ends of the ladder, so a dead button says why it is dead. */
+function syncZoomButtons(): void {
+  const inb = document.getElementById('zoom-in') as HTMLButtonElement | null;
+  const out = document.getElementById('zoom-out') as HTMLButtonElement | null;
+  if (inb) inb.disabled = zoom >= ZOOM_MAX;
+  if (out) out.disabled = zoom <= ZOOM_MIN;
 }
 
 /**
@@ -1688,33 +1725,43 @@ function startWalkerLoop(): void {
   walkerRaf = requestAnimationFrame(step);
 }
 
+/**
+ * Rebuild the scene for a layout that has changed under it.
+ *
+ * Shared by the window resize and the zoom control, because they are the same
+ * event as far as the scene is concerned: the house rect moved, and everything
+ * derived from it is now wrong. Zoom used to be nothing and resize was inline;
+ * a second caller is what makes it worth a name.
+ */
+function relayout(): void {
+  if (!current) return;
+  const wasWalk = sidewalkOf(rendered);
+  const built = renderToCanvas(current, routeIndex * stageSize().w);
+  rendered = built.rl;
+  currentCanvas = built.cv;
+  currentProps = propLayerFor(rendered);
+  currentGlow = glowLayerFor(rendered, current);
+  centroidCache.clear();
+  // Rebuild the resident too. Their patch of lawn is derived from the house
+  // rect, so a layout change invalidates it — and the walker keeps walking to
+  // coordinates from the OLD one, which after a shrink is somewhere up the
+  // roof. Seeded from the lot id, so this is the same person, just re-placed.
+  resident = makeWalker(current, rendered);
+  animal = makeAnimal(current, rendered);
+  bountyAnimal = makeBountyAnimal(current, rendered);
+  // Traffic is REMAPPED, not respawned: anyone who has already walked off has
+  // gone for good, and rebuilding from the seed would march them back on.
+  passersby = remapPassersby(passersby, wasWalk, sidewalkOf(rendered));
+  escort = (remapPassersby(escort ? [escort] : [], wasWalk, sidewalkOf(rendered))[0] as Escort) ?? null;
+  startWalkerLoop();
+  paint();
+}
+
 /** Re-render on resize: the layout, not just the canvas, depends on the size. */
 let resizeTimer = 0;
 window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (!current) return;
-    const wasWalk = sidewalkOf(rendered);
-    const built = renderToCanvas(current, routeIndex * stageSize().w);
-    rendered = built.rl;
-    currentCanvas = built.cv;
-    currentProps = propLayerFor(rendered);
-    currentGlow = glowLayerFor(rendered, current);
-    centroidCache.clear();
-    // Rebuild the resident too. Their patch of lawn is derived from the house
-    // rect, so a layout change invalidates it — and the walker keeps walking to
-    // coordinates from the OLD one, which after a shrink is somewhere up the
-    // roof. Seeded from the lot id, so this is the same person, just re-placed.
-    resident = makeWalker(current, rendered);
-    animal = makeAnimal(current, rendered);
-    bountyAnimal = makeBountyAnimal(current, rendered);
-    // Traffic is REMAPPED, not respawned: anyone who has already walked off has
-    // gone for good, and rebuilding from the seed would march them back on.
-    passersby = remapPassersby(passersby, wasWalk, sidewalkOf(rendered));
-    escort = (remapPassersby(escort ? [escort] : [], wasWalk, sidewalkOf(rendered))[0] as Escort) ?? null;
-    startWalkerLoop();
-    paint();
-  }, 120) as unknown as number;
+  resizeTimer = setTimeout(relayout, 120) as unknown as number;
 });
 
 /** Average position of an object's pixels in the id buffer. */
@@ -2762,6 +2809,10 @@ const toggleMute = () => {
 $('mi-mute').onclick = toggleMute;
 $('mute').onclick = toggleMute;
 syncMute();
+
+$('zoom-in').onclick = () => setZoom(zoom + 1);
+$('zoom-out').onclick = () => setZoom(zoom - 1);
+syncZoomButtons();
 
 /**
  * The drawer under the desk.

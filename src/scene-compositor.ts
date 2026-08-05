@@ -385,8 +385,10 @@ export function renderLot(
    * transition — the one frame the player is guaranteed to be looking at.
    */
   worldX = 0,
+  /** Notches off the auto-fit house scale. See layout(). */
+  zoom = 0,
 ): RenderedLot {
-  const L = layout(width, height);
+  const L = layout(width, height, zoom);
   const r = new Raster(L.w, L.h);
   const objects: RenderedObject[] = [];
   const byKey = new Map<number, RenderedObject>();
