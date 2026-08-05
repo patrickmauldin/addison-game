@@ -12,7 +12,8 @@
     "R-107",
     "R-108",
     "R-109",
-    "R-110"
+    "R-110",
+    "R-111"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
@@ -83,25 +84,25 @@
         "sprite": "house2",
         "mirror": true
       },
-      "_teaching": "STUB — the RV has gone.",
+      "_teaching": "A real waiver again, on the last morning — so the player who learned to distrust the paper on Saturday has to look rather than assume.",
       "props": [
         {
-          "id": "fence",
-          "sprite": "fence1",
-          "anchor": "FENCE_1",
-          "label": "Side-yard fence",
-          "first_seen": "2026-03-16",
-          "align": "left"
+          "id": "dumpster",
+          "sprite": "dumpster",
+          "anchor": "DRIVEWAY_3",
+          "label": "Dumpster, driveway",
+          "first_seen": "2026-03-07"
         }
       ],
       "truth": {
-        "violations": [],
-        "decoys": [
+        "violations": [
           {
-            "object": "fence",
-            "why": "Sound."
+            "object": "dumpster",
+            "article": "R-108",
+            "why": "Nine days, and covered."
           }
-        ]
+        ],
+        "decoys": []
       },
       "expected_verdict": "PASS"
     },
@@ -113,35 +114,83 @@
       "house": {
         "sprite": "house13b"
       },
-      "_teaching": "STUB — the boat is on day five and still legal; the packaging from Saturday is not, and it was warned then.",
+      "_teaching": "THE PILE, last visit. The turf has gone over too — a fourth article at an address already cited under three. The pod is STILL inside its seven days, and still the only thing here you cannot write up.",
       "props": [
         {
-          "id": "boat",
-          "sprite": "boat1",
-          "anchor": "DRIVEWAY_3",
-          "label": "Boat on trailer, driveway",
-          "first_seen": "2026-03-12"
+          "id": "weeds_1",
+          "sprite": "weed3",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2026-03-04"
+        },
+        {
+          "id": "washer",
+          "sprite": "washer",
+          "anchor": "YARD_5",
+          "label": "Appliance, front lawn",
+          "first_seen": "2026-03-08"
+        },
+        {
+          "id": "dryer",
+          "sprite": "dryer",
+          "anchor": "YARD_1",
+          "label": "Appliance, front lawn",
+          "first_seen": "2026-03-08"
         },
         {
           "id": "boxes",
           "sprite": "boxes",
-          "anchor": "YARD_2",
-          "label": "Discarded packaging, front lawn",
-          "first_seen": "2026-03-14"
+          "anchor": "BED_FRONT",
+          "label": "Discarded packaging, planting bed",
+          "first_seen": "2026-03-10"
+        },
+        {
+          "id": "storage",
+          "sprite": "storage",
+          "anchor": "DRIVEWAY_3",
+          "label": "Portable storage unit, driveway",
+          "first_seen": "2026-03-10"
+        },
+        {
+          "id": "grass_1",
+          "sprite": "grass1",
+          "anchor": "YARD_4",
+          "label": "Turf, overgrown",
+          "first_seen": "2026-03-16"
         }
       ],
       "truth": {
         "violations": [
           {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Growing here since Wednesday of the first week."
+          },
+          {
+            "object": "washer",
+            "article": "R-107",
+            "why": "Still on the lawn."
+          },
+          {
+            "object": "dryer",
+            "article": "R-107",
+            "why": "Still beside it."
+          },
+          {
             "object": "boxes",
             "article": "R-107",
-            "why": "Warned Saturday. Still on the lawn."
+            "why": "Still in the bed."
+          },
+          {
+            "object": "grass_1",
+            "article": "R-102",
+            "why": "Nobody has cut it since the campaign began."
           }
         ],
         "decoys": [
           {
-            "object": "boat",
-            "why": "Day five of seven."
+            "object": "storage",
+            "why": "On record 10 March. The Article allows seven days and they have not run out."
           }
         ]
       },
@@ -156,38 +205,27 @@
         "sprite": "house4",
         "mirror": true
       },
-      "_teaching": "STUB — bins away, glazing sound. The address with the longest file closes clean.",
+      "_teaching": "The last waiver, and the sloppiest: it ran out four days ago. The letterhead and the seal are both genuine, which is what makes the date the only thing between a fine and a false positive.",
       "props": [
         {
-          "id": "bin_green",
-          "sprite": "trash-green",
-          "anchor": "BINS_SCREENED",
-          "label": "Refuse container, green — behind fence",
-          "first_seen": "2026-03-16"
-        },
-        {
-          "id": "fence",
-          "sprite": "fence1",
-          "anchor": "FENCE_1",
-          "label": "Side-yard fence",
-          "first_seen": "2026-03-16",
-          "align": "left"
+          "id": "storage",
+          "sprite": "storage",
+          "anchor": "DRIVEWAY_3",
+          "label": "Portable storage unit, driveway",
+          "first_seen": "2026-03-07"
         }
       ],
       "truth": {
-        "violations": [],
-        "decoys": [
+        "violations": [
           {
-            "object": "bin_green",
-            "why": "Screened."
-          },
-          {
-            "object": "fence",
-            "why": "Sound."
+            "object": "storage",
+            "article": "R-108",
+            "why": "Nine days, and the waiver has lapsed."
           }
-        ]
+        ],
+        "decoys": []
       },
-      "expected_verdict": "PASS"
+      "expected_verdict": "NOTICE"
     },
     {
       "lot_id": "bonerville_05",
@@ -215,6 +253,30 @@
         "decoys": []
       },
       "expected_verdict": "CITATION"
+    }
+  ],
+  "passes": [
+    {
+      "id": "pass-8-real",
+      "lot_id": "bonerville_02",
+      "object": "dumpster",
+      "letterhead": "Letterhead/addison-letterhead1",
+      "stamp": "Letterhead/hoa-stamp1",
+      "article": "R-108",
+      "expires": "2026-03-16",
+      "covers": "Temporary container — dumpster, driveway",
+      "speaker": "She has it in a plastic sleeve, which is not a good sign and is not evidence either."
+    },
+    {
+      "id": "pass-8-fake",
+      "lot_id": "bonerville_04",
+      "object": "storage",
+      "letterhead": "Letterhead/addison-letterhead1",
+      "stamp": "Letterhead/hoa-stamp1",
+      "article": "R-108",
+      "expires": "2026-03-12",
+      "covers": "Temporary container — portable storage unit, driveway",
+      "speaker": "He holds it at arm's length, which is far enough that you have to ask for it."
     }
   ]
 }

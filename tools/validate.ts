@@ -24,7 +24,7 @@ import { execSync } from 'node:child_process';
 import { renderLot, type Bitmap, type LotSpec } from '../src/scene-compositor.js';
 import { ANCHOR_SURFACE, DEFAULT_ANCHORS, housePlan, mergeAnchors, surfaceOf } from '../src/core/scene.js';
 import { decodePng } from '../src/core/png.js';
-import { adjudicate, emptySave, noteFirstSeen, recordFor, type ArticleTiming } from '../src/game/state.js';
+import { adjudicate, emptySave, noteFirstSeen, passFault, recordFor, waivedBy, type ArticleTiming, type Pass } from '../src/game/state.js';
 import { dateForLevel } from '../src/game/calendar.js';
 
 import housesData from '../src/data/houses.json';
@@ -350,18 +350,51 @@ for (const day of LEVELS) {
       },
     ]),
   );
+  /**
+   * WAIVERS. Four ways to be wrong and one to be right, all of them printed on
+   * the note — so the only thing worth asserting here is that the paper names
+   * something real and that a round teaching them shows both kinds.
+   */
+  for (const day of LEVELS) {
+    const passes = (day as { passes?: Pass[] }).passes ?? [];
+    const today = dateForLevel(day.level_id);
+    let real = 0;
+    for (const p of passes) {
+      const lot = day.lots.find((l) => l.lot_id === p.lot_id);
+      if (!lot) { fail(`level ${day.level_id} pass ${p.id}: no lot "${p.lot_id}" on this route`); continue; }
+      const v = lot.truth.violations.find((x) => x.object === p.object);
+      if (!v) {
+        fail(`level ${day.level_id} pass ${p.id}: "${p.object}" is not a violation on ${p.lot_id}. `
+          + `A waiver for something that is not a finding excuses nothing and reads as a bug.`);
+        continue;
+      }
+      for (const [what, key] of [['letterhead', p.letterhead], ['seal', p.stamp]] as const)
+        if (!existsSync(`assets/${key}.png`))
+          fail(`level ${day.level_id} pass ${p.id}: ${what} art "assets/${key}.png" does not exist`);
+      if (!passFault(p, v.article, today.iso)) real++;
+    }
+    if (passes.length && (real === 0 || real === passes.length))
+      fail(`level ${day.level_id}: ${passes.length} waiver(s), ${real} genuine. `
+        + `A round that teaches these needs at least one of each, or the answer is the same every time.`);
+  }
+
   const save = emptySave();
   for (const day of LEVELS) {
     const today = dateForLevel(day.level_id);
     for (const lot of day.lots) {
       const rec = recordFor(save, lot.lot_id, lot.address);
       for (const p of lot.props ?? []) noteFirstSeen(rec, p.id, p.first_seen ?? today.iso);
-      const flagged = new Set(lot.truth.violations.map((v) => v.object));
+      // A genuine waiver excuses a violation, so a careful player does NOT
+      // write it up. Filtering here is the whole check: if the authored verdict
+      // still assumes the finding, this is where the two disagree.
+      const waived = waivedBy(lot, (day as { passes?: Pass[] }).passes, today.iso);
+      const flagged = new Set(lot.truth.violations.map((v) => v.object).filter((id) => !waived.has(id)));
       const labels = new Map<string, string>();
       const o = adjudicate(lot, labels, labels, flagged, 'PASS', 0, {
         today: { iso: today.iso, weekday: today.weekday },
         timing,
         rec,
+        waived,
       });
       if (o.expected !== lot.expected_verdict)
         fail(`level ${day.level_id} ${lot.lot_id}: authored ${lot.expected_verdict}, `

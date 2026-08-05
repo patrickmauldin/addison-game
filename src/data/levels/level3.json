@@ -43,8 +43,7 @@
   ],
   "story": [
     "Friday, and dark by the time you start. The Board schedules these. Nobody has explained why.",
-    "Article VIII from today: seasonal lighting comes down by 31 January. It is March.",
-    "You will be offered things on this round. What you do about that is between you and the Board."
+    "Article VIII from today: seasonal lighting comes down by 31 January. It is March."
   ],
   "bounty": {
     "id": "thief",
@@ -271,5 +270,6 @@
       },
       "expected_verdict": "CITATION"
     }
-  ]
+  ],
+  "_story": "The bribe is NOT mentioned here on purpose. It is meant to arrive without warning, mid-inspection, which it cannot do if the morning briefing has told the player to expect it."
 }

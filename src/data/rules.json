@@ -104,11 +104,11 @@
       "id": "R-110",
       "title": "Recycling Collection",
       "section": "Article IX, Section 2",
-      "text": "Recycling is collected on alternate weeks. The recycling container may be placed at the curb on the Tuesday or Wednesday of a collection week only; in the intervening week it shall not be visible from the street on any day.",
-      "decoy_note": "The refuse container is on the WEEKLY schedule and is not governed by this Article — a brown bin at the curb on a Tuesday is compliant every Tuesday of the year. Only the green one skips a week, and the two are routinely put out together.",
+      "text": "Recycling is collected on alternate weeks — every second Tuesday, not every Tuesday. The recycling container may be placed at the curb on the Tuesday or Wednesday of a collection week only. In the week between collections it shall not be visible from the street on any day.",
+      "decoy_note": "Two containers, two schedules. Refuse is WEEKLY and is not governed by this Article — a brown bin at the curb on a Tuesday is compliant every Tuesday of the year. Only the green one skips a week, and the two are routinely put out together. If you cannot remember whether this is a collection week, the briefing said so this morning.",
       "tab": "Recycling",
       "category": "Trash",
-      "short": "Green bin: Tuesday or Wednesday, collection weeks only.",
+      "short": "Green bin: every OTHER Tuesday or Wednesday, not every one.",
       "introduced_level": 5,
       "weekday_window": [
         "Tuesday",
@@ -122,11 +122,11 @@
         "cite": [
           "trash-green"
         ],
-        "cite_note": "At the curb in the week between collections, whatever the day.",
+        "cite_note": "At the curb in the week BETWEEN collections, whatever the day.",
         "allow": [
           "trash-brown"
         ],
-        "allow_note": "Refuse is weekly. The brown bin is not this Article."
+        "allow_note": "Refuse is weekly. The brown bin is never this Article."
       }
     },
     {
@@ -196,8 +196,8 @@
       "id": "R-108",
       "title": "Temporary Containers",
       "section": "Article VII, Section 6",
-      "text": "Dumpsters, portable storage units and similar temporary containers may remain upon a Lot for a period not exceeding seven (7) consecutive days. A container in place beyond that period constitutes a violation of this Article.",
-      "decoy_note": "Inside the seven days there is nothing to cite. The clock starts on the date YOU first recorded the container, and your own note is the only record of it — the Association keeps none.",
+      "text": "Dumpsters, portable storage units and similar temporary containers may remain upon a Lot for a period not exceeding seven (7) consecutive days. A container in place beyond that period constitutes a violation of this Article, except as provided by Article XII.",
+      "decoy_note": "Inside the seven days there is nothing to cite. The clock starts on the date YOU first recorded the container, and your own note is the only record of it — the Association keeps none. Past the seventh day the only thing that saves it is a waiver, and waivers are the next Article.",
       "tab": "Containers",
       "category": "Objects",
       "short": "Dumpsters and storage pods may stay seven days.",
@@ -208,11 +208,38 @@
           "dumpster",
           "storage"
         ],
-        "cite_note": "Still in place on the eighth day or later.",
+        "cite_note": "Still in place on the eighth day or later, with nothing to show for it.",
         "allow": [
           "dumpster"
         ],
         "allow_note": "Within its seven days. Check the file before you mark it."
+      }
+    },
+    {
+      "id": "R-111",
+      "title": "Association Waivers",
+      "section": "Article XII, Section 1",
+      "text": "The Association may issue a written waiver granting an Owner immunity from enforcement of a named Article until the date stated upon it. A waiver so issued bars any notice or citation under that Article for so long as it remains current. No waiver is valid unless it bears the Association letterhead and the Association seal, names the Article excused, and states a date that has not passed.",
+      "decoy_note": "FOUR THINGS, and all four or none. The letterhead, the seal, the Article named, and the date. The Association keeps no register of what it has issued, so the note in the Owner's hand is the whole of the evidence and the only place to check it is the note itself.\n\nThe seal is green AND reads HOA above APPROVED — there is a green one in circulation that does not. The letterhead carries the sun AND the wreath; there are two about that have one or the other. A waiver naming a different Article, or dated before today, is no better. Any of these is a forgery however well printed, and a forgery excuses nothing: accept one and it is a finding you failed to write up.",
+      "tab": "Waivers",
+      "category": "Objects",
+      "short": "A valid pass grants immunity from the Article it names, until it expires.",
+      "introduced_level": 7,
+      "exhibit": {
+        "cite_label": "Valid marks:",
+        "cite": [
+          "Letterhead/addison-letterhead1",
+          "Letterhead/hoa-stamp1"
+        ],
+        "cite_note": "The letterhead with the sun AND the wreath, and the green seal reading HOA. A waiver carries both or it is not one.",
+        "allow_label": "Forgeries in circulation.",
+        "allow": [
+          "Letterhead/hoa-stamp2",
+          "Letterhead/hoa-stamp3",
+          "Letterhead/addison-letterhead2",
+          "Letterhead/addison-letterhead3"
+        ],
+        "allow_note": "A navy seal. A green one with no HOA. A letterhead with no sun. One with no wreath. One flaw each, and none of them excuses anything."
       }
     },
     {

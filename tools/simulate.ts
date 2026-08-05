@@ -21,7 +21,9 @@ import {
   emptySave,
   noteFirstSeen,
   recordFor,
+  waivedBy,
   type ArticleTiming,
+  type Pass,
   type SaveFile,
   type Verdict,
 } from '../src/game/state.js';
@@ -39,7 +41,7 @@ import level8 from '../src/data/levels/level8.json';
 
 type Truth = { violations?: { object: string; article: string }[]; decoys?: { object: string }[] };
 type Lot = LotSpec & { lot_id: string; address: string; truth: Required<Truth>; props?: { id: string; first_seen?: string }[] };
-type Level = { level_id: number; quota: number; pay_per_inspection: number; verdict_mode: string; lots: Lot[] };
+type Level = { level_id: number; quota: number; pay_per_inspection: number; verdict_mode: string; lots: Lot[]; passes?: Pass[] };
 
 const LEVELS = [level1, level2, level3, level4, level5, level6, level7, level8] as unknown as Level[];
 
@@ -105,8 +107,17 @@ for (const b of BEHAVIORS) {
       const rec = recordFor(save, lot.lot_id, lot.address);
       for (const p of lot.props ?? []) noteFirstSeen(rec, p.id, p.first_seen ?? today.iso);
 
-      const flagged = new Set(b.flag(lot));
-      const ctx = { today: { iso: today.iso, weekday: today.weekday }, timing: TIMING, rec };
+      const waived = waivedBy(lot, level.passes, today.iso);
+      const flagged = new Set(b.flag(lot).filter((id) => !(b.stamp === 'correct' && waived.has(id))));
+      // A genuine waiver excuses a violation, so the diligent run has to see
+      // the same ones the game does — otherwise it "cites" a thing the
+      // Association already allowed and calls the authored verdict wrong.
+      const ctx = {
+        today: { iso: today.iso, weekday: today.weekday },
+        timing: TIMING,
+        rec,
+        waived: waivedBy(lot, level.passes, today.iso),
+      };
       // Probe for the correct verdict rather than restating the escalation rule
       // here — a simulator that computes its own answer is checking itself.
       const probe = adjudicate(lot, labels, kinds, flagged, 'PASS', 0, ctx);

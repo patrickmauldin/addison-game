@@ -1,142 +1,142 @@
 {
-  "group_id": "d7f6ae4e-f146-4d23-801e-cdb1c3e33210",
+  "group_id": "af9de13f-fe82-4c90-b8c5-a3862a29adcc",
   "states": [
     {
       "character": {
-        "id": "609ba8c8-cad3-49a3-8680-edc9969b523c",
-        "name": "\u00be top down perspective black lab mix with short black hair and a little grey in the muzzle",
-        "prompt": "\u00be top down perspective black lab mix with short black hair and a little grey in the muzzle",
+        "id": "219bbb7c-3425-4cb0-a7e8-2e79b3ce36c0",
+        "name": "Idle",
+        "prompt": "\u00be top down perspective black lab mix with short black hair and a little grey in the muzzle and white paws and a little white in the chest",
         "size": {
           "width": 60,
           "height": 60
         },
         "template_id": "dog",
         "directions": 8,
-        "view": "low top-down",
-        "created_at": "2026-07-30T05:53:32.015882+00:00"
+        "view": "high top-down",
+        "created_at": "2026-08-05T04:53:46.179193+00:00"
       },
-      "folder": "top_down_perspective_black_lab_mix_with_short_blac",
+      "folder": "Idle",
       "frames": {
         "rotations": {
-          "south": "top_down_perspective_black_lab_mix_with_short_blac/rotations/south.png",
-          "south-east": "top_down_perspective_black_lab_mix_with_short_blac/rotations/south-east.png",
-          "east": "top_down_perspective_black_lab_mix_with_short_blac/rotations/east.png",
-          "north-east": "top_down_perspective_black_lab_mix_with_short_blac/rotations/north-east.png",
-          "north": "top_down_perspective_black_lab_mix_with_short_blac/rotations/north.png",
-          "north-west": "top_down_perspective_black_lab_mix_with_short_blac/rotations/north-west.png",
-          "west": "top_down_perspective_black_lab_mix_with_short_blac/rotations/west.png",
-          "south-west": "top_down_perspective_black_lab_mix_with_short_blac/rotations/south-west.png"
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
         },
         "animations": {}
       }
     },
     {
       "character": {
-        "id": "d85535d1-5fb6-433e-9be7-0e55650e3694",
-        "name": "walking",
-        "prompt": "\u00be top down perspective black lab mix with short black hair and a little grey in the muzzle",
+        "id": "a7601318-ea44-428d-89bc-bf37fd57f6a5",
+        "name": "Walking",
+        "prompt": "\u00be top down perspective black lab mix with short black hair and a little grey in the muzzle and white paws and a little white in the chest",
         "size": {
           "width": 60,
           "height": 60
         },
         "template_id": "dog",
         "directions": 8,
-        "view": "low top-down",
-        "created_at": "2026-07-30T06:11:01.934082+00:00"
+        "view": "high top-down",
+        "created_at": "2026-08-05T05:27:04.010064+00:00"
       },
-      "folder": "walking",
+      "folder": "Walking",
       "frames": {
         "rotations": {
-          "south": "walking/rotations/south.png",
-          "south-east": "walking/rotations/south-east.png",
-          "east": "walking/rotations/east.png",
-          "north-east": "walking/rotations/north-east.png",
-          "north": "walking/rotations/north.png",
-          "north-west": "walking/rotations/north-west.png",
-          "west": "walking/rotations/west.png",
-          "south-west": "walking/rotations/south-west.png"
+          "south": "Walking/rotations/south.png",
+          "south-east": "Walking/rotations/south-east.png",
+          "east": "Walking/rotations/east.png",
+          "north-east": "Walking/rotations/north-east.png",
+          "north": "Walking/rotations/north.png",
+          "north-west": "Walking/rotations/north-west.png",
+          "west": "Walking/rotations/west.png",
+          "south-west": "Walking/rotations/south-west.png"
         },
         "animations": {
-          "Walking": {
-            "west": [
-              "walking/animations/Walking/west/frame_000.png",
-              "walking/animations/Walking/west/frame_001.png",
-              "walking/animations/Walking/west/frame_002.png",
-              "walking/animations/Walking/west/frame_003.png",
-              "walking/animations/Walking/west/frame_004.png",
-              "walking/animations/Walking/west/frame_005.png",
-              "walking/animations/Walking/west/frame_006.png",
-              "walking/animations/Walking/west/frame_007.png"
-            ],
+          "walking": {
             "north-west": [
-              "walking/animations/Walking/north-west/frame_000.png",
-              "walking/animations/Walking/north-west/frame_001.png",
-              "walking/animations/Walking/north-west/frame_002.png",
-              "walking/animations/Walking/north-west/frame_003.png",
-              "walking/animations/Walking/north-west/frame_004.png",
-              "walking/animations/Walking/north-west/frame_005.png",
-              "walking/animations/Walking/north-west/frame_006.png",
-              "walking/animations/Walking/north-west/frame_007.png"
-            ],
-            "north-east": [
-              "walking/animations/Walking/north-east/frame_000.png",
-              "walking/animations/Walking/north-east/frame_001.png",
-              "walking/animations/Walking/north-east/frame_002.png",
-              "walking/animations/Walking/north-east/frame_003.png",
-              "walking/animations/Walking/north-east/frame_004.png",
-              "walking/animations/Walking/north-east/frame_005.png",
-              "walking/animations/Walking/north-east/frame_006.png",
-              "walking/animations/Walking/north-east/frame_007.png"
+              "Walking/animations/walking/north-west/frame_000.png",
+              "Walking/animations/walking/north-west/frame_001.png",
+              "Walking/animations/walking/north-west/frame_002.png",
+              "Walking/animations/walking/north-west/frame_003.png",
+              "Walking/animations/walking/north-west/frame_004.png",
+              "Walking/animations/walking/north-west/frame_005.png",
+              "Walking/animations/walking/north-west/frame_006.png",
+              "Walking/animations/walking/north-west/frame_007.png"
             ],
             "south": [
-              "walking/animations/Walking/south/frame_000.png",
-              "walking/animations/Walking/south/frame_001.png",
-              "walking/animations/Walking/south/frame_002.png",
-              "walking/animations/Walking/south/frame_003.png",
-              "walking/animations/Walking/south/frame_004.png",
-              "walking/animations/Walking/south/frame_005.png",
-              "walking/animations/Walking/south/frame_006.png",
-              "walking/animations/Walking/south/frame_007.png"
-            ],
-            "east": [
-              "walking/animations/Walking/east/frame_000.png",
-              "walking/animations/Walking/east/frame_001.png",
-              "walking/animations/Walking/east/frame_002.png",
-              "walking/animations/Walking/east/frame_003.png",
-              "walking/animations/Walking/east/frame_004.png",
-              "walking/animations/Walking/east/frame_005.png",
-              "walking/animations/Walking/east/frame_006.png",
-              "walking/animations/Walking/east/frame_007.png"
+              "Walking/animations/walking/south/frame_000.png",
+              "Walking/animations/walking/south/frame_001.png",
+              "Walking/animations/walking/south/frame_002.png",
+              "Walking/animations/walking/south/frame_003.png",
+              "Walking/animations/walking/south/frame_004.png",
+              "Walking/animations/walking/south/frame_005.png",
+              "Walking/animations/walking/south/frame_006.png",
+              "Walking/animations/walking/south/frame_007.png"
             ],
             "south-east": [
-              "walking/animations/Walking/south-east/frame_000.png",
-              "walking/animations/Walking/south-east/frame_001.png",
-              "walking/animations/Walking/south-east/frame_002.png",
-              "walking/animations/Walking/south-east/frame_003.png",
-              "walking/animations/Walking/south-east/frame_004.png",
-              "walking/animations/Walking/south-east/frame_005.png",
-              "walking/animations/Walking/south-east/frame_006.png",
-              "walking/animations/Walking/south-east/frame_007.png"
+              "Walking/animations/walking/south-east/frame_000.png",
+              "Walking/animations/walking/south-east/frame_001.png",
+              "Walking/animations/walking/south-east/frame_002.png",
+              "Walking/animations/walking/south-east/frame_003.png",
+              "Walking/animations/walking/south-east/frame_004.png",
+              "Walking/animations/walking/south-east/frame_005.png",
+              "Walking/animations/walking/south-east/frame_006.png",
+              "Walking/animations/walking/south-east/frame_007.png"
+            ],
+            "west": [
+              "Walking/animations/walking/west/frame_000.png",
+              "Walking/animations/walking/west/frame_001.png",
+              "Walking/animations/walking/west/frame_002.png",
+              "Walking/animations/walking/west/frame_003.png",
+              "Walking/animations/walking/west/frame_004.png",
+              "Walking/animations/walking/west/frame_005.png",
+              "Walking/animations/walking/west/frame_006.png",
+              "Walking/animations/walking/west/frame_007.png"
+            ],
+            "north-east": [
+              "Walking/animations/walking/north-east/frame_000.png",
+              "Walking/animations/walking/north-east/frame_001.png",
+              "Walking/animations/walking/north-east/frame_002.png",
+              "Walking/animations/walking/north-east/frame_003.png",
+              "Walking/animations/walking/north-east/frame_004.png",
+              "Walking/animations/walking/north-east/frame_005.png",
+              "Walking/animations/walking/north-east/frame_006.png",
+              "Walking/animations/walking/north-east/frame_007.png"
             ],
             "south-west": [
-              "walking/animations/Walking/south-west/frame_000.png",
-              "walking/animations/Walking/south-west/frame_001.png",
-              "walking/animations/Walking/south-west/frame_002.png",
-              "walking/animations/Walking/south-west/frame_003.png",
-              "walking/animations/Walking/south-west/frame_004.png",
-              "walking/animations/Walking/south-west/frame_005.png",
-              "walking/animations/Walking/south-west/frame_006.png",
-              "walking/animations/Walking/south-west/frame_007.png"
+              "Walking/animations/walking/south-west/frame_000.png",
+              "Walking/animations/walking/south-west/frame_001.png",
+              "Walking/animations/walking/south-west/frame_002.png",
+              "Walking/animations/walking/south-west/frame_003.png",
+              "Walking/animations/walking/south-west/frame_004.png",
+              "Walking/animations/walking/south-west/frame_005.png",
+              "Walking/animations/walking/south-west/frame_006.png",
+              "Walking/animations/walking/south-west/frame_007.png"
             ],
             "north": [
-              "walking/animations/Walking/north/frame_000.png",
-              "walking/animations/Walking/north/frame_001.png",
-              "walking/animations/Walking/north/frame_002.png",
-              "walking/animations/Walking/north/frame_003.png",
-              "walking/animations/Walking/north/frame_004.png",
-              "walking/animations/Walking/north/frame_005.png",
-              "walking/animations/Walking/north/frame_006.png",
-              "walking/animations/Walking/north/frame_007.png"
+              "Walking/animations/walking/north/frame_000.png",
+              "Walking/animations/walking/north/frame_001.png",
+              "Walking/animations/walking/north/frame_002.png",
+              "Walking/animations/walking/north/frame_003.png",
+              "Walking/animations/walking/north/frame_004.png",
+              "Walking/animations/walking/north/frame_005.png",
+              "Walking/animations/walking/north/frame_006.png",
+              "Walking/animations/walking/north/frame_007.png"
+            ],
+            "east": [
+              "Walking/animations/walking/east/frame_000.png",
+              "Walking/animations/walking/east/frame_001.png",
+              "Walking/animations/walking/east/frame_002.png",
+              "Walking/animations/walking/east/frame_003.png",
+              "Walking/animations/walking/east/frame_004.png",
+              "Walking/animations/walking/east/frame_005.png",
+              "Walking/animations/walking/east/frame_006.png",
+              "Walking/animations/walking/east/frame_007.png"
             ]
           }
         }
@@ -144,5 +144,5 @@
     }
   ],
   "export_version": "3.1",
-  "export_date": "2026-07-30T07:20:06.968121"
+  "export_date": "2026-08-05T16:50:09.126652"
 }

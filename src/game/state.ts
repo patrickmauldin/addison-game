@@ -416,6 +416,79 @@ export type ArticleTiming = {
 export type DayContext = { iso: string; weekday: string };
 
 /**
+ * A WAIVER, handed over on the doorstep.
+ *
+ * The Association does grant passes, and a homeowner who has one produces it
+ * the moment you write the thing up. It is a piece of paper, so the question is
+ * never "does this exist" but "is this real" — and the four ways it can be
+ * wrong are the four things printed on it.
+ *
+ * VALIDITY IS DERIVED, never authored. A `valid: true` beside the artwork would
+ * be two sources for one fact, and the day they disagree the game tells the
+ * player they were wrong about something they read correctly.
+ */
+export type Pass = {
+  id: string;
+  lot_id: string;
+  /** The prop it is produced over — the one the player just marked. */
+  object: string;
+  /** Asset key for the letterhead. Only ONE of them is the Association's. */
+  letterhead: string;
+  /** Asset key for the seal. Same. */
+  stamp: string;
+  /** The article it claims to excuse. Wrong article, wrong paper. */
+  article: string;
+  /** ISO date. On or after today is current; before today has run out. */
+  expires: string;
+  /** What the note says is covered, in the Association's own words. */
+  covers: string;
+  /** Who hands it over. */
+  speaker: string;
+};
+
+/** The genuine article. Anything else on a pass is a forgery. */
+export const REAL_LETTERHEAD = 'Letterhead/addison-letterhead1';
+export const REAL_STAMP = 'Letterhead/hoa-stamp1';
+
+/**
+ * Why this pass is no good, or null if it is good.
+ *
+ * Checked in the order a person would look: the paper it is printed on, the
+ * seal, what it says, then the date. The first failure is the one reported,
+ * because that is the one the player should have seen.
+ */
+/**
+ * Which of a lot's violations a GENUINE waiver covers today.
+ *
+ * One implementation, because three callers need the answer and they must not
+ * differ: the game excuses these when it adjudicates, the simulator plays
+ * against them, and the validator checks the authored verdict is the verdict a
+ * careful player actually gets. A second copy is how the paper starts meaning
+ * one thing on the desk and another in the audit.
+ */
+export function waivedBy(
+  lot: { lot_id: string; truth: { violations: Array<{ object: string; article: string }> } },
+  passes: Pass[] | undefined,
+  todayIso: string,
+): Set<string> {
+  const out = new Set<string>();
+  for (const p of passes ?? []) {
+    if (p.lot_id !== lot.lot_id) continue;
+    const article = lot.truth.violations.find((v) => v.object === p.object)?.article;
+    if (article && !passFault(p, article, todayIso)) out.add(p.object);
+  }
+  return out;
+}
+
+export function passFault(p: Pass, article: string, todayIso: string): string | null {
+  if (p.letterhead !== REAL_LETTERHEAD) return 'The letterhead is not the Association’s.';
+  if (p.stamp !== REAL_STAMP) return 'The seal is not the Association’s.';
+  if (p.article !== article) return `It excuses ${p.article}. This is a finding under ${article}.`;
+  if (p.expires < todayIso) return `It expired on ${p.expires}.`;
+  return null;
+}
+
+/**
  * Is this violation live TODAY, or is the thing it describes still legal?
  *
  * A bin at the curb on a Wednesday, lights up in December, a dumpster on its
@@ -467,10 +540,28 @@ function excuse(
  * Per ARTICLE, not per address. Warning someone for weeds does not license a
  * fine for the bins you have never mentioned to them.
  */
-function articlesAlreadyCited(rec: AddressRecord): Set<string> {
+/**
+ * AND IT LAPSES. A citation counts for two weeks and then stops counting.
+ *
+ * Without a limit the file only ever grows: one warning in March licenses a
+ * fine in December, and the case file becomes a list of things that will never
+ * matter again sitting above the two that do. Fourteen days is the same window
+ * the card greys a ruling out at, and it has to be the same number — the whole
+ * point of striking a line through a ruling is that it no longer does anything.
+ */
+export const ESCALATION_DAYS = 14;
+
+/** Is this ruling still live enough to turn a warning into a fine? */
+export function rulingCounts(r: Ruling, todayIso: string): boolean {
+  return r.verdict !== 'PASS'
+    && r.findings.some((f) => f.article)
+    && daysBetween(r.date, todayIso) <= ESCALATION_DAYS;
+}
+
+function articlesAlreadyCited(rec: AddressRecord, todayIso: string): Set<string> {
   const out = new Set<string>();
   for (const r of rec.rulings) {
-    if (r.verdict === 'PASS') continue;
+    if (!rulingCounts(r, todayIso)) continue;
     for (const f of r.findings) if (f.article) out.add(f.article);
   }
   return out;
@@ -491,7 +582,13 @@ export function adjudicate(
   flagged: Set<string>,
   stamped: Verdict,
   payPerInspection: number,
-  ctx: { today: DayContext; timing: Record<string, ArticleTiming>; rec: AddressRecord },
+  ctx: {
+    today: DayContext;
+    timing: Record<string, ArticleTiming>;
+    rec: AddressRecord;
+    /** Object ids covered by a pass that turned out to be genuine. */
+    waived?: Set<string>;
+  },
 ): LotOutcome {
   const nameOf = (id: string) => labels.get(id) ?? id;
   const kindOf = (id: string) => kinds.get(id) ?? nameOf(id);
@@ -501,7 +598,13 @@ export function adjudicate(
   // it had been authored clean, because on this date it IS clean.
   const excused = new Map<string, string>();
   const live = lot.truth.violations.filter((v) => {
-    const why = excuse(v.article, v.object, ctx.timing, ctx.today, ctx.rec.first_seen);
+    // A GENUINE PASS IS AN EXCUSE LIKE ANY OTHER. The Association has already
+    // said this one is allowed, so it is not a finding today — and writing it
+    // up anyway is a false positive, exactly as it is for a dumpster inside its
+    // seven days. A forged pass excuses nothing and never reaches this set.
+    const why = ctx.waived?.has(v.object)
+      ? 'A current Association pass covers it. The homeowner produced it.'
+      : excuse(v.article, v.object, ctx.timing, ctx.today, ctx.rec.first_seen);
     if (why) excused.set(v.object, why);
     return !why;
   });
@@ -562,7 +665,7 @@ export function adjudicate(
    * those count today, and the address's own history decides how hard.
    */
   const repeat = live.length > 0 && (() => {
-    const cited = articlesAlreadyCited(ctx.rec);
+    const cited = articlesAlreadyCited(ctx.rec, ctx.today.iso);
     return live.some((v) => cited.has(v.article));
   })();
   const expected: Verdict = live.length === 0 ? 'PASS' : repeat ? 'CITATION' : 'NOTICE';

@@ -114,38 +114,87 @@
       "house": {
         "sprite": "house13b"
       },
-      "_teaching": "The other side of the same article on the same night. A boat first recorded today is inside its week, and the working car beside it was never within the Article at all.",
+      "_teaching": "THE PILE, fifth visit and first night. Everything from Tuesday is where it was, and a sofa has joined it on the porch. Nothing on this lot has ever been cleared.",
       "props": [
         {
-          "id": "boat",
-          "sprite": "boat1",
-          "anchor": "DRIVEWAY_3",
-          "label": "Boat on trailer, driveway",
-          "first_seen": "2026-03-12"
+          "id": "weeds_1",
+          "sprite": "weed3",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2026-03-04"
         },
         {
-          "id": "fence",
-          "sprite": "fence1",
-          "anchor": "FENCE_1",
-          "label": "Side-yard fence",
-          "first_seen": "2026-03-12",
-          "align": "left"
+          "id": "washer",
+          "sprite": "washer",
+          "anchor": "YARD_5",
+          "label": "Appliance, front lawn",
+          "first_seen": "2026-03-08"
+        },
+        {
+          "id": "dryer",
+          "sprite": "dryer",
+          "anchor": "YARD_1",
+          "label": "Appliance, front lawn",
+          "first_seen": "2026-03-08"
+        },
+        {
+          "id": "boxes",
+          "sprite": "boxes",
+          "anchor": "BED_FRONT",
+          "label": "Discarded packaging, planting bed",
+          "first_seen": "2026-03-10"
+        },
+        {
+          "id": "storage",
+          "sprite": "storage",
+          "anchor": "DRIVEWAY_3",
+          "label": "Portable storage unit, driveway",
+          "first_seen": "2026-03-10"
+        },
+        {
+          "id": "couch",
+          "sprite": "couch",
+          "anchor": "PORCH_1",
+          "label": "Sofa, front porch",
+          "first_seen": "2026-03-12"
         }
       ],
       "truth": {
-        "violations": [],
-        "decoys": [
+        "violations": [
           {
-            "object": "boat",
-            "why": "First recorded today. The Article allows seven days."
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Growing here since Wednesday of the first week."
           },
           {
-            "object": "fence",
-            "why": "Sound."
+            "object": "washer",
+            "article": "R-107",
+            "why": "Still on the lawn."
+          },
+          {
+            "object": "dryer",
+            "article": "R-107",
+            "why": "Still beside it."
+          },
+          {
+            "object": "boxes",
+            "article": "R-107",
+            "why": "Still in the bed."
+          },
+          {
+            "object": "couch",
+            "article": "R-107",
+            "why": "A sofa on the porch. New since Tuesday."
+          }
+        ],
+        "decoys": [
+          {
+            "object": "storage",
+            "why": "On record 10 March. The Article allows seven days and they have not run out."
           }
         ]
       },
-      "expected_verdict": "PASS"
+      "expected_verdict": "CITATION"
     },
     {
       "lot_id": "bonerville_04",

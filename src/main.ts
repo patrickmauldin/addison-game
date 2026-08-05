@@ -23,8 +23,12 @@ import {
   noteFirstSeen,
   recordFor,
   reset,
+  passFault,
+  waivedBy,
+  rulingCounts,
   save,
   type LotOutcome,
+  type Pass,
   type Ruling,
   type SaveFile,
   type SlotInfo,
@@ -46,7 +50,7 @@ import housesData from './data/houses.json';
 import { BarkState, factsFromProps, resetBarkHistory, type BarkContext } from './game/barks.js';
 import { BUBBLE_FONT, drawBubble } from './game/bubble.js';
 import { ANIMAL_UPSCALE, ANIMALS, animalFrameFor, animalKind, animalNamed, animalsAbroad } from './game/animal.js';
-import { dateForLevel } from './game/calendar.js';
+import { dateForLevel, isCollectionWeek } from './game/calendar.js';
 import { makePassersby, remapPassersby, stepPassersby, type Passerby, type Sidewalk } from './game/passerby.js';
 import { characterNamed, pickCharacter, RESIDENT_UPSCALE, residentFrame, RESIDENTS, TOOL_NAMES, ToolWork, walkFrame } from './game/residents.js';
 import { seedFrom, Walker } from './game/walker.js';
@@ -151,6 +155,11 @@ type LevelSpec = {
     options: { id: string; label: string; pay?: number; unmark?: boolean; reply: string }[];
   };
   /**
+   * Waivers the homeowners on this round will produce. Same trigger as `event`
+   * — you have to have written the thing up before anybody argues about it.
+   */
+  passes?: Pass[];
+  /**
    * A night shift. Authored per level rather than derived from the number: the
    * intent is roughly every couple of shifts, but which ones is a pacing
    * decision — a night round wants to land where the street has something worth
@@ -232,23 +241,39 @@ function loadLevel(i: number): void {
   day = LEVELS[i];
   today = dateForLevel(day.level_id);
   /**
-   * A round with no notice of its own picks up the oldest one still open.
+   * `day.bounty` is THIS ROUND'S notice and nothing else now.
    *
-   * This was the thief alone, hardwired. Any unfound flyer works the same way
-   * now: it stays POSTED every round (see postedNotices) but can only be acted
-   * on when the round has nothing of its own to look for, because everything
-   * downstream — the lot it hides on, the face, the hunt — is built for one
-   * bounty at a time.
+   * It used to be quietly overwritten with the oldest unfound one so a round
+   * with none of its own had something to look for. Every open notice is placed
+   * on its own lot instead — see placeBounty — so a flyer no longer waits for a
+   * quiet round to be answerable, and this level's own bounty stays this
+   * level's own.
    */
-  if (!day.bounty) {
-    const open = outstandingBounties()[0];
-    if (open) day = { ...day, bounty: open };
-  }
   LOTS = Object.fromEntries(day.lots.map((l) => [l.lot_id, l]));
 }
 loadLevel(0);
 
 const ARTICLES = rulesData.articles;
+/**
+ * Which week the recycling truck runs, read off R-110 rather than repeated.
+ *
+ * The briefing has to say whether today is a collection week, and adjudication
+ * has to agree with it — two copies of the reference date is how the morning
+ * meeting starts contradicting the stamp.
+ */
+/**
+ * The days a green bin could legitimately be at the curb, off R-110 itself.
+ *
+ * Read rather than repeated: which weekdays the containers are allowed out is
+ * the Article's business, and a second copy here is a copy that eventually
+ * disagrees with the one the stamp is judged against.
+ */
+const RECYCLING_DAYS: string[] =
+  (ARTICLES.find((a) => a.id === 'R-110') as { weekday_window?: string[] } | undefined)
+    ?.weekday_window ?? [];
+const RECYCLING_WEEK =
+  (ARTICLES.find((a) => a.id === 'R-110') as { alternate_weeks?: { week_of: string } } | undefined)
+    ?.alternate_weeks?.week_of ?? '2026-03-02';
 /** Binder divider order. Fixed by the data, never sorted — see rules.json. */
 const CATEGORIES: string[] = (rulesData as { categories?: string[] }).categories ?? [];
 
@@ -362,46 +387,68 @@ async function loadBitmap(url: string): Promise<{ w: number; h: number; rgba: Ui
 }
 
 /**
- * Hide this level's bounty on one of its eligible lots.
+ * Hide every OPEN notice on a lot of its own.
  *
  * Never the first lot of the round: the notice is what tells the player there
  * is anything to look for, so finding the animal before reading about it is not a
  * discovery, it is a coincidence. The level data lists the eligible lots.
+ *
+ * EVERY open notice, not just this level's. A flyer that stays up for three
+ * rounds and can only be answered on the one round that has nothing of its own
+ * is a flyer the player watches expire — miss Chaz on Wednesday and he has to
+ * be somewhere on Friday. One bounty to a lot, because a lot is the unit
+ * everything downstream searches.
  */
 function placeBounty(): void {
-  bountyLot = null;
-  bountyCharacter = null;
-  const b = day.bounty;
-  if (!b?.eligible_lots?.length) return;
-  const pool = b.eligible_lots.filter((id) => id !== day.lots[0]?.lot_id && LOTS[id]);
-  if (!pool.length) return;
-  const rnd = seedFrom(`level${day.level_id}:bounty`);
-  bountyLot = pool[Math.floor(rnd() * pool.length)];
-  // THE NOTICE OUTLIVES THE MAN. He is a night animal, so on a daylight round
-  // the flyer is up and he is simply not on the street — bountyLot stays null
-  // and nothing places him, while the face is still drawn below for the poster.
-  if (b.id === 'thief' && !day.night) bountyLot = null;
-  // Drawn, not authored. The player is meant to RECOGNISE a face off a notice,
-  // and a face that is the same every playthrough gets memorised instead.
-  // Pinned if the level names one, drawn otherwise. The Poop Bandit is a face
-  // you have to match and so must not be memorisable; the thief is the only
-  // person crossing a lawn after dark and is meant to be recognised on sight.
-  if (b.kind === 'person') {
-    bountyCharacter = b.character ? characterNamed(b.character) : Math.floor(rnd() * RESIDENTS.count);
-    // Remembered, so the poster shows the same man on every round it stays up.
-    // The seed is per LEVEL, so without this the face on a carried-forward
-    // notice would change every morning — or vanish, on a round that never
-    // placed him at all.
-    (saveFile.inspector.faces ??= {})[b.id] = bountyCharacter;
-    save(saveFile);
+  bountyLots.clear();
+  const taken = new Set<string>([day.lots[0]?.lot_id]);
+  for (const b of postedNotices()) {
+    if (claimed.has(b.id)) continue;
+    const pool = (b.eligible_lots ?? []).filter((id) => !taken.has(id) && LOTS[id]);
+    // THE NOTICE OUTLIVES THE MAN. He is a night animal, so on a daylight round
+    // the flyer is up and he is simply not on the street — no lot is assigned
+    // and nothing places him, while the face is still drawn for the poster.
+    if (b.id === 'thief' && !day.night) continue;
+    if (!pool.length) continue;
+    // Seeded off the level AND the notice, so two open bounties do not draw the
+    // same number, and a given notice lands in the same place every replay.
+    const rnd = seedFrom(`level${day.level_id}:${b.id}:bounty`);
+    const lot = pool[Math.floor(rnd() * pool.length)];
+    bountyLots.set(b.id, lot);
+    taken.add(lot);
+    // Drawn, not authored. The player is meant to RECOGNISE a face off a notice,
+    // and a face that is the same every playthrough gets memorised instead.
+    // Pinned if the level names one, drawn otherwise. The Poop Bandit is a face
+    // you have to match and so must not be memorisable; the thief is the only
+    // person crossing a lawn after dark and is meant to be recognised on sight.
+    if (b.kind === 'person' && faceOf(b) === null) {
+      // Remembered, so the poster shows the same man on every round it stays
+      // up — the seed is per level, so a redraw would change him overnight.
+      (saveFile.inspector.faces ??= {})[b.id] =
+        b.character ? characterNamed(b.character) : Math.floor(rnd() * RESIDENTS.count);
+      save(saveFile);
+    }
   }
+}
+
+/** The notice hiding on this lot, if any is. */
+function bountyOn(lotId: string | undefined): Bounty | null {
+  if (!lotId) return null;
+  for (const b of postedNotices())
+    if (bountyLots.get(b.id) === lotId && !claimed.has(b.id)) return b;
+  return null;
+}
+
+/** Whose face is on this notice. Pinned, remembered, or nobody's yet. */
+function faceOf(b: Bounty): number | null {
+  if (b.character) return characterNamed(b.character);
+  return saveFile.inspector.faces?.[b.id] ?? null;
 }
 
 /** The bounty prop, if it is hiding on this lot and has not been claimed. */
 function bountyPropFor(lot: LotSpec): PropSpec | null {
-  const b = day.bounty;
+  const b = bountyOn(lot.lot_id);
   if (!b || b.kind === 'person' || b.kind === 'animal' || !b.sprite) return null;
-  if (lot.lot_id !== bountyLot || claimed.has(b.id)) return null;
   // Seeded off the lot so he is in the same place every time you visit it.
   const rnd = seedFrom(`${lot.lot_id}:${b.id}`);
   const spots = ['YARD_1', 'YARD_2', 'YARD_3', 'YARD_5', 'YARD_6', 'BED_FRONT'];
@@ -879,10 +926,15 @@ let fineBonus = 0;
  * desk is willing to say before the Board has looked at your work.
  */
 let bankShown = saveFile.inspector.pay;
-/** Which lot this level hid the bounty on, if any. */
-let bountyLot: string | null = null;
-/** For a person bounty: which of the ten they are. Drawn per level. */
-let bountyCharacter: number | null = null;
+/**
+ * Which lot each OPEN notice is hiding on this round, by bounty id.
+ *
+ * A map rather than one lot: several notices can be up at once now, and each
+ * gets a lot to itself. The face that goes with a person bounty lives in the
+ * save (`inspector.faces`) rather than beside this, because a poster outlives
+ * the round that drew it.
+ */
+const bountyLots = new Map<string, string>();
 /** Where the tick goes once he is gone from the scene. */
 let bountyMark: { x: number; y: number } | null = null;
 let outcomes: LotOutcome[] = [];
@@ -1130,8 +1182,8 @@ function paint(): void {
 
   // Claimed bounty: a green tick where he was, held until the round ends. The
   // animal himself is gone from the scene — the tick is the receipt.
-  const b = day.bounty;
-  if (b && claimed.has(b.id) && bountyLot === current?.lot_id && checkMark.complete && checkMark.naturalWidth) {
+  const claimedHere = [...bountyLots].find(([id, lot]) => lot === current?.lot_id && claimed.has(id));
+  if (claimedHere && checkMark.complete && checkMark.naturalWidth) {
     const spot = bountyMark;
     if (spot) ctx.drawImage(checkMark, Math.round(spot.x - MW / 2), Math.round(spot.y - MH / 2), MW, MH);
   }
@@ -1167,7 +1219,9 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   const rnd = seedFrom(lot.lot_id);
   // A wanted person has to be findable, so on their lot somebody is always out
   // and it is always them. Everywhere else the usual roll applies.
-  const wanted = day.bounty?.kind === 'person' && lot.lot_id === bountyLot && bountyCharacter !== null;
+  const here = bountyOn(lot.lot_id);
+  const wantedFace = here?.kind === 'person' ? faceOf(here) : null;
+  const wanted = wantedFace !== null;
   /**
    * AFTER DARK NOBODY IS OUT ON THEIR OWN LAWN.
    *
@@ -1217,7 +1271,7 @@ function makeWalker(lot: LotSpec, rl: RenderedLot): Resident | null {
   const speed = L.house.w * 0.085 * (thieving ? 3 : 1);
   // Weighted, not uniform — see pickCharacter for why the skin mix depends on it.
   // The wanted face is whatever the notice printed, pinned or drawn.
-  const character = wanted ? bountyCharacter! : pickCharacter(rnd);
+  const character = wanted ? wantedFace! : pickCharacter(rnd);
   // Somebody out with a hoe is working a patch of yard, not touring it. Speed
   // zero rather than a separate stationary type: the walker still keeps time,
   // which is what the tool animation cuts its frames from.
@@ -1301,9 +1355,8 @@ function makeAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Wal
  * Gone the moment it is claimed: the tick left behind is the receipt.
  */
 function makeBountyAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walker: Walker } | null {
-  const b = day.bounty;
+  const b = bountyOn(lot.lot_id);
   if (!b || b.kind !== 'animal' || !b.animal) return null;
-  if (lot.lot_id !== bountyLot || claimed.has(b.id)) return null;
   const L = rl.layout;
   const top = L.house.y + L.house.h * 0.8;
   const bottom = L.walkTop - 10;
@@ -1767,7 +1820,16 @@ function rulingLine(r: Ruling): string {
   const what = cited.length
     ? cited.map((id) => `<span class="cf-art">${ruleNumber(id)} ${ARTICLE_TAB[id] ?? id}</span>`).join(' ')
     : '<span class="muted">no articles cited</span>';
-  return `<div class="cf-line">
+  /**
+   * STRUCK OUT once it can no longer change what you stamp today.
+   *
+   * A case file that lists everything ever written at an address is a case file
+   * nobody reads: the two lines that decide the verdict are buried among the
+   * ones that stopped mattering. The same test adjudication uses, so a line
+   * through a ruling means exactly what it looks like — spent.
+   */
+  const spent = !rulingCounts(r, today.iso);
+  return `<div class="cf-line${spent ? ' spent' : ''}"${spent ? ' title="Lapsed. No longer counts toward escalation."' : ''}>
       <span>${shortDate(r.date)} — <b>${VERDICT_WORD[r.verdict] ?? r.verdict}</b></span>
       ${what}
     </div>`;
@@ -1775,7 +1837,10 @@ function rulingLine(r: Ruling): string {
 
 type Article = (typeof ARTICLES)[number] & {
   category?: string;
-  exhibit?: { cite: string[]; cite_note: string };
+  exhibit?: {
+    cite: string[]; cite_note: string; cite_label?: string;
+    allow?: string[]; allow_note?: string; allow_label?: string;
+  };
 };
 
 /**
@@ -1804,9 +1869,20 @@ const binderExpanded = new Set<string>();
  * there with them: the section number is flavour, not something you scan for.
  */
 function binderEntry(a: Article, expanded: Set<string> = binderExpanded): string {
-  const pics = (a.exhibit?.cite ?? [])
-    .map((k) => `<img src="assets/${k}.png" alt="" />`)
-    .join('');
+  const thumbs = (keys: string[] = []) =>
+    keys.map((k) => `<img src="assets/${k}.png${CB}" alt="" />`).join('');
+  const pics = thumbs(a.exhibit?.cite);
+  /**
+   * THE OTHER HALF OF THE EXHIBIT, which was authored and never drawn.
+   *
+   * `allow` and `allow_note` have been in rules.json since the book was written
+   * and nothing rendered them, so every article showed the player what a
+   * violation looks like and nothing of what a NEAR-MISS looks like — which is
+   * the harder half of this job and the half the decoys are built on. It shows
+   * behind "read more" with the enforcement limits, because that is the same
+   * question asked twice: what does this Article NOT reach.
+   */
+  const allow = thumbs(a.exhibit?.allow);
   const open = expanded.has(a.id);
   return `
     <div class="bk-rule">
@@ -1814,14 +1890,30 @@ function binderEntry(a: Article, expanded: Set<string> = binderExpanded): string
         <span class="bk-code">${ruleNumber(a.id)}</span>
         <span class="bk-title">${a.title}</span>
       </div>
-      <div class="bk-gist">${a.short}</div>
-      ${pics ? `<div class="bk-pics">${pics}</div>` : ''}
-      <button type="button" class="bk-more" data-more="${a.id}"
-              aria-expanded="${open}">${open ? 'collapse' : 'read more'}</button>
+      <div class="bk-gist">${a.short}
+        <!-- INSIDE the summary, not under it: it is the end of that sentence,
+             and a row of its own turned a one-line rule into a three-line one. -->
+        <button type="button" class="bk-more" data-more="${a.id}"
+                aria-expanded="${open}">${open ? 'collapse' : 'read more'}</button>
+      </div>
+      ${
+        pics
+          ? `${a.exhibit?.cite_label ? `<div class="bk-pics-label">${a.exhibit.cite_label}</div>` : ''}
+             <div class="bk-pics">${pics}</div>`
+          : ''
+      }
       <div class="bk-full"${open ? '' : ' hidden'}>
         <div class="bk-cite">${a.section}</div>
         <p class="bk-formal">${a.text}</p>
         <div class="bk-limits"><b>Enforcement limits.</b> ${a.decoy_note}</div>
+        ${
+          allow || a.exhibit?.allow_note
+            ? `<div class="bk-allow">
+                 <b>${a.exhibit?.allow_label ?? 'Not this Article.'}</b> ${a.exhibit?.allow_note ?? ''}
+                 ${allow ? `<div class="bk-pics">${allow}</div>` : ''}
+               </div>`
+            : ''
+        }
       </div>
     </div>`;
 }
@@ -2173,8 +2265,9 @@ frame.addEventListener('click', (ev) => {
 
   // The wanted person, if this is a person bounty and you have found them.
   // Same rule as the animals: checked before the id buffer, never a finding.
-  const pb = day.bounty;
-  if (pb?.kind === 'person' && !claimed.has(pb.id) && bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
+  const pb = bountyOn(current?.lot_id);
+  const pbFace = pb?.kind === 'person' ? faceOf(pb) : null;
+  if (pb && pbFace !== null && personHit(p.x, p.y) === pbFace) {
     claimBounty(pb, { x: p.x, y: p.y });
     return;
   }
@@ -2190,9 +2283,8 @@ frame.addEventListener('click', (ev) => {
    * has found Chaz and gets a meow out of the neighbour's cat instead would
    * reasonably conclude the bounty is broken.
    */
-  const bAnimal = day.bounty;
-  if (bAnimal?.kind === 'animal' && bountyAnimal && !claimed.has(bAnimal.id)
-      && overAnimal(bountyAnimal, p.x, p.y)) {
+  const bAnimal = bountyOn(current?.lot_id);
+  if (bAnimal?.kind === 'animal' && bountyAnimal && overAnimal(bountyAnimal, p.x, p.y)) {
     // Its BODY, not its feet. drawAnimal puts the sprite in y-h..y, so the
     // walker's y is the ground line — centring the tick there hangs half of it
     // on the grass below the cat.
@@ -2223,9 +2315,8 @@ frame.addEventListener('click', (ev) => {
 
   // A bounty is claimed, not cited. It pays immediately, never enters `flagged`,
   // and so never reaches adjudication or the accuracy figure.
-  const b = day.bounty;
+  const b = bountyOn(current?.lot_id);
   if (b && obj.id === b.id) {
-    if (claimed.has(b.id)) return;
     claimBounty(b, centroid(key) ?? { x: p.x, y: p.y });
     return;
   }
@@ -2243,6 +2334,7 @@ frame.addEventListener('click', (ev) => {
   // AFTER the mark lands and before anything is stamped. The order is the
   // point: the resident comes out because they saw you photograph it.
   maybeEvent(obj.id);
+  maybePass(obj.id);
 });
 
 /**
@@ -2265,6 +2357,14 @@ const HUNT_DARTS = 4;
 const HUNT_SPENT_MS = 900;
 
 let hunt: { darts: number; timer: number } | null = null;
+/**
+ * WHAT IS BEING SHOT AT, held for the length of the hunt.
+ *
+ * Not looked up from the lot each time: endHunt clears the quarry's lot on a
+ * miss, and shoot() would then be firing at a notice nothing can find any more.
+ * One capture at the top of the encounter, dropped when it ends.
+ */
+let hunted: Bounty | null = null;
 
 /**
  * HIT. He does not vanish on the frame the dart lands.
@@ -2287,13 +2387,11 @@ function blinkAlpha(now: number): number {
 }
 
 function huntTarget(): Bounty | null {
-  const b = day.bounty;
   // `hunt`, not the id: the thief was the first of these, not the only one.
   // Still night-only — the drawer, the music and a torch-lit street are one
   // idea, and a dart gun on a Tuesday afternoon is a different game.
-  if (!b?.hunt || !day.night) return null;
-  if (!current || current.lot_id !== bountyLot || claimed.has(b.id)) return null;
-  return b;
+  const b = bountyOn(current?.lot_id);
+  return b?.hunt && day.night ? b : null;
 }
 
 function startHunt(): void {
@@ -2310,6 +2408,7 @@ function startHunt(): void {
   // the gun away does not reveal a drawer left open before the music started.
   setDrawerOpen(false);
   hunt = { darts: HUNT_DARTS, timer: 0 };
+  hunted = b;
   const drawer = $('drawer');
   drawer.hidden = false;
   drawer.setAttribute('aria-hidden', 'false');
@@ -2342,13 +2441,15 @@ function endHunt(caught: boolean): void {
   // and writing him into the save would put the thief's flag on the wrong
   // animal — which is what decides whether the notice stays up for the rest of
   // the campaign.
-  if (day.bounty?.id === 'thief') saveFile.inspector.thief = caught ? 'caught' : 'outstanding';
+  const quarry = hunted;
+  hunted = null;
+  if (quarry?.id === 'thief') saveFile.inspector.thief = caught ? 'caught' : 'outstanding';
   save(saveFile);
   if (!caught) {
     // Gone for the night. The lot goes quiet, which is the point — you had him
-    // and the music ran out.
+    // and the music ran out. Off the map too, so nothing else looks for him.
     resident = null;
-    bountyLot = null;
+    if (quarry) bountyLots.delete(quarry.id);
     paint();
   }
   // On a catch he is deliberately left standing: shoot() is mid-blink and owns
@@ -2367,12 +2468,14 @@ function shoot(p: { x: number; y: number }): void {
   hunt.darts--;
   syncDarts();
   sound.play('shot');
-  const b = day.bounty!;
+  const b = hunted;
+  if (!b) return;
+  const face = b.kind === 'person' ? faceOf(b) : null;
   // A dart hits whatever the notice is FOR, and a notice is for a person or for
   // an animal. Testing only for a person was fine while the thief was the only
   // hunt; it made the armadillo unshootable, which reads as the gun being
   // broken rather than as the player missing.
-  if (b.kind === 'person' && bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
+  if (face !== null && personHit(p.x, p.y) === face) {
     endHunt(true);
     // He stays on his feet and stays walking; only the drawing goes. The walker
     // is torn down when the blink finishes, not when the dart lands — which is
@@ -2417,6 +2520,57 @@ function shoot(p: { x: number; y: number }): void {
  * decision and the audit will treat it as one.
  */
 const firedEvents = new Set<string>();
+
+/**
+ * WAIVERS THE PLAYER HAS ACCEPTED, by object id, for this round.
+ *
+ * Accepting is not what makes a pass genuine — `passFault` decides that off the
+ * paper, and adjudication reads the genuine ones whether or not the player was
+ * taken in. This is only what they did about it, which is the mark.
+ */
+const passesSeen = new Set<string>();
+
+/** Every waiver produced on this lot for this object, genuine or not. */
+function passFor(objectId: string): Pass | undefined {
+  return day.passes?.find((p) => p.lot_id === current.lot_id && p.object === objectId);
+}
+
+/**
+ * The note on the doorstep.
+ *
+ * Produced the moment the player writes the thing up, because that is when a
+ * homeowner who has one produces it. It is EVIDENCE, not an offer: the two
+ * buttons only decide whether the mark stays, and whether that was right is
+ * settled by the paper, not by the choice. Accept a forgery and the finding is
+ * simply missing from the pad in the morning.
+ *
+ * Small on purpose. A full-screen document reads itself; a note held up at the
+ * door has to be looked at.
+ */
+function maybePass(objectId: string): void {
+  const p = passFor(objectId);
+  if (!p || passesSeen.has(p.id) || !flagged.has(objectId)) return;
+  passesSeen.add(p.id);
+
+  const box = $('pass');
+  $('pass-who').textContent = p.speaker;
+  $<HTMLImageElement>('pass-head').src = `assets/${p.letterhead}.png${CB}`;
+  $<HTMLImageElement>('pass-seal').src = `assets/${p.stamp}.png${CB}`;
+  $('pass-covers').textContent = p.covers;
+  $('pass-exp').textContent = p.expires;
+  box.hidden = false;
+
+  const close = () => { box.hidden = true; };
+  $('pass-accept').onclick = () => {
+    // Taken at face value. The pad simply stops saying it — which is right if
+    // the paper was real and a missed finding if it was not.
+    flagged.delete(objectId);
+    paint();
+    syncDesk();
+    close();
+  };
+  $('pass-reject').onclick = close;
+}
 
 function maybeEvent(objectId: string): void {
   const e = day.event;
@@ -2732,6 +2886,7 @@ function stamp(v: Verdict): void {
     today: { iso: today.iso, weekday: today.weekday },
     timing: ARTICLE_TIMING,
     rec,
+    waived: waivedBy(current, day.passes, today.iso),
   });
   outcomes.push(outcome);
   // Read here rather than at the next lot: `outcomes` is cleared per level and
@@ -3155,13 +3310,13 @@ function endDay(): void {
       <span class="money total">${money(pay + fineBonus + bountyPay - penalty)}</span></div>
     <div class="today-line"><span>Balance</span>
       <span class="money">${money(saveFile.inspector.pay)}</span></div>
-    ${shortfall > 0 ? `<p class="muted">Quota was ${day.quota}. Short ${shortfall}. In the full campaign this docks the stub.</p>` : ''}
+    ${shortfall > 0 ? `<p class="muted">Quota was ${day.quota}. Short ${shortfall}.</p>` : ''}
     <p>Mistakes today: <b>${strikes}</b>${
       penalty > 0
         ? ` — ${FREE_MISTAKES} forgiven, ${billed} charged`
         : `. ${strikes ? 'Forgiven.' : 'None.'}`
     } &nbsp;·&nbsp; Cumulative accuracy: <b>${acc}%</b>
-       ${acc < 70 ? '<br><span class="muted">Below 70%. In the full campaign this triggers probation at the bi-weekly review.</span>' : ''}</p>
+       ${acc < 70 ? '<br><span class="muted">Below 70%. The Board reviews an inspector who stays there.</span>' : ''}</p>
 
     ${
       firedWhy
@@ -3405,6 +3560,28 @@ function briefing(): void {
    * articles are introduced with their exhibits — a control the player meets
    * for the first time on the lot is a control they misuse on the lot.
    */
+  /**
+   * WHICH WEEK IT IS, but only on a day when that is the question.
+   *
+   * A green bin at the curb on a Thursday is a finding whichever week it is —
+   * the weekday window has already decided it — so telling the player about the
+   * collection cycle on a Thursday is noise that reads like the reason. The
+   * cycle is only the deciding fact on the two days a container may legally be
+   * out at all, and on those days it is worth saying either way round: this is
+   * the week, or this is not.
+   */
+  const recyclingAlert = (): string => {
+    if (!day.active_rules.includes('R-110')) return '';
+    if (!RECYCLING_DAYS.includes(today.weekday)) return '';
+    return isCollectionWeek(today.iso, RECYCLING_WEEK)
+      ? `<p class="brief-alert"><b>Recycling runs this week.</b> It is ${today.weekday}, so a green
+           container at the curb is compliant today — and so is the brown one. Neither is on any
+           other day of the week.</p>`
+      : `<p class="brief-alert"><b>This is the off week.</b> No recycling truck is coming, so a
+           green container at the curb is a finding even though it is ${today.weekday} — and the
+           brown one beside it is not. Write up every green bin you see.</p>`;
+  };
+
   const fineNote = day.level_id === 2
     ? `<div class="brief-note">
          <img src="assets/fine.png" alt="" />
@@ -3439,6 +3616,7 @@ function briefing(): void {
     `<h3>New today</h3>
      <p class="muted" style="margin-bottom:12px">Added to the binder as of this morning.
         Everything already in there still applies — look it up before you stamp.</p>
+     ${recyclingAlert()}
      <div class="bk-leaf">
        <div class="bk-leaf-book">
          <div class="bk-leaf-page">${exhibits()}</div>
@@ -3649,12 +3827,10 @@ function flyerMarkup(b: Bounty | undefined = day.bounty, pinned = true): string 
    * flyer rather than as a flyer about a face nobody has drawn.
    *
    * So it falls back to the face this notice was FIRST drawn with, kept in
-   * `bountyFaces` when the round that posted it placed it. Nothing to borrow
-   * only on a save that pre-dates the record.
+   * the save when the round that posted it placed him. Nothing to borrow only
+   * on a save that pre-dates the record.
    */
-  const character = b.character ? characterNamed(b.character)
-    : b === day.bounty ? bountyCharacter
-      : saveFile.inspector.faces?.[b.id] ?? null;
+  const character = faceOf(b);
   // A prop shows its own sprite; a person is a window onto the resident sheet,
   // so the face on the notice IS the sprite to spot and cannot drift from it.
   const isPerson = b.kind === 'person' && character !== null;
@@ -3773,6 +3949,7 @@ function startRound(): void {
   // drawer away and give the pointer back.
   if (hunt) endHunt(false);
   firedEvents.clear();
+  passesSeen.clear();
   // A shift jumped out of mid-round must not ring on the new shift's first lot.
   phonePending = false;
   // Nobody starts a shift with the drawer hanging open.
