@@ -432,8 +432,9 @@
          they run the full width of the desk right to the window edge — an icon
          there sits on the WARNING button, and on a three-stamp round there is
          even less room. */
+      /* Shifted right to make room for the zoom pair, which takes the corner. */
       #mute {
-        position: fixed; left: 12px; bottom: 8px; z-index: 50;
+        position: fixed; left: 74px; bottom: 8px; z-index: 50;
         background: none; border: 0; padding: 6px; cursor: pointer;
         line-height: 0; opacity: .2; transition: opacity .14s;
       }
@@ -444,6 +445,30 @@
            kerb is one resize away — the shadow keeps it legible on either. */
         filter: drop-shadow(0 1px 2px rgba(0,0,0,.9));
       }
+
+      /* --- Zoom ---------------------------------------------------------- */
+      /* The house is fitted to the window in snapped steps (see core/scene.ts),
+         and on a laptop the fit often lands a whole step below what the room
+         allows — which is a house sitting in a field of grass. These move it
+         along that same ladder.
+         Typed, not drawn: a + and a - are the two glyphs nobody has to learn,
+         and a pixel-art icon of a magnifier at 20px is a smudge. Same corner
+         and the same faint-until-wanted treatment as the mute beside it. */
+      #zoom {
+        position: fixed; left: 12px; bottom: 8px; z-index: 50;
+        display: flex; gap: 2px; opacity: .2; transition: opacity .14s;
+      }
+      #zoom:hover, #zoom:focus-within { opacity: .7; }
+      #zoom button {
+        background: none; border: 0; padding: 0; width: 26px; height: 26px;
+        cursor: pointer; color: #fff;
+        font-family: var(--pixel-font); font-size: 15px; line-height: 1;
+        /* The road under this corner is dark, but a pale kerb is one resize
+           away — the same shadow the speaker carries, for the same reason. */
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,.9));
+      }
+      /* At the end of the ladder. Still there, so the pair never reflows. */
+      #zoom button:disabled { opacity: .35; cursor: default; }
 
       /* --- The dart drawer ---------------------------------------------- */
       /* Pulled out over the desk from the right. Same board as the desk itself,
@@ -751,8 +776,25 @@
          thing the eye picks up while the whole panel is moving. */
       #desk.open #desk-scroll, #desk.open #stamps { transform: translateX(-28px); }
       /* No right inset: the pull is on the edge of the front, hard against the
-         side of the window. */
-      #desk-pull { flex: 0 0 auto; display: flex; justify-content: flex-end; padding: 0 0 6px; }
+         side of the window.
+         STILL IN THE COLUMN, between the paperwork and the stamps, because that
+         is where the handle belongs — a pull sits low on a drawer front, by the
+         stamps, not up by the route sheet. But it reserves NO height: as a
+         normal flex item it held a 107px band across the full width that
+         nothing else could enter, which on a laptop is a card's worth of desk
+         spent on a handle. Zero-height here, with the button hung off the
+         bottom, so it keeps its place in the order and rises up over the
+         paperwork instead of pushing it away.
+         Under the paperwork, too. It is a pull on the edge of a drawer front,
+         so the paper lying on that front passes over it — and the cards stop
+         12px short of the window, which leaves the outer 12px uncovered and
+         still the thing you hit when you reach for the edge. See the z-index
+         pair with #desk-scroll. */
+      #desk-pull {
+        flex: 0 0 auto; height: 0;
+        position: relative; z-index: 1;
+      }
+      #desk-handle { position: absolute; right: 0; bottom: 6px; }
       #desk-handle {
         background: none; border: 0; padding: 0; cursor: pointer; line-height: 0;
         filter: drop-shadow(-2px 2px 0 rgba(0,0,0,.35));
@@ -764,9 +806,31 @@
       /* Leans the way it is about to go. */
       #desk-handle:hover, #desk-handle:focus-visible { transform: translateX(-3px); }
       #desk.open #desk-handle:hover, #desk.open #desk-handle:focus-visible { transform: translateX(3px); }
+      /* The right inset is a MARGIN, not padding, so the strip it leaves is
+         outside this box entirely. As padding it was still part of the scroll
+         area, and a scroll area swallows the click whether it has drawn
+         anything there or not — the pull would have been buried under a
+         transparent 12px of nothing.
+         The right inset is therefore SPLIT. The book is set down at -2deg, and
+         a rotated box is wider than the element that was rotated — #binder
+         comes out ~4-6px past its own layout width, more the taller the book
+         is. Padding absorbed that silently for as long as the inset was all
+         padding; making it all margin turned it into real overflow, which is
+         the horizontal scrollbar that appeared across the sidebar. So: 8px of
+         padding, which is inside the scroll box and gives the rotation somewhere
+         to go, plus 12px of margin, which is outside it and is what leaves the
+         pull reachable.
+         overflow-x is pinned as well, as a floor rather than the fix — a taller
+         book must never put that bar back. It cannot be `clip`: beside an
+         `overflow-y` of `auto`, `clip` computes to `hidden` regardless, which
+         also means overflow-clip-margin would never have applied. Hence the
+         padding doing the real work. */
       #desk-scroll {
-        flex: 1; min-height: 0; overflow-y: auto;
-        padding: 12px; display: flex; flex-direction: column; gap: 10px;
+        position: relative; z-index: 2;
+        flex: 1; min-height: 0;
+        overflow-y: auto; overflow-x: hidden;
+        padding: 12px 8px 12px 12px; margin-right: 12px;
+        display: flex; flex-direction: column; gap: 10px;
       }
       /* Same curve and duration as the front, so the two start and stop together. */
       #desk-scroll, #stamps { transition: transform .5s cubic-bezier(.22,.61,.36,1); }
@@ -953,6 +1017,7 @@
          44px tab gutter and its margins, which is why it was sitting off
          square in the middle of the briefing. */
       #binder {
+        --book-h: clamp(230px, 27vh, 340px);
         /* Not a .card: a book is not a sheet of paper. The left padding is the
            gutter the coil hangs in, the right is where the dividers stick out. */
         background: none; border: 0; box-shadow: none;
@@ -1011,8 +1076,10 @@
            not jump when the book is opened.
            The floor clears the five tabbed dividers stacked down the outside
            edge — 30px each plus 8px gaps — so the last one never hangs off the
-           bottom of the board. Adding sections means raising it. */
-        height: clamp(230px, 27vh, 340px);
+           bottom of the board. Adding sections means raising it.
+           Named, because the map has to fit INSIDE this and there must be one
+           number to fit against — see .bk-map svg. */
+        height: var(--book-h);
         /* drop-shadow, not box-shadow: box-shadow squares off the stepped
            corners the clip-path just cut. Matches the .card offset. */
         filter: drop-shadow(-6px 6px 0 rgba(0,0,0,.3));
@@ -1137,12 +1204,18 @@
         display: flex; flex-wrap: wrap; gap: 8px;
         align-items: flex-end; margin-top: 6px;
       }
-      .bk-pics img { height: 48px; width: auto; image-rendering: pixelated; }
+      /* Sized off a custom property so the whole set can come down together on
+         a short screen — see the height query at the end of the sheet. Exhibits
+         are the tallest thing on a leaf, and they are what pushes an article
+         onto a second page on a laptop. */
+      .bk-pics img {
+        height: var(--exhibit-h, 48px); width: auto; image-rendering: pixelated;
+      }
       /* The Association's own marks, shown bigger than a prop thumbnail.
          The player is meant to hold a waiver up against these and tell a green
          seal from a navy one — at 38px that is a colour swatch, not a
          comparison. */
-      .bk-pics img[src*="Letterhead/"] { height: 74px; }
+      .bk-pics img[src*="Letterhead/"] { height: var(--exhibit-mark-h, 74px); }
       /* INK ON PAPER. Every seal in the game is a rubber stamp pressed onto a
          sheet, so it darkens what is under it rather than covering it — on the
          waiver, in the book, and on the briefing leaf alike. */
@@ -1173,8 +1246,22 @@
          and an image is an opaque document to both CSS and script. */
       /* No frame and no padding. The drawing runs to its own edges, so the top
          of the map is the creek and not a green border with a creek under it. */
-      .bk-map { background: #d3f8e1; margin-top: 2px; }
-      .bk-map svg { display: block; width: 100%; height: auto; }
+      /* The drawing is very nearly square (618x615), so at width:100% it is as
+         tall as the leaf is wide — which on a laptop is taller than the whole
+         book, and a map you have to scroll to see the bottom of is not a map.
+         It is bounded by the HEIGHT it has to live in and takes its width from
+         that, rather than the other way round.
+         The 62px is what the leaf spends around it: the page's own padding, the
+         page-turn strip below, and this element's margin. */
+      .bk-map {
+        background: #d3f8e1; margin-top: 2px;
+        display: flex; justify-content: center;
+      }
+      .bk-map svg {
+        display: block;
+        width: auto; max-width: 100%;
+        height: auto; max-height: calc(var(--book-h) - 62px);
+      }
       /* Everything faded, then two things brought back. Dimming is the default
          so a street added to the drawing later is handled without touching
          this — it simply starts faded like the rest. */
@@ -1409,7 +1496,7 @@
          board edge to the outside of the card. */
       #binder-tabs {
         position: absolute; right: 0; top: 8px; width: 44px; z-index: 2;
-        display: flex; flex-direction: column; gap: 8px; align-items: flex-start;
+        display: flex; flex-direction: column; gap: 4px; align-items: flex-start;
       }
       #binder-tabs button {
         background: #ffffff; border: 0;
@@ -1854,6 +1941,29 @@
       @media (prefers-reduced-motion: reduce) {
         #title { animation: none; }
       }
+
+      /* --- Short screens ------------------------------------------------- */
+      /* A laptop is not a narrow desktop, it is a SHORT one: the panel keeps
+         its 380px and loses two hundred pixels of height, and everything in it
+         is competing for the same column. The book is already clamped by vh;
+         what overflows it is the exhibit art, which is the tallest thing on a
+         leaf and the least damaged by coming down a few pixels — the point of
+         a thumbnail is that you recognise the object, and a dumpster is a
+         dumpster at 34px.
+         The Association's marks come down proportionally less: the waiver rule
+         asks the player to tell a green seal from a navy one, and that is the
+         one comparison on any leaf that a smaller picture actually harms. */
+      /* Both books, not just the one on the desk. The briefing leaf and the
+         binder are deliberately the same page — "the page you are shown at the
+         meeting is the page you will turn to at the third house" — and an
+         exhibit that is one size at the briefing and another at the lot breaks
+         exactly the thing that pairing is for. */
+      @media (max-height: 900px) {
+        #binder, .bk-leaf { --exhibit-h: 38px; --exhibit-mark-h: 62px; }
+      }
+      @media (max-height: 760px) {
+        #binder, .bk-leaf { --exhibit-h: 32px; --exhibit-mark-h: 54px; }
+      }
       #title.on { display: flex; }
       #title-logo {
         /* The logo is close to square, so a width-only cap would shove START
@@ -2174,6 +2284,14 @@
         <button id="mute" aria-label="Sound on" aria-pressed="false">
           <img id="mute-icon" src="assets/sound-on.svg" alt="" />
         </button>
+        <!-- Same corner and the same near-invisible treatment as the mute: both
+             are settings about the machine rather than about the inspection.
+             Left of the speaker because zoom is the one people go looking for
+             on a small screen, and the eye reads this corner outward. -->
+        <div id="zoom">
+          <button id="zoom-out" aria-label="Zoom out">&minus;</button>
+          <button id="zoom-in" aria-label="Zoom in">+</button>
+        </div>
       </div>
     </div>
 
