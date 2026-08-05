@@ -1,5 +1,8 @@
 # Addison — Lawn & Order
 
+A pixel-art game about the Addison neighborhood: you are its HOA compliance
+inspector, and the job is deciding what counts.
+
 Vertical slice: **Day 1, Bonerville.** Two lots, one rule (R-101), binary PASS/FAIL.
 
 Everything inside the lot viewport is generated from data — there are no image
