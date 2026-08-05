@@ -39,6 +39,13 @@ jobs:
       # reproducible deploy, and esbuild is the only thing being installed.
       - run: npm ci
 
+      # The validator has no JPEG decoder of its own, so it borrows one from the
+      # OS to read the house art — sips on a Mac, ImageMagick here. ImageMagick
+      # is NOT preinstalled on ubuntu-latest, and without it every house fails
+      # to decode and the run dies claiming house1.jpg is missing.
+      - name: Install ImageMagick
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick
+
       # The content checks run BEFORE the deploy, not after. A level that cites
       # a rule which is not live, or an anchor that puts a bin through a wall,
       # is a broken game — and it is cheaper to fail here than to ship it.
