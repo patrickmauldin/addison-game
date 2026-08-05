@@ -29,6 +29,11 @@
         font-display: swap;
       }
       @font-face {
+        font-family: 'Cavalhatriz';
+        src: url('assets/fonts/Cavalhatriz.ttf') format('truetype');
+        font-display: swap;
+      }
+      @font-face {
         font-family: 'Minecraft';
         src: url('assets/fonts/Minecraft.ttf') format('truetype');
         font-weight: 100 900;
@@ -547,11 +552,125 @@
         image-rendering: pixelated;
         border-left: 3px solid #232019;
         display: flex; flex-direction: column; min-height: 0;
+        /* The drawer front slides clear off the panel. Clipped here, so what
+           leaves the sidebar is gone rather than sitting over the street. */
+        position: relative; overflow: hidden;
       }
+      /* --- The desk drawer ---------------------------------------------- */
+      /* The paperwork is a drawer front with a pull on its right edge; under it
+         is the board itself. Pulling it left is one transform on one element,
+         so the route sheet, the binder and the stamps travel as the single
+         object they physically are rather than as five things animating in
+         formation.
+         Distinct from #drawer, which is the dart-hunt drawer that comes in from
+         the RIGHT and covers all of this. That one is an interruption; this one
+         is furniture. */
+      /* The desk's own wood is the drawer interior; this is the box the contents
+         will be put in, and the wash that puts the interior in shade. Dropping
+         the whole panel 40% is what makes the strip that stays behind read as
+         being ABOVE it rather than as part of the same surface. */
+      #desk-under {
+        position: absolute; inset: 0; z-index: 0;
+        background: rgba(0,0,0,0);
+        transition: background .5s cubic-bezier(.22,.61,.36,1);
+      }
+      #desk.open #desk-under { background: rgba(0,0,0,.4); }
+      /* Shut, the drawer is under an opaque board and nothing in it is
+         reachable. Saying so beats relying on the board to swallow the click. */
+      #desk-under { pointer-events: none; }
+      #desk.open #desk-under { pointer-events: auto; }
+      /* The wash is #desk-under's own BACKGROUND, so it paints behind these:
+         the interior is in shade and the things lying in it are not. Which is
+         the right way round — a note in here is going to have to be read. */
+      .dr-item {
+        position: absolute; display: block;
+        image-rendering: pixelated; cursor: grab;
+        /* A drag must not start a text selection or a scroll gesture. */
+        user-select: none; -webkit-user-drag: none; touch-action: none;
+        /* Lit from the upper right like everything else on this desk. */
+        filter: drop-shadow(-3px 4px 0 rgba(0,0,0,.45));
+        transition: filter .12s;
+      }
+      /* Picked up: the shadow lengthens, which is the whole trick. */
+      .dr-item.dragging { cursor: grabbing; filter: drop-shadow(-7px 9px 0 rgba(0,0,0,.4)); }
+      /* Dropped in, not laid out. Anchored off whichever corner each one was
+         asked for — the drag normalises to left/top on the first pick-up, so
+         bottom/right here does not fight it later. */
+      #dr-key { width: 104px; left: 132px; top: 196px; transform: rotate(-14deg); }
+      /* A torn scrap, nine-sliced so the paper grows with what is written on it
+         instead of the writing being sized to fit a fixed picture of paper.
+         The 32 is the artist's cell size; `fill` is what keeps the middle of
+         the scrap drawn at all, and without it the note is a torn border around
+         a hole. See tools/make-note.ts for where the atlas comes from. */
+      #dr-note {
+        left: 20px; top: 34px; width: 244px;
+        /* Two different 32s, deliberately: the ART is drawn a full slice thick
+           (border-image-width), while the box only RESERVES 21px of it. The
+           torn edge stays at native scale — dropping the border to 21 would
+           squash the slices to two thirds — and the writing sits 11px further
+           out, onto the stain, the way it would on a real scrap. */
+        border: 21px solid transparent;
+        border-image: url('assets/drawer/note-9slice.png') 32 fill repeat;
+        border-image-width: 32px;
+        font-family: 'Cavalhatriz', cursive;
+        font-size: 25px; line-height: 1.1; text-align: center;
+        color: #2b2118; transform: rotate(-5deg);
+      }
+      /* Part of the drawer rather than a thing in it: fixed in its corner, and
+         no drop shadow, because writing on a surface does not cast one. */
+      #dr-lying {
+        position: absolute; right: 14px; bottom: 14px; z-index: 0;
+        width: 224px; display: block; image-rendering: pixelated;
+        transform: rotate(6deg); pointer-events: none; user-select: none;
+      }
+      #desk-front {
+        position: relative; z-index: 2;
+        flex: 1; min-height: 0; display: flex; flex-direction: column;
+        /* Its own board rather than letting the desk's show through: it is a
+           panel that MOVES, and the grain has to move with it. Closed, the two
+           share an origin and the join is invisible. */
+        background: #4a453c url('assets/wood.png') repeat;
+        image-rendering: pixelated;
+        transition: transform .5s cubic-bezier(.22,.61,.36,1);
+      }
+      /* Stops with the width of the pull still in the panel. The handle is
+         mounted flush on the front's right edge, so pulling the front out lands
+         it flush against the left one — the same edge of the same board, just
+         the other side of the panel. That strip is the top drawer seen edge on:
+         undimmed board, above the wash, with the handle on it. */
+      #desk.open #desk-front {
+        transform: translateX(calc(-100% + 28px));
+        /* Thrown by the strip onto the shaded interior beside it. Hard, like
+           every other shadow here. */
+        box-shadow: 8px 0 0 rgba(0,0,0,.3);
+      }
+      /* The paperwork goes 28px further than the board it sits on, because the
+         strip is board and nothing else — the case file, the binder tabs and
+         the stamps all have a right edge inside those 28px, and leaving them
+         there is a column of sliced-off cards down the side of an open drawer.
+         They out-travel the front by 7% over half a second, which is not a
+         thing the eye picks up while the whole panel is moving. */
+      #desk.open #desk-scroll, #desk.open #stamps { transform: translateX(-28px); }
+      /* No right inset: the pull is on the edge of the front, hard against the
+         side of the window. */
+      #desk-pull { flex: 0 0 auto; display: flex; justify-content: flex-end; padding: 0 0 6px; }
+      #desk-handle {
+        background: none; border: 0; padding: 0; cursor: pointer; line-height: 0;
+        filter: drop-shadow(-2px 2px 0 rgba(0,0,0,.35));
+        transition: transform .14s;
+      }
+      #desk-handle img {
+        width: 28px; height: 101px; display: block; image-rendering: pixelated;
+      }
+      /* Leans the way it is about to go. */
+      #desk-handle:hover, #desk-handle:focus-visible { transform: translateX(-3px); }
+      #desk.open #desk-handle:hover, #desk.open #desk-handle:focus-visible { transform: translateX(3px); }
       #desk-scroll {
         flex: 1; min-height: 0; overflow-y: auto;
         padding: 12px; display: flex; flex-direction: column; gap: 10px;
       }
+      /* Same curve and duration as the front, so the two start and stop together. */
+      #desk-scroll, #stamps { transition: transform .5s cubic-bezier(.22,.61,.36,1); }
       /* Everything on the desk is lit from the upper right, so the paperwork
          throws its shadow down and to the LEFT. Hard-edged and unblurred —
          a soft gradient beside pixel art reads as a different medium. */
@@ -1435,6 +1554,35 @@
         position: absolute; right: 14px; bottom: 0; z-index: 7;
         width: 262px; padding-top: 25px; border: 0; overflow: hidden;
       }
+      /* The office calling. Stands on the stage floor immediately left of the
+         Findings pad, and rises from below the frame rather than fading in —
+         a notification appears, a phone is PRODUCED.
+         Sized 1:1 to the art, 186x279 — the screen is positioned in percentages
+         of that box, so it stays registered to the pixels at any width. */
+      #phone {
+        position: absolute; right: 290px; bottom: 0; z-index: 8;
+        width: 186px; height: 279px;
+        background: url('assets/phone.png') no-repeat center / 100% 100%;
+        image-rendering: pixelated;
+        filter: drop-shadow(-4px -2px 0 rgba(0,0,0,.28));
+        /* Off the bottom edge, and out of the way of clicks on the lot while
+           it is down. Transform alone, so nothing on the stage reflows. */
+        transform: translateY(105%);
+        transition: transform .5s cubic-bezier(.22,.61,.36,1);
+        pointer-events: none;
+      }
+      #phone.up { transform: translateY(0); }
+      /* The green rectangle in the art: x 30..154, y 64..164 of 186x279. */
+      #phone p {
+        position: absolute;
+        left: 16.1%; top: 22.9%; width: 67.2%; height: 36.2%;
+        margin: 0; padding: 5px 4px 0;
+        box-sizing: border-box;
+        font-family: var(--pixel-font); font-size: 13px; line-height: 1.3;
+        letter-spacing: .02em; color: #111; text-align: left;
+        overflow: hidden;
+      }
+
       /* The glued edge of a legal pad. A few pixels of brown board across the
          head of the sheet, which is what makes the case file read as a pad you
          tear a sheet off rather than as a loose leaf. Tiled from the texture
@@ -1624,12 +1772,38 @@
         <ul id="find-list"></ul>
       </div>
 
+      <!-- The office, calling. Slides up beside the Findings pad a beat after
+           you arrive at the NEXT house, which is the point: the determination
+           it is about is already stamped and driven away from. Text is in the
+           screen, so the phone art carries the whole thing. -->
+      <div id="phone" aria-live="polite">
+        <p id="phone-text"></p>
+      </div>
+
       <div id="tools">
           <span id="hover"></span>
         </div>
       </div>
 
       <div id="desk">
+        <!-- What is under the paperwork: the desk's own wood, and the things
+             you are not supposed to have. Everything in here can be picked up
+             and put down somewhere else — see makeDraggable(). -->
+        <div id="desk-under">
+          <div class="dr-item" id="dr-note">Emergency Meeting: Feb 25 at 10pm</div>
+          <img class="dr-item" id="dr-key" src="assets/drawer/key.png"
+               alt="A key" draggable="false" />
+          <!-- Not a dr-item: this is written ON the drawer, not lying in it,
+               so it is not draggable and the drag wiring never sees it. -->
+          <img id="dr-lying" src="assets/drawer/lying2.png"
+               alt="Handwriting: They're ALL lying" draggable="false" />
+        </div>
+
+        <!-- The paperwork, as one drawer front. Everything the desk normally
+             shows rides on this and slides off to the left together — the pull
+             is on its right edge, so once it is out the handle is the only part
+             of the front still in the panel. -->
+        <div id="desk-front">
         <div id="desk-scroll">
           <!-- The clipboard and the desk calendar sit side by side, which is
                where they would be. The calendar took the date off the route
@@ -1711,11 +1885,13 @@
 
         </div>
 
-        <!-- Bottom right of everything, and deliberately almost invisible: a
-             control you want findable once and then out of your way. -->
-        <button id="mute" aria-label="Sound on" aria-pressed="false">
-          <img id="mute-icon" src="assets/sound-on.svg" alt="" />
-        </button>
+        <!-- The pull. Right edge, above the stamps — where a drawer handle is. -->
+        <div id="desk-pull">
+          <button id="desk-handle" type="button" aria-expanded="false"
+                  aria-controls="desk-under" aria-label="Open the drawer">
+            <img src="assets/drawer.png" alt="" />
+          </button>
+        </div>
 
         <!-- Which of these is present depends on the level's verdict_mode.
              Early on there is no fine to give, so there is no button for one. -->
@@ -1724,6 +1900,16 @@
           <button id="btn-warn" aria-label="Stamp WARNING"><span>WARNING</span></button>
           <button id="btn-fine" aria-label="Stamp FINE" hidden><span>FINE</span></button>
         </div>
+        </div>
+
+        <!-- Bottom right of everything, and deliberately almost invisible: a
+             control you want findable once and then out of your way.
+             OUTSIDE the drawer front on purpose: it is position:fixed, and a
+             transformed ancestor would make it a containing block and drag the
+             icon off with the paperwork. -->
+        <button id="mute" aria-label="Sound on" aria-pressed="false">
+          <img id="mute-icon" src="assets/sound-on.svg" alt="" />
+        </button>
       </div>
     </div>
 

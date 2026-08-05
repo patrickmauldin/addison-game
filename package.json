@@ -14,7 +14,8 @@
     "pack-residents": "npx esbuild tools/pack-residents.ts --bundle --platform=node --outfile=dist/pack-residents.cjs --loader:.json=json --log-level=warning && node dist/pack-residents.cjs",
     "pack-animals": "npx esbuild tools/pack-animals.ts --bundle --platform=node --outfile=dist/pack-animals.cjs --loader:.json=json --log-level=warning && node dist/pack-animals.cjs",
     "rotate-rings": "npx esbuild tools/rotate-rings.ts --bundle --platform=node --outfile=dist/rotate-rings.cjs --log-level=warning && node dist/rotate-rings.cjs",
-    "make-reticle": "npx esbuild tools/make-reticle.ts --bundle --platform=node --outfile=dist/make-reticle.cjs --log-level=warning && node dist/make-reticle.cjs"
+    "make-reticle": "npx esbuild tools/make-reticle.ts --bundle --platform=node --outfile=dist/make-reticle.cjs --log-level=warning && node dist/make-reticle.cjs",
+    "make-note": "npx esbuild tools/make-note.ts --bundle --platform=node --outfile=dist/make-note.cjs --log-level=warning && node dist/make-note.cjs"
   },
   "keywords": [],
   "author": "",

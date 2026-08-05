@@ -655,6 +655,52 @@ let bountyMark: { x: number; y: number } | null = null;
 let outcomes: LotOutcome[] = [];
 let stamping = false;
 
+// --- The office calling ---------------------------------------------------
+
+/**
+ * A wrong determination is not corrected on the lot it happened on.
+ *
+ * The audit at the end of the shift is still where the reasoning lands — what
+ * was missed, what was overturned, why. This is only the Association noticing,
+ * and it deliberately arrives AFTER the pan: you have stamped the file, driven
+ * away, and are looking at somebody else's yard when the phone goes. There is
+ * nothing to do about it, which is the whole feeling.
+ */
+const PHONE_TEXT = 'Incorrect determination: your failure has been noted';
+/** A beat into the next lot. Long enough that it reads as a call, not a click. */
+const PHONE_DELAY_MS = 1500;
+/** How long it stays up. Long enough to read the screen twice. */
+const PHONE_HOLD_MS = 6000;
+/** Set by a wrong stamp, spent on arrival at the next lot. */
+let phonePending = false;
+let phoneTimers: number[] = [];
+
+/** Put it away and cancel anything in flight. Safe to call when it is down. */
+function hangUp(): void {
+  for (const t of phoneTimers) clearTimeout(t);
+  phoneTimers = [];
+  $('phone').classList.remove('up');
+}
+
+/**
+ * Called on arrival at every lot. Rings only if the lot BEFORE this one was
+ * stamped wrong — the flag is consumed either way, so one bad call is one
+ * phone call and never carries past the next address.
+ */
+function phoneOnArrival(): void {
+  hangUp();
+  if (!phonePending) return;
+  phonePending = false;
+  $('phone-text').textContent = PHONE_TEXT;
+  phoneTimers.push(
+    setTimeout(() => {
+      sound.play('error');
+      $('phone').classList.add('up');
+      phoneTimers.push(setTimeout(hangUp, PHONE_HOLD_MS) as unknown as number);
+    }, PHONE_DELAY_MS) as unknown as number,
+  );
+}
+
 // --- Rendering ------------------------------------------------------------
 
 /**
@@ -1422,6 +1468,7 @@ function loadLot(index: number): void {
   renderCaseFile(rec);
   paint();
   syncDesk();
+  phoneOnArrival();
 }
 
 /**
@@ -1946,6 +1993,9 @@ function startHunt(): void {
   // onto it must not hand out four more darts.
   if (!b || hunt || saveFile.inspector.thief === 'caught' || firedEvents.has('hunt')) return;
   firedEvents.add('hunt');
+  // The dart drawer covers the panel. Shut the desk drawer under it, so putting
+  // the gun away does not reveal a drawer left open before the music started.
+  setDrawerOpen(false);
   hunt = { darts: HUNT_DARTS, timer: 0 };
   const drawer = $('drawer');
   drawer.hidden = false;
@@ -2178,6 +2228,88 @@ $('mi-mute').onclick = toggleMute;
 $('mute').onclick = toggleMute;
 syncMute();
 
+/**
+ * The drawer under the desk.
+ *
+ * Open, the paperwork is off the panel entirely — which also means the stamps
+ * are, so the two `inert` calls are not decoration: without them a Tab still
+ * lands on a PASS button sitting somewhere off to the left of the window, and
+ * Enter stamps a verdict the player cannot see.
+ */
+function setDrawerOpen(open: boolean): void {
+  const desk = $('desk');
+  if (desk.classList.contains('open') === open) return;
+  desk.classList.toggle('open', open);
+  const h = $('desk-handle');
+  h.setAttribute('aria-expanded', String(open));
+  h.setAttribute('aria-label', open ? 'Close the drawer' : 'Open the drawer');
+  $('desk-scroll').toggleAttribute('inert', open);
+  $('stamps').toggleAttribute('inert', open);
+  // No sound: there is no drawer effect in assets/, and the page-turn is paper.
+}
+$('desk-handle').onclick = () => setDrawerOpen(!$('desk').classList.contains('open'));
+
+/**
+ * Everything in the drawer can be picked up and moved.
+ *
+ * Position is left/top so `transform` stays free for the angle a thing was
+ * dropped at — a key lying square to the drawer looks placed, and nothing in a
+ * drawer is placed.
+ *
+ * The clamp works in VISUAL coordinates rather than layout ones, which is the
+ * only reason a tilted item cannot be shoved half off the side: an element
+ * rotated 14 degrees has a bounding box wider than its width, and clamping on
+ * offsetWidth would let the corner leave the panel. The gap between the two is
+ * fixed for the length of a drag, since the rotation does not change, so it is
+ * measured once on pick-up.
+ */
+let dragTop = 0;
+const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), Math.max(lo, hi));
+function makeDraggable(el: HTMLElement): void {
+  el.addEventListener('pointerdown', (e: PointerEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    // Whatever corner the thing was laid out from, it is dragged by left/top
+    // from here on. Doing this once on pick-up means an item anchored bottom
+    // right in the stylesheet does not have to be re-expressed as a top-left
+    // offset that only holds at one window height.
+    el.style.left = `${el.offsetLeft}px`;
+    el.style.top = `${el.offsetTop}px`;
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
+    const box = $('desk-under').getBoundingClientRect();
+    const vis = el.getBoundingClientRect();
+    // Where in the item the player took hold of it.
+    const grabX = e.clientX - vis.left;
+    const grabY = e.clientY - vis.top;
+    // Visual box minus layout box. Constant while the angle is.
+    const skewX = vis.left - box.left - el.offsetLeft;
+    const skewY = vis.top - box.top - el.offsetTop;
+
+    el.setPointerCapture(e.pointerId);
+    el.classList.add('dragging');
+    // Whatever was picked up last is on top of the pile.
+    el.style.zIndex = String(++dragTop);
+
+    const move = (m: PointerEvent) => {
+      const x = clamp(m.clientX - grabX - box.left, 0, box.width - vis.width);
+      const y = clamp(m.clientY - grabY - box.top, 0, box.height - vis.height);
+      el.style.left = `${x - skewX}px`;
+      el.style.top = `${y - skewY}px`;
+    };
+    const up = () => {
+      el.classList.remove('dragging');
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+    };
+    el.addEventListener('pointermove', move);
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+  });
+}
+for (const el of document.querySelectorAll<HTMLElement>('#desk-under .dr-item')) makeDraggable(el);
+
 $('mi-reset').onclick = () => {
   reset();
   location.reload();
@@ -2221,6 +2353,9 @@ function stamp(v: Verdict): void {
     rec,
   });
   outcomes.push(outcome);
+  // Read here rather than at the next lot: `outcomes` is cleared per level and
+  // the flag has to survive the pan, which is the only thing between the two.
+  phonePending = !outcome.verdictRight;
 
   /**
    * Log the ruling with correctness UNRESOLVED. The audit fills it in later.
@@ -2325,6 +2460,7 @@ function slideToLot(index: number): void {
     renderCaseFile(rec);
     paint();
     syncDesk();
+    phoneOnArrival();
   };
 
   /**
@@ -2442,6 +2578,10 @@ const GRADE = [
 // --- End of day: the audit ------------------------------------------------
 
 function endDay(): void {
+  // The last lot of the shift has no next house to be called at, and the audit
+  // is about to say the same thing at length anyway.
+  phonePending = false;
+  hangUp();
   let strikes = 0;
   for (const o of outcomes) {
     if (o.strike) strikes++;
@@ -3068,6 +3208,10 @@ function startRound(): void {
   // drawer away and give the pointer back.
   if (hunt) endHunt(false);
   firedEvents.clear();
+  // A shift jumped out of mid-round must not ring on the new shift's first lot.
+  phonePending = false;
+  // Nobody starts a shift with the drawer hanging open.
+  setDrawerOpen(false);
   bountyPay = 0;
   bountyMark = null;
   // What the sheet will say for the rest of the shift, whatever gets earned.

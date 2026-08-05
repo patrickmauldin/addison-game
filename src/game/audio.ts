@@ -47,6 +47,8 @@ export const ONESHOT_FILES = {
   page: 'page-turn.mp3',
   /** The dart gun going off. Fires on every shot, hit or miss. */
   shot: 'shot.mp3',
+  /** The office calling about a determination you got wrong. */
+  error: 'error.mp3',
   meow: 'meow.wav',
   bark1: 'bark1.wav',
   bark2: 'bark2.wav',
