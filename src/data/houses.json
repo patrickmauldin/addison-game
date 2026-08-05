@@ -4,9 +4,14 @@
   "_check": "core/scene.ts declares the surface each anchor must sit on; the validator re-samples the art and fails when one misses.",
   "_screened": "BINS_SCREENED sits just up-screen of FENCE_1 so props sorted by anchor y put the fence in front of the bins. R-104 treats screened containers as compliant on any day, whatever state the fence is in.",
   "_fence": "FENCE_1 is left-aligned (PropSpec.align) so the panel end post meets the house wall rather than straddling it. Clean right side on every plan, per the reference.",
+  "_drive": "The paved run as [left, right] fractions of the house rect. The anchors say where to stand one thing; this says how wide the driveway actually is, which is what decides whether a lot can take two cars abreast. See withParkedCar.",
   "houses": {
     "house1": {
       "_plan": "Garage right. Walk curves from the door to meet the driveway high, near the garage.",
+      "drive": [
+        0.608,
+        0.901
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.754,
@@ -76,6 +81,10 @@
     },
     "house2": {
       "_plan": "Garage right, driveway slightly left of house1. Walk down the left side.",
+      "drive": [
+        0.534,
+        0.842
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.688,
@@ -145,6 +154,10 @@
     },
     "house3": {
       "_plan": "MIRRORED PLAN — garage and driveway on the LEFT, entry on the right. Its walk is on the opposite side from every other house, and the default yard anchors land on its driveway.",
+      "drive": [
+        0.212,
+        0.504
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.358,
@@ -214,6 +227,10 @@
     },
     "house4": {
       "_plan": "Garage right, narrow single-width driveway.",
+      "drive": [
+        0.523,
+        0.831
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.677,
@@ -283,6 +300,10 @@
     },
     "house5": {
       "_plan": "Garage right.",
+      "drive": [
+        0.542,
+        0.864
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.703,
@@ -352,6 +373,10 @@
     },
     "house6": {
       "_plan": "Three-car garage — the widest driveway of the set. Walk is far left.",
+      "drive": [
+        0.414,
+        0.875
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.644,
@@ -421,6 +446,10 @@
     },
     "house7": {
       "_plan": "MEASURED — Garage right, wide driveway, walk at 0.34.",
+      "drive": [
+        0.426,
+        0.737
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.581,
@@ -490,6 +519,10 @@
     },
     "house8": {
       "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.49.",
+      "drive": [
+        0.586,
+        0.875
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.73,
@@ -559,6 +592,10 @@
     },
     "house9": {
       "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.31.",
+      "drive": [
+        0.557,
+        0.837
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.697,
@@ -628,6 +665,10 @@
     },
     "house10": {
       "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.47.",
+      "drive": [
+        0.548,
+        0.831
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.689,
@@ -697,6 +738,10 @@
     },
     "house11": {
       "_plan": "MEASURED — Garage right, two-car driveway, walk at 0.46.",
+      "drive": [
+        0.566,
+        0.822
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.694,
@@ -766,6 +811,10 @@
     },
     "house12": {
       "_plan": "MEASURED — Garage centred, two-car driveway, walk at 0.64.",
+      "drive": [
+        0.273,
+        0.569
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.421,
@@ -835,6 +884,10 @@
     },
     "house13": {
       "_plan": "MEASURED — Garage centred, two-car driveway, walk at 0.71.",
+      "drive": [
+        0.332,
+        0.596
+      ],
       "anchors": {
         "DRIVEWAY_1": {
           "hx": 0.464,

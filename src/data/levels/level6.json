@@ -1,6 +1,6 @@
 {
   "level_id": 6,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 6 is Thursday 11 March (night).",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 6 is Thursday 12 March (night).",
   "night": true,
   "weather": "clear",
   "active_rules": [
@@ -12,7 +12,8 @@
     "R-106",
     "R-107",
     "R-108",
-    "R-109"
+    "R-109",
+    "R-110"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
@@ -31,36 +32,35 @@
       "dog": "lani"
     }
   ],
-  "_ambient_animals": "The animals loose in yards on this shift. Nights are the wild ones; days are the neighbourhood cat.",
+  "_ambient_animals": "The animals loose in yards on this shift. The armadillo is NOT among them tonight — he is the bounty, on one lot only, and a second one wandering past would answer the notice early.",
   "ambient_animals": [
-    "raccoon",
-    "armadillo"
+    "raccoon"
   ],
   "story": [
     "Thursday, dark again. Vehicles today: recreational, inoperable, unregistered. Same seven days, same clock.",
     "A working car on its own driveway is not within the Article, whatever the neighbours have written on the board about it."
   ],
-  "artifact": {
+  "_artifact": {
     "title": "Left in the binder pocket",
     "text": "A photocopy of Article X with one line underlined twice, and no note. The underlining is not yours."
   },
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 60001,
       "house": {
         "sprite": "house1"
       },
-      "_teaching": "The dumpster from Tuesday, still there. Warned once, and the grace period does not restart because the container did not leave.",
+      "_teaching": "The dumpster from Tuesday, still there. Warned once, and the grace period does not restart — so this is the fine. Nothing else on the lot.",
       "props": [
         {
           "id": "dumpster",
           "sprite": "dumpster",
           "anchor": "DRIVEWAY_3",
           "label": "Dumpster, driveway",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         }
       ],
       "truth": {
@@ -77,8 +77,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 60002,
       "house": {
         "sprite": "house2",
@@ -91,7 +91,7 @@
           "sprite": "rv1",
           "anchor": "DRIVEWAY_3",
           "label": "Recreational vehicle, driveway",
-          "first_seen": "2027-03-04"
+          "first_seen": "2026-03-05"
         }
       ],
       "truth": {
@@ -112,7 +112,7 @@
       "street": "Bonerville",
       "seed": 60003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house13b"
       },
       "_teaching": "The other side of the same article on the same night. A boat first recorded today is inside its week, and the working car beside it was never within the Article at all.",
       "props": [
@@ -121,14 +121,14 @@
           "sprite": "boat1",
           "anchor": "DRIVEWAY_3",
           "label": "Boat on trailer, driveway",
-          "first_seen": "2027-03-11"
+          "first_seen": "2026-03-12"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-11",
+          "first_seen": "2026-03-12",
           "align": "left"
         }
       ],
@@ -149,21 +149,28 @@
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 60004,
       "house": {
         "sprite": "house4",
         "mirror": true
       },
-      "_teaching": "Bins on a Thursday at an address that has never been cited for them. Six shifts in, the calendar is still the whole question.",
+      "_teaching": "Bins on a Thursday at an address that has never been cited for them, and a dead pickup on the driveway that has been on record eight days. Three articles, all of them first offences here — the case file is long and none of it is about these.",
       "props": [
+        {
+          "id": "deadcar",
+          "sprite": "car9blue-bad",
+          "anchor": "DRIVEWAY_1",
+          "label": "Inoperable vehicle, driveway",
+          "first_seen": "2026-03-04"
+        },
         {
           "id": "bin_green",
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-11",
+          "first_seen": "2026-03-12",
           "group": "Trash cans, at the curb"
         },
         {
@@ -171,16 +178,21 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "first_seen": "2027-03-11",
+          "first_seen": "2026-03-12",
           "group": "Trash cans, at the curb"
         }
       ],
       "truth": {
         "violations": [
           {
+            "object": "deadcar",
+            "article": "R-109",
+            "why": "A pickup with the windscreen gone, on record eight days."
+          },
+          {
             "object": "bin_green",
-            "article": "R-104",
-            "why": "At the curb on a Thursday."
+            "article": "R-110",
+            "why": "Out on a Thursday, and in the week between recycling collections."
           },
           {
             "object": "bin_brown",
@@ -194,28 +206,35 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 60005,
       "house": {
         "sprite": "house5",
         "mirror": true
       },
-      "_teaching": "A dead car on record since 3 March — eight days, so the clock has run out. But this address has never been cited under the VEHICLE article, and a long file under other articles does not carry over. First offence, first warning.",
+      "_teaching": "TWO DERELICTS, ONE DRIVEWAY, and only one of them is a finding. The red car has been on record since 4 March and is out of time; the green one arrived this morning and has its seven days. Same article, same lot, same look — the case file is the only thing telling them apart. This address has never been cited under the VEHICLE article, so it is a first offence and a warning.",
       "props": [
         {
           "id": "deadcar",
           "sprite": "car1redbad",
           "anchor": "DRIVEWAY_3",
           "label": "Inoperable vehicle, driveway",
-          "first_seen": "2027-03-03"
+          "first_seen": "2026-03-04"
+        },
+        {
+          "id": "deadcar2",
+          "sprite": "car8green-bad",
+          "anchor": "DRIVEWAY_1",
+          "label": "Inoperable vehicle, second",
+          "first_seen": "2026-03-12"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-11",
+          "first_seen": "2026-03-12",
           "align": "left"
         }
       ],
@@ -229,6 +248,10 @@
         ],
         "decoys": [
           {
+            "object": "deadcar2",
+            "why": "On record today. The Article allows seven days, and this one has had none of them."
+          },
+          {
             "object": "fence",
             "why": "Replaced. Sound at last."
           }
@@ -236,5 +259,24 @@
       },
       "expected_verdict": "NOTICE"
     }
-  ]
+  ],
+  "bounty": {
+    "id": "armadillo",
+    "kind": "animal",
+    "animal": "armadillo",
+    "sprite": "animals/armadillo/Idle/rotations/south",
+    "_hunt": "The thief's encounter, with an animal on the end of it. `hunt` is what brings the drawer in; see huntTarget(). Night only, which Shift 6 is.",
+    "headline": "Wanted",
+    "name": "Armadillo",
+    "note": "Destroying my yard",
+    "label": "Armadillo",
+    "reward": 35,
+    "hunt": true,
+    "eligible_lots": [
+      "bonerville_02",
+      "bonerville_03",
+      "bonerville_04",
+      "bonerville_05"
+    ]
+  }
 }

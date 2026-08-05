@@ -346,6 +346,7 @@ for (const day of LEVELS) {
         weekday_window: (a as { weekday_window?: string[] }).weekday_window,
         season_window: (a as { season_window?: { from: string; to: string } }).season_window,
         grace_days: (a as { grace_days?: number }).grace_days,
+        alternate_weeks: (a as { alternate_weeks?: { week_of: string } }).alternate_weeks,
       },
     ]),
   );

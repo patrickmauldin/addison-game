@@ -101,6 +101,35 @@
       ]
     },
     {
+      "id": "R-110",
+      "title": "Recycling Collection",
+      "section": "Article IX, Section 2",
+      "text": "Recycling is collected on alternate weeks. The recycling container may be placed at the curb on the Tuesday or Wednesday of a collection week only; in the intervening week it shall not be visible from the street on any day.",
+      "decoy_note": "The refuse container is on the WEEKLY schedule and is not governed by this Article — a brown bin at the curb on a Tuesday is compliant every Tuesday of the year. Only the green one skips a week, and the two are routinely put out together.",
+      "tab": "Recycling",
+      "category": "Trash",
+      "short": "Green bin: Tuesday or Wednesday, collection weeks only.",
+      "introduced_level": 5,
+      "weekday_window": [
+        "Tuesday",
+        "Wednesday"
+      ],
+      "alternate_weeks": {
+        "week_of": "2026-03-02"
+      },
+      "_alternate_weeks": "Shift 1's own week is a collection week, so the campaign alternates A-B-A: shifts 1 to 4 collect, shifts 5 to 7 do not, shift 8 collects again. This is the whole of why a green bin on Shift 5 is a finding on a day the brown bin beside it is fine.",
+      "exhibit": {
+        "cite": [
+          "trash-green"
+        ],
+        "cite_note": "At the curb in the week between collections, whatever the day.",
+        "allow": [
+          "trash-brown"
+        ],
+        "allow_note": "Refuse is weekly. The brown bin is not this Article."
+      }
+    },
+    {
       "id": "R-103",
       "title": "Seasonal Decorations",
       "section": "Article VIII, Section 4",
@@ -115,7 +144,9 @@
         "to": "01-31"
       },
       "exhibit": {
-        "cite": [],
+        "cite": [
+          "lights"
+        ],
         "cite_note": "Lighting still up outside the November-to-January window.",
         "allow": [],
         "allow_note": "Anything at all, between 1 November and 31 January."
@@ -129,10 +160,12 @@
       "decoy_note": "The article covers CONDITION, not appearance. A window that is dirty, curtained, shuttered or of an unfashionable style is in sound repair. Cracked glass is not.",
       "tab": "Windows",
       "category": "Objects",
-      "short": "Glazing must be kept in sound repair.",
+      "short": "Windows and facade must be kept in sound condition.",
       "introduced_level": 4,
       "exhibit": {
-        "cite": [],
+        "cite": [
+          "window"
+        ],
         "cite_note": "Glazing broken, cracked or boarded.",
         "allow": [],
         "allow_note": "Dirty, curtained or old is not damaged."

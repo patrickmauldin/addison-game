@@ -19,7 +19,7 @@
  * ends up rewriting its content.
  */
 
-import { daysBetween, inSeasonWindow } from './calendar.js';
+import { daysBetween, inSeasonWindow, isCollectionWeek } from './calendar.js';
 
 export type AddressState = 'CLEAN' | 'FLAGGED' | 'ON_NOTICE' | 'UNCAUGHT' | 'LIEN';
 export type Verdict = 'PASS' | 'FAIL' | 'NOTICE' | 'CITATION';
@@ -49,6 +49,19 @@ export type AddressRecord = {
 
 export type SaveFile = {
   version: 1;
+  /**
+   * Which shift this file is on, so resuming lands where the player stopped.
+   *
+   * It used to live nowhere: `levelIndex` was module state that began at 0 every
+   * load, so a "continue" carried every address record forward and then put you
+   * back on Shift 1 with them. Optional because a file written before slots
+   * existed has no idea, and the only sane reading of that is the beginning.
+   */
+  level_id?: number;
+  /** Real-world ms of the last write. What the slot list calls "played". */
+  saved_at?: number;
+  /** Real-world ms the slot was started. Fixes the order of the list. */
+  created_at?: number;
   inspector: {
     pay: number;
     strikes_today: number;
@@ -65,6 +78,37 @@ export type SaveFile = {
      * Absent means he has not been seen yet.
      */
     thief?: 'outstanding' | 'caught';
+    /**
+     * PAID mistakes per completed shift, oldest first.
+     *
+     * One mistake a shift is forgiven; the rest come out of the balance. Only
+     * the last two entries are ever read — five deductions across two shifts is
+     * a dismissal — but the whole run is kept because it costs nothing and it
+     * is the only record of how a file ended up where it did.
+     */
+    deductions?: number[];
+    /**
+     * NOTICES STILL UP, by bounty id and oldest first.
+     *
+     * A flyer comes down when the thing on it is found, and not before. The
+     * thief had this to himself in `thief` above; he only ever needed it
+     * because he is the one who cannot be looked for on a daylight round, but
+     * every other notice has the same problem in a smaller way — miss the cat
+     * and the poster stays on the wall.
+     *
+     * Ids, not whole notices: the text and the reward live in the level file
+     * that authored them, which is the one place they should be written.
+     */
+    outstanding?: string[];
+    /**
+     * The face a notice was drawn with, by bounty id.
+     *
+     * A wanted face is drawn per round rather than authored, so it cannot be
+     * memorised. But a notice that stays up across rounds has to keep showing
+     * the SAME man — the poster is a photograph, and a photograph does not
+     * change because a week went by. Recorded the round it is first placed.
+     */
+    faces?: Record<string, number>;
     /**
      * What they put on the application, which is the only thing the Association
      * ever asks them about themselves.
@@ -94,11 +138,102 @@ export type SaveFile = {
   days_completed: number[];
 };
 
-const KEY = 'addison.save.v1';
+/**
+ * SLOTS.
+ *
+ * There used to be one file, overwritten forever, so "new game" and "the game"
+ * were the same key and starting over destroyed what came before. Now every
+ * new game takes a slot of its own and the old ones stay on the title screen.
+ *
+ * The index is a list of ids and nothing else — every slot's shift, its dates
+ * and its inspector are read off the file itself, so there is exactly one place
+ * a fact about a save is written and the list cannot drift from what it lists.
+ */
+/** The single file that existed before slots. Read once, on migration. */
+const LEGACY_KEY = 'addison.save.v1';
+const INDEX_KEY = 'addison.slots.v1';
+/** Which slot the game is playing. Absent until the player picks one. */
+const ACTIVE_KEY = 'addison.slot.v1';
+const slotKey = (id: string) => `addison.save.v1.${id}`;
+
+export type SlotInfo = {
+  id: string;
+  /** The shift the file stopped on. 1 for anything that never recorded one. */
+  level_id: number;
+  saved_at: number;
+  created_at: number;
+  /** What they put on the application, if they got that far. */
+  name?: string;
+};
+
+function readIndex(): string[] {
+  try {
+    const raw = localStorage.getItem(INDEX_KEY);
+    const ids = raw ? (JSON.parse(raw) as unknown) : [];
+    return Array.isArray(ids) ? ids.filter((x): x is string => typeof x === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeIndex(ids: string[]): void {
+  try {
+    localStorage.setItem(INDEX_KEY, JSON.stringify(ids));
+  } catch {
+    /* private browsing; slots simply do not survive the session */
+  }
+}
+
+function readSlot(id: string): SaveFile | null {
+  try {
+    const raw = localStorage.getItem(slotKey(id));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as SaveFile;
+    return parsed.version === 1 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Adopt the pre-slots save, once.
+ *
+ * Somebody mid-campaign when this shipped must not lose it, and must not be
+ * handed it as the active file either — the title screen is where a file gets
+ * chosen now, so the migrated one is listed and waits to be picked like any
+ * other. The legacy key is left where it is rather than deleted: it costs a few
+ * kilobytes and it is the only copy if this goes wrong.
+ */
+function migrate(): void {
+  try {
+    if (localStorage.getItem(INDEX_KEY) !== null) return;
+    const raw = localStorage.getItem(LEGACY_KEY);
+    if (!raw) {
+      writeIndex([]);
+      return;
+    }
+    const parsed = JSON.parse(raw) as SaveFile;
+    if (parsed.version !== 1) {
+      writeIndex([]);
+      return;
+    }
+    const id = 'slot1';
+    parsed.created_at ??= Date.now();
+    parsed.saved_at ??= Date.now();
+    localStorage.setItem(slotKey(id), JSON.stringify(parsed));
+    writeIndex([id]);
+  } catch {
+    /* a storage that will not answer leaves the player with no slots, not a crash */
+  }
+}
+migrate();
 
 export function emptySave(): SaveFile {
   return {
     version: 1,
+    level_id: 1,
+    created_at: Date.now(),
+    saved_at: Date.now(),
     inspector: { pay: 0, strikes_today: 0, reprimands: 0 },
     accuracy: {},
     addresses: {},
@@ -106,31 +241,97 @@ export function emptySave(): SaveFile {
   };
 }
 
-export function load(): SaveFile {
+/** Every slot, newest first. A slot whose file will not parse is dropped. */
+export function listSlots(): SlotInfo[] {
+  return readIndex()
+    .map((id): SlotInfo | null => {
+      const f = readSlot(id);
+      return f
+        ? {
+            id,
+            level_id: f.level_id ?? 1,
+            saved_at: f.saved_at ?? 0,
+            created_at: f.created_at ?? 0,
+            name: f.inspector.name,
+          }
+        : null;
+    })
+    .filter((s): s is SlotInfo => s !== null)
+    .sort((a, b) => b.saved_at - a.saved_at);
+}
+
+export function activeSlot(): string | null {
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return emptySave();
-    const parsed = JSON.parse(raw) as SaveFile;
-    return parsed.version === 1 ? parsed : emptySave();
+    return localStorage.getItem(ACTIVE_KEY);
   } catch {
-    return emptySave();
+    return null;
   }
 }
 
-export function save(s: SaveFile): void {
+export function activateSlot(id: string): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(s));
+    localStorage.setItem(ACTIVE_KEY, id);
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Start a fresh file and make it the one being played. Returns its id. */
+export function newSlot(): string {
+  // Wall-clock, not a counter: ids must not collide with a slot the index
+  // failed to write, and they never need to be read by a human.
+  const id = `slot${Date.now().toString(36)}`;
+  const ids = readIndex();
+  ids.push(id);
+  writeIndex(ids);
+  const file = emptySave();
+  try {
+    localStorage.setItem(slotKey(id), JSON.stringify(file));
+  } catch {
+    /* ignore */
+  }
+  activateSlot(id);
+  return id;
+}
+
+export function deleteSlot(id: string): void {
+  try {
+    writeIndex(readIndex().filter((x) => x !== id));
+    localStorage.removeItem(slotKey(id));
+    if (activeSlot() === id) localStorage.removeItem(ACTIVE_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * The file being played, or an empty one before a slot has been chosen.
+ *
+ * Boot calls this before the title screen has asked anything, which is why the
+ * no-slot answer is a blank file rather than a throw: the module-scope
+ * loadLevel only wants to know whether the thief is still out.
+ */
+export function load(): SaveFile {
+  const id = activeSlot();
+  return (id && readSlot(id)) || emptySave();
+}
+
+/** No active slot means nothing is written. Nothing is being played yet. */
+export function save(s: SaveFile): void {
+  const id = activeSlot();
+  if (!id) return;
+  s.saved_at = Date.now();
+  try {
+    localStorage.setItem(slotKey(id), JSON.stringify(s));
   } catch {
     /* private browsing; the slice runs fine without persistence across reloads */
   }
 }
 
+/** Throw away the file being played and go back to having none. */
 export function reset(): void {
-  try {
-    localStorage.removeItem(KEY);
-  } catch {
-    /* ignore */
-  }
+  const id = activeSlot();
+  if (id) deleteSlot(id);
 }
 
 export function recordFor(s: SaveFile, lot_id: string, address: string): AddressRecord {
@@ -197,6 +398,19 @@ export type ArticleTiming = {
   weekday_window?: string[];
   season_window?: { from: string; to: string };
   grace_days?: number;
+  /**
+   * Collected every OTHER week, not every week.
+   *
+   * `week_of` is any date inside a collection week; the week containing it, and
+   * every second week after and before it, is a collection week. Recycling is
+   * the only thing in Addison on this schedule, and it is what makes the green
+   * bin a different question from the brown one standing next to it.
+   *
+   * Rides ON TOP of `weekday_window` rather than replacing it: the container is
+   * legal on Tuesday and Wednesday OF a collection week, which is two
+   * conditions and not one.
+   */
+  alternate_weeks?: { week_of: string };
 };
 
 export type DayContext = { iso: string; weekday: string };
@@ -224,7 +438,13 @@ function excuse(
 ): string | null {
   const a = timing[article];
   if (!a) return null;
-  if (a.weekday_window?.includes(today.weekday)) return `Permitted on ${today.weekday}.`;
+  if (a.weekday_window?.includes(today.weekday)) {
+    // Two conditions, not one: the right day OF the right week. A green bin on
+    // a Tuesday is only compliant if that Tuesday is a collection Tuesday, and
+    // the weeks in between are exactly what the player has to keep track of.
+    if (a.alternate_weeks && !isCollectionWeek(today.iso, a.alternate_weeks.week_of)) return null;
+    return `Permitted on ${today.weekday}.`;
+  }
   if (a.season_window && inSeasonWindow(today.iso, a.season_window.from, a.season_window.to))
     return 'Inside the permitted season.';
   if (a.grace_days) {
@@ -359,9 +579,21 @@ export function adjudicate(
    */
   const verdictRight = stamped === expected;
 
-  // A strike comes from the wrong verdict, or from any finding that would
-  // survive appeal.
-  const strike = !verdictRight || falsePositives.length > 0;
+  /**
+   * A strike comes from the wrong verdict, from a finding that would survive
+   * appeal, or from a violation left unwritten.
+   *
+   * The third of those is new, and it closes the hole the other two left: the
+   * verdict is computed from what is WRONG with the lot rather than from what
+   * the player marked, so stamping WARNING at a house you never looked at was
+   * scored exactly the same as stamping it after finding the weeds. The whole
+   * job was skippable by guessing severities.
+   *
+   * `missed` is already one entry per KIND — citing one weed answers for the
+   * other five — so this asks for one of each violation on the lot and not an
+   * inventory of it.
+   */
+  const strike = !verdictRight || falsePositives.length > 0 || missed.length > 0;
 
   return {
     lot_id: lot.lot_id,

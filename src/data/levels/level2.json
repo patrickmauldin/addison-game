@@ -1,6 +1,6 @@
 {
   "level_id": 2,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 2 is Wednesday 3 March.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 2 is Wednesday 4 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -38,11 +38,11 @@
     "pablo"
   ],
   "story": [
-    "Wednesday. Collection day on Bonerville, so half the street has bins at the curb.",
+    "Wednesday. Collection day across the whole community, so half your route has bins at the curb.",
     "That is permitted today. Article IX allows Tuesday and Wednesday. It does not allow Thursday, and residents are aware of this.",
     "From today you may also issue a fine. One warning first — always. A fine on a first sighting will not survive appeal, and the Association pays the costs."
   ],
-  "artifact": {
+  "_artifact": {
     "title": "Clipped to the binder",
     "text": "A page of the previous inspector’s route notes. The handwriting is small and very even. In the margin beside R-104: “they will lie about the day.”"
   },
@@ -68,8 +68,8 @@
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 20001,
       "house": {
         "sprite": "house1"
@@ -81,7 +81,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "group": "Trash cans, at the curb"
         },
         {
@@ -89,7 +89,7 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "group": "Trash cans, at the curb"
         }
       ],
@@ -110,8 +110,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 20002,
       "house": {
         "sprite": "house2",
@@ -124,15 +124,22 @@
           "sprite": "trash-green",
           "anchor": "BINS_SCREENED",
           "label": "Refuse container, green — behind fence",
-          "first_seen": "2027-03-03"
+          "first_seen": "2026-03-04"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "align": "left"
+        },
+        {
+          "id": "yard_sign",
+          "sprite": "yard-sign",
+          "anchor": "YARD_4",
+          "label": "Campaign sign",
+          "first_seen": "2026-03-02"
         }
       ],
       "truth": {
@@ -145,6 +152,10 @@
           {
             "object": "fence",
             "why": "Sound."
+          },
+          {
+            "object": "yard_sign",
+            "why": "No Article covers signage. It is loud, it is political and it is somebody's opinion on a stick — and none of those is a thing the declaration gives you."
           }
         ]
       },
@@ -156,7 +167,7 @@
       "street": "Bonerville",
       "seed": 20003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house13b"
       },
       "_teaching": "Weeds at an address that was warned on Monday for its FENCE. A different article, so this is a first offence and a warning — escalation is per article, and this lot is where that is demonstrated rather than stated.",
       "props": [
@@ -165,14 +176,14 @@
           "sprite": "weed3",
           "anchor": "YARD_2",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-03"
+          "first_seen": "2026-03-04"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "align": "left"
         }
       ],
@@ -195,8 +206,8 @@
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 20004,
       "house": {
         "sprite": "house4",
@@ -209,14 +220,14 @@
           "sprite": "weed1",
           "anchor": "YARD_1",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         },
         {
           "id": "weeds_2",
           "sprite": "weed2",
           "anchor": "YARD_4",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         }
       ],
       "truth": {
@@ -238,8 +249,8 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 20005,
       "house": {
         "sprite": "house5",
@@ -252,7 +263,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "group": "Trash cans, at the curb"
         },
         {
@@ -260,7 +271,7 @@
           "sprite": "fence3",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "align": "left"
         }
       ],

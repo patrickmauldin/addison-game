@@ -7,14 +7,19 @@
  */
 
 
-import { renderLot, type LotSpec, type PropSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
+import { renderLot, solidHeight, type LotSpec, type PropSpec, type RenderedLot, type SceneAssets } from './scene-compositor.js';
+import { DEFAULT_ANCHORS, HOUSE_NATIVE, housePlan } from './core/scene.js';
 
 import {
   adjudicate,
   type ArticleTiming,
+  activateSlot,
   bumpAccuracy,
   cumulativeAccuracy,
+  deleteSlot,
+  listSlots,
   load,
+  newSlot,
   noteFirstSeen,
   recordFor,
   reset,
@@ -22,6 +27,7 @@ import {
   type LotOutcome,
   type Ruling,
   type SaveFile,
+  type SlotInfo,
   type Verdict,
 } from './game/state.js';
 
@@ -94,6 +100,15 @@ type Bounty = {
   scale?: number;
   /** Pin the face instead of drawing one. See placeBounty. */
   character?: string;
+  /**
+   * This one is not CLICKED, it is SHOT.
+   *
+   * The drawer comes in, the pointer becomes a sight and the music is the
+   * clock. It was the thief's alone and hardwired to his id; it is a property
+   * of the notice now, because an armadillo wrecking a lawn is the same
+   * encounter with a different animal on the end of it.
+   */
+  hunt?: boolean;
   eligible_lots: string[];
 };
 type LevelSpec = {
@@ -172,6 +187,37 @@ let LOTS: Record<string, LotSpec> = {};
 const THIEF_BOUNTY = (level3 as { bounty?: Bounty }).bounty!;
 
 /**
+ * Every notice the campaign can post, by id.
+ *
+ * The save records which flyers are still UP as a list of ids; this is what
+ * turns one back into the notice that authored it. Read from the level files
+ * rather than copied, so the wording, the reward and the eligible lots have one
+ * home — the round that introduced them.
+ */
+const ALL_BOUNTIES: Map<string, Bounty> = new Map(
+  LEVELS.map((l) => (l as { bounty?: Bounty }).bounty)
+    .filter((b): b is Bounty => !!b)
+    .map((b) => [b.id, b]),
+);
+
+/** Notices still up, oldest first, skipping any whose level file has gone. */
+function outstandingBounties(): Bounty[] {
+  return (saveFile.inspector.outstanding ?? [])
+    .map((id) => ALL_BOUNTIES.get(id))
+    .filter((b): b is Bounty => !!b);
+}
+
+/** A notice comes down when the thing on it is found, and not before. */
+function markOutstanding(b: Bounty): void {
+  const list = (saveFile.inspector.outstanding ??= []);
+  if (!list.includes(b.id)) list.push(b.id);
+}
+function clearOutstanding(id: string): void {
+  const list = saveFile.inspector.outstanding;
+  if (list) saveFile.inspector.outstanding = list.filter((x) => x !== id);
+}
+
+/**
  * Loaded HERE, above the first loadLevel, and not down with the round state.
  *
  * loadLevel runs once at module scope to set up level 1, and it now asks the
@@ -185,8 +231,19 @@ function loadLevel(i: number): void {
   levelIndex = i;
   day = LEVELS[i];
   today = dateForLevel(day.level_id);
-  if (!day.bounty && saveFile.inspector.thief === 'outstanding' && day.level_id > 3)
-    day = { ...day, bounty: THIEF_BOUNTY };
+  /**
+   * A round with no notice of its own picks up the oldest one still open.
+   *
+   * This was the thief alone, hardwired. Any unfound flyer works the same way
+   * now: it stays POSTED every round (see postedNotices) but can only be acted
+   * on when the round has nothing of its own to look for, because everything
+   * downstream — the lot it hides on, the face, the hunt — is built for one
+   * bounty at a time.
+   */
+  if (!day.bounty) {
+    const open = outstandingBounties()[0];
+    if (open) day = { ...day, bounty: open };
+  }
   LOTS = Object.fromEntries(day.lots.map((l) => [l.lot_id, l]));
 }
 loadLevel(0);
@@ -329,8 +386,15 @@ function placeBounty(): void {
   // Pinned if the level names one, drawn otherwise. The Poop Bandit is a face
   // you have to match and so must not be memorisable; the thief is the only
   // person crossing a lawn after dark and is meant to be recognised on sight.
-  if (b.kind === 'person')
+  if (b.kind === 'person') {
     bountyCharacter = b.character ? characterNamed(b.character) : Math.floor(rnd() * RESIDENTS.count);
+    // Remembered, so the poster shows the same man on every round it stays up.
+    // The seed is per LEVEL, so without this the face on a carried-forward
+    // notice would change every morning — or vanish, on a round that never
+    // placed him at all.
+    (saveFile.inspector.faces ??= {})[b.id] = bountyCharacter;
+    save(saveFile);
+  }
 }
 
 /** The bounty prop, if it is hiding on this lot and has not been claimed. */
@@ -377,7 +441,7 @@ const PARKED_CARS = [
  * one it stays out of the rotation and in the loader, so content can place it
  * deliberately the day that rule exists.
  */
-const UNPARKED_CARS = ['car1redbad'];
+const UNPARKED_CARS = ['car1redbad', 'car8green-bad', 'car9blue-bad'];
 
 /**
  * Overgrown turf, in four tufts.
@@ -437,6 +501,7 @@ const ARTICLE_TIMING: Record<string, ArticleTiming> = Object.fromEntries(
       weekday_window: a.weekday_window as string[] | undefined,
       season_window: a.season_window as { from: string; to: string } | undefined,
       grace_days: a.grace_days as number | undefined,
+      alternate_weeks: a.alternate_weeks as { week_of: string } | undefined,
     },
   ]),
 );
@@ -449,7 +514,11 @@ const HOUSE_VARIANTS = ['window', 'christmas'];
 const HOUSE_SPRITES = [
   ...HOUSE_PLANS,
   ...HOUSE_ALTS,
-  ...HOUSE_PLANS.flatMap((h) => HOUSE_VARIANTS.map((v) => `${h}-${v}`)),
+  // The ALTS take variants too. A "b" dressing is the same plan with the garage
+  // open, and it can have its lights up like any other — the cross product was
+  // over the numbered plans alone, so house13b-christmas resolved to
+  // assets/ rather than assets/houses/ and quietly failed to load.
+  ...[...HOUSE_PLANS, ...HOUSE_ALTS].flatMap((h) => HOUSE_VARIANTS.map((v) => `${h}-${v}`)),
 ];
 
 /**
@@ -485,6 +554,9 @@ const ASSET_FILES = [
   ...HOUSE_LOADS,
   'fence1', 'fence2', 'fence3',
   'weed1', 'weed2', 'weed3', 'trash-green', 'trash-brown',
+  // Signage. Nothing in the declaration covers it, which is the entire reason
+  // it is on a lawn the player is being asked to judge.
+  'yard-sign',
   // Overgrown turf. Four tufts so a lawn that has got away from its owner does
   // not read as the same clump stamped five times.
   ...TALL_GRASS,
@@ -492,43 +564,202 @@ const ASSET_FILES = [
   'pin',
   ...PARKED_CARS,
   ...UNPARKED_CARS,
-  // Not yet placed by any lot, but loaded so content can reference them:
-  // R-107 clutter (couch, washer, dryer, boxes) and R-204 recreational
-  // vehicles. Missing sprites are skipped at render, so listing them early
-  // costs nothing but a fetch.
+  // Loaded so content can reference them before any lot places them: R-107
+  // clutter and recreational vehicles. Missing sprites are skipped at render,
+  // so listing them early costs nothing but a fetch.
   'couch', 'washer', 'dryer', 'boxes', 'rv1', 'rv2',
+  /**
+   * EVERY PROP THE CONTENT ACTUALLY PLACES, read from the levels.
+   *
+   * A sprite named by a lot and missing from this list does not 404 — the
+   * compositor skips a prop it has no art for and the lot renders without it,
+   * silently. `dumpster` and `storage` had been authored into Shift 5 and never
+   * added here, so a driveway the content says has a storage pod on it had
+   * nothing on it at all. Reading the content is the only version of this list
+   * that cannot fall behind the content.
+   */
+  ...new Set(LEVELS.flatMap((l) => l.lots.flatMap((lot) =>
+    ((lot as { props?: { sprite: string }[] }).props ?? []).map((p) => p.sprite)))),
+  // Notices carry art of their own, and a bounty prop is placed at runtime.
+  ...new Set(LEVELS.map((l) => (l as { bounty?: Bounty }).bounty?.sprite).filter(Boolean) as string[]),
   // Bounty art, referenced straight out of its delivered folder. Copying one
   // frame out to assets/chaz.png would work today and be stale the moment the
   // animal is re-exported.
   'animals/cat-chaz/walking/rotations/south',
 ];
 
+/** How much clear paving to leave between two cars, and outside the pair. */
+const CAR_GAP = 0.012;
+/** Of the lots that get a car at all, how many get a second one beside it. */
+const SECOND_CAR_CHANCE = 0.35;
+
+/** A prop's width as a fraction of the house rect it is drawn against. */
+function propWidth(sprite: string): number {
+  const spr = assets.sprites.get(sprite);
+  return spr ? spr.w / HOUSE_NATIVE.w : 0.14;
+}
+
 /**
- * Park a car on the driveway, or leave it empty. 0-1 per house.
+ * A prop's DRAWN height as a fraction of the house rect. Ink, not canvas — the
+ * vehicle art carries a baked shadow and a margin, and lining two of them up by
+ * the canvas would leave a visible step.
+ */
+function propHeight(sprite: string): number {
+  const spr = assets.sprites.get(sprite);
+  return spr ? solidHeight(spr) / HOUSE_NATIVE.h : 0.2;
+}
+
+/** What a driveway holds. Two, whoever put them there. */
+const DRIVEWAY_SLOTS = 2;
+/**
+ * The row two things park on, and it is the STREET end.
  *
- * Returned as a COPY with the car appended, so `current` stays the authored lot:
- * the car is scenery, and the case file, first-seen tracking and adjudication
- * should all carry on seeing exactly the props the content declares.
+ * DRIVEWAY_1/2/3 are 0.13 of the house apart and every prop that stands on a
+ * driveway is between 0.20 and 0.42 of the house TALL — a dumpster anchored at
+ * _3 reaches past _1. So the three anchors were never three parking spaces;
+ * anything on two of them overlapped, and the higher one ran into the garage
+ * door. Two things go side by side on one row or they do not go at all.
+ */
+const DRIVEWAY_ROW = 'DRIVEWAY_3';
+/**
+ * How far up the run everything parks, as a fraction of the house height.
  *
- * DRIVEWAY_2 rather than _1 or _3 because it is the only one every car clears.
- * The anchor marks where a prop meets the ground, so a sprite hangs UP the
- * screen from it: at _1 (hy 0.70) even the shortest car would reach the garage
- * door, and the longest would sit inside the garage.
+ * The anchors put a vehicle's wheels almost on the sidewalk. Cars pull IN — a
+ * driveway is not a kerbside space — so the whole slot lifts by this much.
+ */
+const DRIVEWAY_LIFT = 0.05;
+
+/**
+ * Lay out the driveway: the content's vehicles, plus an ambient car or two.
+ *
+ * Returned as a COPY, so `current` stays the authored lot: the car is scenery,
+ * and the case file, first-seen tracking and adjudication should all carry on
+ * seeing exactly the props the content declares. Re-anchoring is part of the
+ * same copy — it changes where a thing is DRAWN and nothing else.
+ *
+ * TWO ABREAST OR ONE IN THE MIDDLE. A single vehicle keeps the anchor it was
+ * given; a pair is centred as a group on the street end of the run, which is
+ * the only arrangement this art can hold without one sprite standing in
+ * another.
+ *
+ * AND A SECOND CAR IS OFFERED, NOT ASSUMED. Driveways in this set run from
+ * 0.256 of the house width to 0.461, and the props from 0.077 to 0.159 — so the
+ * widest pair fits house6 and nothing like house11. The test is against the
+ * measured pair and the measured driveway, not a blanket rule. The CONTENT gets
+ * the slots first: a lot the level already parked two derelicts on takes no
+ * ambient car at all.
  */
 function withParkedCar(lot: LotSpec): LotSpec {
-  const extra: PropSpec[] = [];
   const rnd = seedFrom(`${lot.lot_id}:car`);
+  const authored = (lot.props ?? []).filter((p) => p.anchor.startsWith('DRIVEWAY'));
+  const free = DRIVEWAY_SLOTS - authored.length;
+  const span = drivewaySpan(lot) ?? 0;
+
+  const ambient: PropSpec[] = [];
   if (rnd() >= 0.4) {
-    const sprite = PARKED_CARS[Math.floor(rnd() * PARKED_CARS.length)];
+    const pick = () => PARKED_CARS[Math.floor(rnd() * PARKED_CARS.length)];
+    const first = pick();
+    // Drawn BEFORE the fit test so the roll sequence does not depend on the
+    // answer: a house that turns out to be too narrow must still leave the next
+    // lot's seed where it would have been. Same reason the slot count is
+    // applied after — a full driveway must not reshuffle the rest of the street.
+    const second = rnd() < SECOND_CAR_CHANCE ? pick() : null;
     // Clickable, like everything else on the lot. A car parked on its own
     // driveway is not a violation of anything live, so citing one is a false
     // positive and takes the strike — which is the whole point of being able
     // to click things that are fine.
-    extra.push({ id: `car_${sprite}`, sprite, anchor: 'DRIVEWAY_2', label: 'Vehicle, driveway', flaggable: true });
+    const car = (sprite: string, n: number): PropSpec => ({
+      // The id carries the slot, not just the sprite: two of the same model on
+      // one driveway would otherwise share an id, and the id is what the
+      // Findings pad and the click buffer key on.
+      id: `car${n}_${sprite}`,
+      sprite, anchor: 'DRIVEWAY_2', label: 'Vehicle, driveway', flaggable: true,
+      nudgeY: -liftFor(lot, 'DRIVEWAY_2', propHeight(sprite)),
+    });
+    if (free >= 2 && second !== null && fits(first, second, span)) {
+      ambient.push(car(first, 1), car(second, 2));
+    } else if (free >= 1) {
+      ambient.push(car(first, 1));
+    }
   }
+
+  // An ambient car has to fit beside whatever the CONTENT already parked, not
+  // just beside another ambient car. house13's run is 0.264 of the house and a
+  // storage pod is 0.159 of it — a car alongside overhangs the grass, so the
+  // car goes rather than the pod. The content's props are never dropped.
+  if (authored.length === 1 && ambient.length === 1
+      && !fits(authored[0].sprite, ambient[0].sprite, span)) ambient.length = 0;
+
+  let props = [...(lot.props ?? []), ...ambient];
+  let changed = ambient.length > 0;
+  const occupants = [...authored, ...ambient];
+  if (occupants.length === 2) {
+    changed = true;
+    const [a, b] = occupants;
+    const wa = propWidth(a.sprite);
+    const wb = propWidth(b.sprite);
+    const total = wa + wb + CAR_GAP;
+    /**
+     * NOSE TO NOSE, not bumper to bumper.
+     *
+     * An anchor is where a prop meets the GROUND, so two sprites on one row
+     * line up by their back ends — and a motorbike beside a pickup then looks
+     * like it is parked halfway down the road. Aligning the TOPS means the
+     * shorter one pulls further up the drive, which is where it would be.
+     */
+    const tallest = Math.max(propHeight(a.sprite), propHeight(b.sprite));
+    // One lift for the pair, set by the TALLER of them — they are meant to move
+    // together, and clamping each separately would pull them apart again.
+    const up = liftFor(lot, DRIVEWAY_ROW, tallest);
+    const lift = (p: PropSpec) => -(tallest - propHeight(p.sprite)) - up;
+    // Centred as a PAIR, so the two together sit where one would have.
+    const moved = new Map<PropSpec, PropSpec>([
+      [a, { ...a, anchor: DRIVEWAY_ROW, nudge: -(total - wa) / 2, nudgeY: lift(a) }],
+      [b, { ...b, anchor: DRIVEWAY_ROW, nudge: (total - wb) / 2, nudgeY: lift(b) }],
+    ]);
+    props = props.map((p) => moved.get(p) ?? p);
+  }
+
   const bounty = bountyPropFor(lot);
-  if (bounty) extra.push(bounty);
-  return extra.length ? { ...lot, props: [...(lot.props ?? []), ...extra] } : lot;
+  if (bounty) { props.push(bounty); changed = true; }
+  return changed ? { ...lot, props } : lot;
+}
+
+/** Do these two stand side by side on a driveway this wide? */
+function fits(a: string, b: string, span: number): boolean {
+  return propWidth(a) + propWidth(b) + CAR_GAP * 3 <= span;
+}
+
+/** An anchor's height on this lot's plan, falling back to the shared table. */
+function anchorHy(lot: LotSpec, name: string): number {
+  const plan = housePlan(lot.house?.sprite ?? '');
+  const over = (housesData as { houses?: Record<string, { anchors?: Record<string, { hy: number }> }> })
+    .houses?.[plan]?.anchors?.[name];
+  return over?.hy ?? DEFAULT_ANCHORS[name]?.hy ?? 0;
+}
+
+/**
+ * How far up the run something this tall may pull, without ending up inside the
+ * garage.
+ *
+ * The garage face is measured per plan — it is where the apron anchors sit —
+ * and a sprite hangs UP the screen from its anchor, so the lift a lot can give
+ * is whatever is left between the row, the prop's own height and that face. A
+ * dumpster is nearly twice a car's height and eats all of it; a motorbike has
+ * room to spare. Asking every lot for the same 0.05 put a skip through a
+ * garage door.
+ */
+function liftFor(lot: LotSpec, row: string, height: number): number {
+  const room = anchorHy(lot, row) - height - anchorHy(lot, 'APRON_1') - 0.01;
+  return Math.max(0, Math.min(DRIVEWAY_LIFT, room));
+}
+
+/** The paved run, as [left, right] fractions of the house rect. */
+function drivewaySpan(lot: LotSpec): number | undefined {
+  const id = lot.house?.sprite;
+  if (!id) return undefined;
+  const d = (housesData as any).houses?.[housePlan(id)]?.drive;
+  return Array.isArray(d) ? d[1] - d[0] : undefined;
 }
 
 /**
@@ -631,6 +862,8 @@ let flagged = new Set<string>();
  */
 let claimed = new Set<string>();
 let bountyPay = 0;
+/** This shift's fine bonuses, for the stub. The balance already has them. */
+let fineBonus = 0;
 /**
  * The balance AS SHOWN, which is not the balance.
  *
@@ -1076,10 +1309,18 @@ function makeBountyAnimal(lot: LotSpec, rl: RenderedLot): { which: number; walke
   const bottom = L.walkTop - 10;
   if (bottom - top < 24) return null;
   const rnd = seedFrom(`${lot.lot_id}:${b.id}:roam`);
-  return {
-    which: animalNamed(b.animal),
-    walker: new Walker(0, { x0: L.w * 0.06, x1: L.w * 0.94, y0: top, y1: bottom }, rnd, L.house.w * 0.05),
-  };
+  /**
+   * A HUNTED animal moves like the thief, not like a lost cat.
+   *
+   * Domino is meant to be found — she ambles, and the game is spotting her. The
+   * armadillo is meant to be HIT, on the same four darts and the same thirty
+   * seconds, and at a cat's pace that budget stops being a budget. Three times
+   * the pace and almost no standing still, exactly as makeWalker does for him.
+   */
+  const speed = L.house.w * 0.05 * (b.hunt ? 3 : 1);
+  const walker = new Walker(0, { x0: L.w * 0.06, x1: L.w * 0.94, y0: top, y1: bottom }, rnd, speed);
+  if (b.hunt) walker.dwell = 0.15;
+  return { which: animalNamed(b.animal), walker };
 }
 
 /** The band a passerby's feet may land in. */
@@ -1255,6 +1496,8 @@ function claimBounty(b: Bounty, mark: { x: number; y: number } | null): void {
     paint();
   }, BOUNTY_TICK_MS) as unknown as number;
   claimed.add(b.id);
+  // Found. The flyer comes down, and stays down on every round after this one.
+  clearOutstanding(b.id);
   bountyPay += b.reward;
   saveFile.inspector.pay += b.reward;
   save(saveFile);
@@ -1315,7 +1558,17 @@ function drawWalker(): void {
   if (bountyAnimal && animalSheet.complete && animalSheet.naturalWidth) {
     const c = bountyAnimal;
     const f = animalFrameFor(c.which, c.walker);
-    queue.push({ y: c.walker.y, draw: () => drawAnimal(c.walker.x, c.walker.y, f.sx, f.sy, f.flip) });
+    // Blinks out on a dart, exactly as the thief does. Only ever non-1 while a
+    // hunt bounty is dying — a cat claimed by clicking is taken off the scene
+    // outright and never reaches this branch.
+    const a = thiefBlink ? blinkAlpha(performance.now()) : 1;
+    queue.push({ y: c.walker.y, draw: () => {
+      if (a >= 1) { drawAnimal(c.walker.x, c.walker.y, f.sx, f.sy, f.flip); return; }
+      ctx.save();
+      ctx.globalAlpha = a;
+      drawAnimal(c.walker.x, c.walker.y, f.sx, f.sy, f.flip);
+      ctx.restore();
+    } });
   }
   // The walked dog. Same sheet as the strays, but she is steered like a
   // passerby, so the frame picker gets a stand-in with the four fields it
@@ -1487,10 +1740,37 @@ function renderCaseFile(rec: { address: string; lot_id: string; rulings: Ruling[
     el.textContent = 'No prior rulings. First inspection at this address.';
   } else {
     el.className = '';
-    el.innerHTML = rec.rulings
-      .map((r) => `<div>${shortDate(r.date)} — stamped <b>${VERDICT_WORD[r.verdict] ?? r.verdict}</b>, ${r.findings.length} finding(s)</div>`)
-      .join('');
+    el.innerHTML = rec.rulings.map(rulingLine).join('');
   }
+}
+
+/** Article id to the word on its binder tab. "R-101" -> "Weeds". */
+const ARTICLE_TAB: Record<string, string> = Object.fromEntries(
+  ARTICLES.map((a) => [a.id, (a as { tab?: string }).tab ?? a.title]),
+);
+
+/**
+ * One prior ruling, and WHAT IT WAS FOR.
+ *
+ * The count of findings was the wrong fact to print. Escalation is per article
+ * — a warning for weeds does not license a fine for the bins — so the only
+ * question the player brings to this card is "have I written them up for THIS
+ * before", and "2 finding(s)" cannot answer it. The articles can.
+ *
+ * Deduplicated, because a lot with six weeds on it was one finding written six
+ * times and the file should say "Weeds" once. Findings with a null article are
+ * dropped: those are marks that were not violations of anything, they never
+ * armed escalation, and listing them here would suggest they had.
+ */
+function rulingLine(r: Ruling): string {
+  const cited = [...new Set(r.findings.map((f) => f.article).filter(Boolean) as string[])];
+  const what = cited.length
+    ? cited.map((id) => `<span class="cf-art">${ruleNumber(id)} ${ARTICLE_TAB[id] ?? id}</span>`).join(' ')
+    : '<span class="muted">no articles cited</span>';
+  return `<div class="cf-line">
+      <span>${shortDate(r.date)} — <b>${VERDICT_WORD[r.verdict] ?? r.verdict}</b></span>
+      ${what}
+    </div>`;
 }
 
 type Article = (typeof ARTICLES)[number] & {
@@ -1609,6 +1889,18 @@ function loadMap(): void {
  */
 function currentStreetId(): string {
   return (current?.street ?? '').toLowerCase().replace(/\s+/g, '_');
+}
+
+/**
+ * The streets this round visits, in route order and without repeats.
+ *
+ * A round used to be one block, so both the briefing and the audit could name
+ * "Bonerville" and be right. The route crosses the neighbourhood now, and a
+ * single street name taken off the current lot would be whichever address the
+ * player happened to stop on.
+ */
+function routeStreets(): string[] {
+  return [...new Set(day.lots.map((l) => l.street).filter(Boolean) as string[])];
 }
 
 function syncBinder(): void {
@@ -1742,10 +2034,24 @@ function syncDesk(): void {
   // zero — the route sheet was printing the same number twice under two labels.
   // Put the row back when a route offers more addresses than the quota needs,
   // or when End Round Early ships and finishing short becomes a real choice.
-  $('c-strikes').textContent = `${saveFile.inspector.strikes_today} / 3`;
-  $('c-pay').textContent = `$${bankShown}`;
+  /**
+   * A RUNNING tally, off this shift's outcomes rather than off the save — the
+   * save's count is only written at the audit, so the row used to show last
+   * shift's number all the way through this one.
+   *
+   * It counts exactly what gets billed tonight and nothing else. The audit
+   * still holds back WHICH lot and WHY, which is the reveal that matters; a
+   * player who budgets on one mistake and is then charged for three would read
+   * that as a bug rather than as the Association being the Association.
+   */
+  const mistakes = outcomes.filter((o) => o.strike).length;
+  const billed = Math.max(0, mistakes - FREE_MISTAKES);
+  $('c-strikes').textContent = billed
+    ? `${mistakes} · -$${billed * MISTAKE_COST}`
+    : `${mistakes} / ${FREE_MISTAKES} free`;
+  $('c-pay').textContent = money(bankShown);
   $('m-day').textContent = `Shift ${day.level_id}`;
-  $('m-pay').textContent = `$${bankShown}`;
+  $('m-pay').textContent = money(bankShown);
 
   syncBinder();
 
@@ -1982,7 +2288,10 @@ function blinkAlpha(now: number): number {
 
 function huntTarget(): Bounty | null {
   const b = day.bounty;
-  if (!b || b.id !== 'thief' || !day.night) return null;
+  // `hunt`, not the id: the thief was the first of these, not the only one.
+  // Still night-only — the drawer, the music and a torch-lit street are one
+  // idea, and a dart gun on a Tuesday afternoon is a different game.
+  if (!b?.hunt || !day.night) return null;
   if (!current || current.lot_id !== bountyLot || claimed.has(b.id)) return null;
   return b;
 }
@@ -1991,7 +2300,11 @@ function startHunt(): void {
   const b = huntTarget();
   // Once per round. Missing him closes the lot for the night, and walking back
   // onto it must not hand out four more darts.
-  if (!b || hunt || saveFile.inspector.thief === 'caught' || firedEvents.has('hunt')) return;
+  // The thief carries state ACROSS shifts — caught once and he is done with
+  // for the campaign. Nothing else does: a bounty that belongs to its own round
+  // is settled that round, so only he consults the save.
+  if (!b || hunt || firedEvents.has('hunt')) return;
+  if (b.id === 'thief' && saveFile.inspector.thief === 'caught') return;
   firedEvents.add('hunt');
   // The dart drawer covers the panel. Shut the desk drawer under it, so putting
   // the gun away does not reveal a drawer left open before the music started.
@@ -2025,7 +2338,11 @@ function endHunt(caught: boolean): void {
   drawer.classList.remove('open');
   drawer.setAttribute('aria-hidden', 'true');
   setTimeout(() => { if (!hunt) drawer.hidden = true; }, 460);
-  saveFile.inspector.thief = caught ? 'caught' : 'outstanding';
+  // Only the thief outlives his round. The armadillo is this shift's problem
+  // and writing him into the save would put the thief's flag on the wrong
+  // animal — which is what decides whether the notice stays up for the rest of
+  // the campaign.
+  if (day.bounty?.id === 'thief') saveFile.inspector.thief = caught ? 'caught' : 'outstanding';
   save(saveFile);
   if (!caught) {
     // Gone for the night. The lot goes quiet, which is the point — you had him
@@ -2051,7 +2368,11 @@ function shoot(p: { x: number; y: number }): void {
   syncDarts();
   sound.play('shot');
   const b = day.bounty!;
-  if (bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
+  // A dart hits whatever the notice is FOR, and a notice is for a person or for
+  // an animal. Testing only for a person was fine while the thief was the only
+  // hunt; it made the armadillo unshootable, which reads as the gun being
+  // broken rather than as the player missing.
+  if (b.kind === 'person' && bountyCharacter !== null && personHit(p.x, p.y) === bountyCharacter) {
     endHunt(true);
     // He stays on his feet and stays walking; only the drawing goes. The walker
     // is torn down when the blink finishes, not when the dart lands — which is
@@ -2060,6 +2381,21 @@ function shoot(p: { x: number; y: number }): void {
     setTimeout(() => {
       thiefBlink = 0;
       resident = null;
+      paint();
+    }, BLINK_MS);
+    claimBounty(b, null);
+    return;
+  }
+  if (b.kind === 'animal' && bountyAnimal && overAnimal(bountyAnimal, p.x, p.y)) {
+    endHunt(true);
+    // Same blink as the thief, and for the same reason: the dart is the only
+    // feedback there is, so the thing it hit has to be visibly leaving. The
+    // walker survives until the blink ends, which is what keeps the frame loop
+    // running long enough to draw it going.
+    thiefBlink = performance.now();
+    setTimeout(() => {
+      thiefBlink = 0;
+      bountyAnimal = null;
       paint();
     }, BLINK_MS);
     claimBounty(b, null);
@@ -2120,17 +2456,56 @@ function maybeEvent(objectId: string): void {
   });
 }
 
+/**
+ * The loupe, at the pointer.
+ *
+ * An INFORMATION tool, not a magnifier: label and first-seen date, never more
+ * pixels (manifest section 10, "Resolution & zoom"). What changed is where it
+ * says it — a strip along the foot of the scene meant looking away from the
+ * thing you were pointing at in order to find out what it was.
+ */
+const hoverTip = $('hover');
+/**
+ * How far off the pointer the label sits.
+ *
+ * Sized to the CURSOR, not to taste. The camera is a 118px sprite with its
+ * hotspot dead centre (see #frame's cursor rule), so the art reaches 59px above
+ * the point the mouse is actually at — at 14px the label was sitting on the
+ * viewfinder. This clears it with a few pixels of air.
+ */
+const HOVER_GAP = 66;
+const hideHover = () => { hoverTip.hidden = true; };
+
 frame.addEventListener('mousemove', (ev) => {
-  if (sliding) return;
+  // Nothing to point AT mid-pan, and the dart hunt has replaced the pointer
+  // with a sight — naming the thing you are about to shoot is not the game.
+  if (sliding || hunt) return hideHover();
   const p = toLotPixel(ev as MouseEvent);
   // Same reach as the click, or the label would disagree with what a click does.
   const obj = rendered.byKey.get(rendered.raster.idNear(p.x, p.y));
-  // The loupe is an INFORMATION tool, not a magnifier: label and first-seen
-  // date, never more pixels (manifest section 10, "Resolution & zoom").
-  $('hover').textContent = obj?.flaggable
-    ? `${obj.label}${obj.first_seen ? ` · first observed ${obj.first_seen}` : ''}`
-    : '';
+  if (!obj?.flaggable) return hideHover();
+
+  hoverTip.innerHTML = obj.first_seen
+    ? `${obj.label}<span class="seen"> · first observed ${obj.first_seen}</span>`
+    : obj.label;
+  hoverTip.hidden = false;
+
+  // Measured AFTER the text lands: the label decides the width, and placing it
+  // off last frame's width makes it lag the cursor by one move.
+  const st = frame.parentElement!.getBoundingClientRect();
+  const w = hoverTip.offsetWidth;
+  const h = hoverTip.offsetHeight;
+  const x = clamp(ev.clientX - st.left, w / 2 + 4, st.width - w / 2 - 4);
+  const above = ev.clientY - st.top - HOVER_GAP;
+  // Near the top of the stage there is no room over the cursor, and the stage
+  // clips. Sit under it instead of being cut in half.
+  const below = above - h < 0;
+  hoverTip.classList.toggle('below', below);
+  hoverTip.style.left = `${x}px`;
+  hoverTip.style.top = `${below ? ev.clientY - st.top + HOVER_GAP : above}px`;
 });
+// Leaving the lot, or leaving the window mid-move, has to put it away.
+frame.addEventListener('mouseleave', hideHover);
 
 
 $('btn-pass').onclick = () => stamp('PASS');
@@ -2193,6 +2568,7 @@ function gotoLevel(i: number): void {
   flagged.clear();
   claimed.clear();
   bountyPay = 0;
+  fineBonus = 0;
   bountyMark = null;
   clearTimeout(bountyTickTimer);
   resident = null;
@@ -2201,6 +2577,11 @@ function gotoLevel(i: number): void {
   escort = null;
   bountyAnimal = null;
   saveFile.inspector.strikes_today = 0;
+  // Where the slot list reads "Shift 3" from, and where a resume lands. Written
+  // when a shift BEGINS rather than when it ends: quitting halfway through a
+  // round should put you back at the top of that round, not the one before it.
+  saveFile.level_id = day.level_id;
+  save(saveFile);
   stamping = false;
   sliding = false;
   syncDesk();
@@ -2374,7 +2755,21 @@ function stamp(v: Verdict): void {
     findings: [...flagged].map((object) => ({ object, article: articleOf.get(object) ?? null })),
     correct: null,
   });
+  // The base salary: paid for turning up at the address, whatever you decide
+  // there. The only money the job pays without asking anything of you.
   saveFile.inspector.pay += day.pay_per_inspection;
+  /**
+   * A cut of the fine — and only of a fine that STANDS.
+   *
+   * "From the fine" is the whole of it: the Association pays the inspector out
+   * of what it collects, and it collects nothing on a citation the homeowner
+   * appeals and wins. Which is what keeps this from being a bounty on stamping
+   * FINE at everything, since a wrong one is also a billed mistake tonight.
+   */
+  if (v === 'CITATION' && outcome.verdictRight) {
+    fineBonus += FINE_BONUS;
+    saveFile.inspector.pay += FINE_BONUS;
+  }
   save(saveFile);
 
   // The verdict lands as ink on the case file. Still no feedback on whether it
@@ -2552,21 +2947,25 @@ function bossHeader(gif: 'boss1' | 'boss2'): string {
  * is worse than no report — the player stops believing any of it.
  *
  * Clean means NO EXCEPTIONS. Not merely that the verdict was right.
+ *
+ * Now literally the inverse of a strike, since a missed violation became one.
+ * Defined off `strike` rather than restating its three terms — two copies of
+ * the same predicate in two files is how the report starts disagreeing with the
+ * pay stub, which is the exact fault this was written to fix.
  */
-const lotClean = (o: LotOutcome): boolean =>
-  o.verdictRight && !o.falsePositives.length && !o.missed.length;
+const lotClean = (o: LotOutcome): boolean => !o.strike;
 
 /**
- * ONE mark for the day, off the strike count and nothing else.
+ * ONE mark for the day, off the mistake count and nothing else.
  *
- * Strikes are already the thing the game threatens you with — three ends the
- * arrangement — so grading on anything else would put a second, quieter score
- * next to the one that actually matters. A day with a strike is not an A
- * however tidy the rest of it was.
+ * Mistakes are already the thing the game charges you for, so grading on
+ * anything else would put a second, quieter score next to the one that actually
+ * costs money. A day with a mistake is not an A however tidy the rest of it was
+ * — even the forgiven one, because forgiven is not the same as unnoticed.
  *
  * There is no D. Four grades for four outcomes, and the gap where a D should be
  * is deliberate: it makes the drop from C to F read as falling off a cliff,
- * which is what a third strike is.
+ * which is what a third mistake is once two of them are being billed.
  */
 const GRADE = [
   { mark: 'A+', cls: 'g-a' },
@@ -2575,6 +2974,41 @@ const GRADE = [
   { mark: 'F', cls: 'g-f' },
 ];
 
+// --- What a shift is worth, and what it costs ------------------------------
+/**
+ * THE ARRANGEMENT.
+ *
+ * The Association does not sack you for being wrong. It bills you for it, once
+ * a shift, after the fact — which is a worse thing to be on the end of, and the
+ * only reason it can afford to be generous with the first one.
+ *
+ * The numbers are here rather than in the level files on purpose: `quota` and
+ * `pay_per_inspection` are what a ROUND is worth and change with the content,
+ * while these are the terms of employment and are the same on every shift. One
+ * of them moving without the others is how an economy stops making sense.
+ */
+/**
+ * "$48", and "-$2" rather than "$-2".
+ *
+ * A balance could not go negative before this round, so nothing ever had to
+ * decide where the sign went. It can now, and the minus belongs in front of the
+ * whole amount the way it is written on a statement.
+ */
+const money = (n: number) => (n < 0 ? `-$${-n}` : `$${n}`);
+/** Mistakes forgiven per shift. Everything past this is billed. */
+const FREE_MISTAKES = 1;
+/** What each billed mistake costs. Two of them is most of a shift's wages. */
+const MISTAKE_COST = 25;
+/** The inspector's cut of a fine that stands. */
+const FINE_BONUS = 20;
+/**
+ * Billed mistakes across the last two shifts that end the arrangement. STRICTLY
+ * more than this — four is a warning you survive, five is not.
+ */
+const MAX_RECENT_DEDUCTIONS = 4;
+/** How many shifts "recently" means for that count. */
+const DEDUCTION_WINDOW = 2;
+
 // --- End of day: the audit ------------------------------------------------
 
 function endDay(): void {
@@ -2582,6 +3016,15 @@ function endDay(): void {
   // is about to say the same thing at length anyway.
   phonePending = false;
   hangUp();
+  /**
+   * The shift ends; anything still not found stays on the wall.
+   *
+   * Recorded HERE rather than when the notice goes up, so a bounty claimed
+   * during the round never touches the list at all. Every posted notice is
+   * checked, not just the round's own — walking past a carried-forward flyer
+   * for a second time must not quietly take it down.
+   */
+  for (const b of postedNotices()) if (!claimed.has(b.id)) markOutstanding(b);
   let strikes = 0;
   for (const o of outcomes) {
     if (o.strike) strikes++;
@@ -2594,7 +3037,44 @@ function endDay(): void {
     if (o.falsePositives.length) rec.disposition -= 1;
   }
   saveFile.inspector.strikes_today = strikes;
+
+  /**
+   * SETTLEMENT. The one moment money moves against the player.
+   *
+   * The first mistake of the shift is forgiven and the rest are billed, which
+   * is why this is counted at the end and not on the lot: you cannot know
+   * whether the one you just made was the free one until the shift is over.
+   */
+  const billed = Math.max(0, strikes - FREE_MISTAKES);
+  const penalty = billed * MISTAKE_COST;
+  saveFile.inspector.pay -= penalty;
+
+  const history = (saveFile.inspector.deductions ??= []);
+  history.push(billed);
+  const recent = history.slice(-DEDUCTION_WINDOW).reduce((a, b) => a + b, 0);
+
+  // Order matters. Broke is checked first because it is the more final of the
+  // two and reads worse — being told you were sloppy while your balance is
+  // also gone is the Association burying the lede.
+  const firedWhy =
+    saveFile.inspector.pay <= 0
+      ? 'Your balance is gone. The Association does not carry an inspector it is owed money by.'
+      : recent > MAX_RECENT_DEDUCTIONS
+        ? `${recent} deductions in ${DEDUCTION_WINDOW} shifts. The Board has reviewed the pattern.`
+        : null;
   save(saveFile);
+  /**
+   * Dismissed is the end of the file, so the file goes.
+   *
+   * Deleted here rather than left on the title as a dead row: a save that
+   * cannot be resumed is not a save, and a list of them would grow forever with
+   * no way to clear it. The stub on screen is the only record the player gets,
+   * which is the right amount of record for a run that ended this way.
+   *
+   * After this, `save()` has no slot to write to and quietly does nothing —
+   * which is what should happen to anything the audit screen tries to record.
+   */
+  if (firedWhy) reset();
   sound.bed('office');
   sound.play('money');
   $('flyer').hidden = true;
@@ -2647,7 +3127,7 @@ function endDay(): void {
     <div class="day-mark ${GRADE[dayGrade].cls}" aria-label="Grade ${GRADE[dayGrade].mark}">${GRADE[dayGrade].mark}</div>
     ${bossHeader('boss2')}
     <h1>END OF LEVEL ${day.level_id}</h1>
-    <div class="muted">${today.weekday}, ${shortDate(today.iso)} · ${current.street}</div>
+    <div class="muted">${today.weekday}, ${shortDate(today.iso)} · ${routeStreets().join(', ')}</div>
 
     <details class="audit">
       <summary>Board Audit<span class="tally">${
@@ -2658,26 +3138,58 @@ function endDay(): void {
     </details>
 
     <h3>Pay Stub</h3>
-    <div class="today-line"><span>${outcomes.length} inspections × $${day.pay_per_inspection}</span>
+    <div class="today-line"><span>Base salary — ${outcomes.length} inspections × $${day.pay_per_inspection}</span>
       <span class="money">$${pay}</span></div>
+    ${fineBonus > 0 ? `<div class="today-line"><span>Share of fines collected</span>
+      <span class="money fee">$${fineBonus}</span></div>` : ''}
     ${bountyPay > 0 ? `<div class="today-line"><span>Finder's fee</span>
       <span class="money fee">$${bountyPay}</span></div>` : ''}
+    ${
+      penalty > 0
+        ? `<div class="today-line"><span>Errors charged — ${billed} × $${MISTAKE_COST}
+             <span class="muted">(first ${FREE_MISTAKES} forgiven)</span></span>
+           <span class="money debit">&minus;$${penalty}</span></div>`
+        : ''
+    }
     <div class="today-line"><span><b>Total for the round</b></span>
-      <span class="money total">$${pay + bountyPay}</span></div>
+      <span class="money total">${money(pay + fineBonus + bountyPay - penalty)}</span></div>
     <div class="today-line"><span>Balance</span>
-      <span class="money">$${saveFile.inspector.pay}</span></div>
+      <span class="money">${money(saveFile.inspector.pay)}</span></div>
     ${shortfall > 0 ? `<p class="muted">Quota was ${day.quota}. Short ${shortfall}. In the full campaign this docks the stub.</p>` : ''}
-    <p>Strikes today: <b>${strikes}</b> / 3 &nbsp;·&nbsp; Cumulative accuracy: <b>${acc}%</b>
+    <p>Mistakes today: <b>${strikes}</b>${
+      penalty > 0
+        ? ` — ${FREE_MISTAKES} forgiven, ${billed} charged`
+        : `. ${strikes ? 'Forgiven.' : 'None.'}`
+    } &nbsp;·&nbsp; Cumulative accuracy: <b>${acc}%</b>
        ${acc < 70 ? '<br><span class="muted">Below 70%. In the full campaign this triggers probation at the bi-weekly review.</span>' : ''}</p>
 
-    <p style="margin-top:18px">
-      <button class="btn primary" id="btn-after">${hasNext ? `Begin Level ${LEVELS[levelIndex + 1].level_id}` : 'Run this level again'}</button>
-    </p>
+    ${
+      firedWhy
+        ? `<div class="dismissed">
+             <h2>NOTICE OF DISMISSAL</h2>
+             <p>${firedWhy}</p>
+             <p class="muted">Your access to the E-Binder has been revoked. Leave the stamps on the desk.</p>
+           </div>
+           <p style="margin-top:18px">
+             <button class="btn primary" id="btn-after">Back to title</button>
+           </p>`
+        : `<p style="margin-top:18px">
+             <button class="btn primary" id="btn-after">${hasNext ? `Begin Level ${LEVELS[levelIndex + 1].level_id}` : 'Run this level again'}</button>
+           </p>`
+    }
   `;
   overlay.classList.add('on');
   // Reloading was fine when there was only one day. Now there is a next level
   // to go to, and only the last one has nothing to advance into.
-  $('btn-after').onclick = () => (hasNext ? gotoLevel(levelIndex + 1) : gotoLevel(levelIndex));
+  $('btn-after').onclick = () => {
+    // Dismissed is the end of the file, not the end of the session. Back to the
+    // title, where the run is listed as what it turned out to be.
+    if (firedWhy) {
+      location.reload();
+      return;
+    }
+    hasNext ? gotoLevel(levelIndex + 1) : gotoLevel(levelIndex);
+  };
   startBossIdle();
 }
 
@@ -2865,11 +3377,44 @@ function briefing(): void {
     .map((t) => `<p data-type="${t.replace(/"/g, '&quot;')}"></p>`)
     .join('');
 
-  // Backstory is FOUND, never told. The artifact is a thing on the desk, in a
-  // different hand from the Association's — so it gets its own register.
+  /**
+   * PARKED, not deleted.
+   *
+   * Backstory is FOUND, never told: the artifact is a thing on the desk in a
+   * different hand from the Association's, which is why it gets its own
+   * register. The four that were written — Shifts 2, 4, 6 and 8 — are still in
+   * their level files under `_artifact`, the underscore being what takes them
+   * out of play. Rename the key back and put `${artifact}` on the first page
+   * and the thread is running again.
+   */
   const art0 = (day as { artifact?: { title: string; text: string } }).artifact;
   const artifact = art0
     ? `<div class="artifact"><h4>${art0.title}</h4><p>${art0.text}</p></div>`
+    : '';
+  void artifact;
+
+  /**
+   * THE DAY THE THIRD STAMP ARRIVES.
+   *
+   * Shift 2 is the first round in `full` verdict mode, and escalation is the
+   * one rule the player cannot work out by looking at a lot: whether an address
+   * gets a warning or a fine depends on what THEY wrote there before, and the
+   * only place that is recorded is the case file on their own desk.
+   *
+   * Shown with the stamp rather than described, for the same reason the
+   * articles are introduced with their exhibits — a control the player meets
+   * for the first time on the lot is a control they misuse on the lot.
+   */
+  const fineNote = day.level_id === 2
+    ? `<div class="brief-note">
+         <img src="assets/fine.png" alt="" />
+         <div>
+           <p><b>There is a third stamp on the desk from today.</b> A warning is for
+              something you have not written up at this address before.</p>
+           <p>If you HAVE — if the case file shows you already warned them under that
+              same article — a second warning is the wrong call. Today that is a fine.</p>
+         </div>
+       </div>`
     : '';
 
   /**
@@ -2886,7 +3431,7 @@ function briefing(): void {
   const pages: string[] = [
     `<h3>This morning</h3>
      <div class="story">${storyBeats()}</div>
-     ${artifact}`,
+     ${fineNote}`,
   ];
   // Levels that add no article skip the page entirely rather than show an
   // empty one — Level 3 introduces nothing, it just changes the day.
@@ -2895,7 +3440,6 @@ function briefing(): void {
      <p class="muted" style="margin-bottom:12px">Added to the binder as of this morning.
         Everything already in there still applies — look it up before you stamp.</p>
      <div class="bk-leaf">
-       <div class="bk-leaf-edge" aria-hidden="true"></div>
        <div class="bk-leaf-book">
          <div class="bk-leaf-page">${exhibits()}</div>
        </div>
@@ -2906,7 +3450,8 @@ function briefing(): void {
        </div>
      </div>`);
   pages.push(`<h3>Today's round</h3>
-     <div class="today-line"><span>Inspections</span><b>${day.lots.length} on Bonerville</b></div>
+     <div class="today-line"><span>Inspections</span><b>${day.lots.length} across ${routeStreets().length} streets</b></div>
+     <div class="today-line"><span>Route</span><b>${routeStreets().join(', ')}</b></div>
      <div class="today-line"><span>Pay</span><b>$${day.pay_per_inspection} each</b></div>
      <div class="today-line"><span>Verdicts</span><b>${day.verdict_mode === 'notice' ? 'Pass or Notice — no fines today' : 'Pass, Notice or Citation'}</b></div>
      <p style="margin-top:14px">Mark what you find, then stamp. You will not be told
@@ -2964,7 +3509,16 @@ function briefing(): void {
              <li><b>Something wrong you have not written up here before</b> — warning.</li>
            </ul>
          </div>
-       </div>`);
+       </div>
+       <!-- The terms, in the Association's voice, on the one page that exists to
+            tell a new inspector what they have agreed to. Deliberately not in
+            the .howto grid: it is not a step, it is the deal. Fines are left
+            out because there is no FINE stamp on the desk until Shift 2. -->
+       <p class="hw-terms"><b>The arrangement.</b> You are paid a base salary for every
+          inspection you complete. One mistake a shift is forgiven; every one after that is
+          charged to you out of your balance at the end of the day. Empty that balance — or
+          take more than ${MAX_RECENT_DEDUCTIONS} deductions across ${DEDUCTION_WINDOW}
+          shifts — and the arrangement ends.</p>`);
   }
     return pages;
   };
@@ -3088,9 +3642,19 @@ function flyerMarkup(b: Bounty | undefined = day.bounty, pinned = true): string 
    * names one and nothing if it does not, rather than borrowing the face of
    * whoever this round happens to be looking for.
    */
+  /**
+   * A face is DRAWN PER ROUND, so a notice for somebody this round did not
+   * place has none to show — and a sheet with no picture on it is a third
+   * shorter than the ones beside it in the stack, which reads as a broken
+   * flyer rather than as a flyer about a face nobody has drawn.
+   *
+   * So it falls back to the face this notice was FIRST drawn with, kept in
+   * `bountyFaces` when the round that posted it placed it. Nothing to borrow
+   * only on a save that pre-dates the record.
+   */
   const character = b.character ? characterNamed(b.character)
     : b === day.bounty ? bountyCharacter
-      : null;
+      : saveFile.inspector.faces?.[b.id] ?? null;
   // A prop shows its own sprite; a person is a window onto the resident sheet,
   // so the face on the notice IS the sprite to spot and cannot drift from it.
   const isPerson = b.kind === 'person' && character !== null;
@@ -3136,8 +3700,9 @@ function flyerMarkup(b: Bounty | undefined = day.bounty, pinned = true): string 
  */
 function postedNotices(): Bounty[] {
   const out: Bounty[] = [];
+  // Today's first, because it is the one the briefing just talked about.
   if (day.bounty) out.push(day.bounty);
-  if (saveFile.inspector.thief === 'outstanding' && day.bounty?.id !== 'thief') out.push(THIEF_BOUNTY);
+  for (const b of outstandingBounties()) if (!out.some((x) => x.id === b.id)) out.push(b);
   return out;
 }
 
@@ -3213,6 +3778,7 @@ function startRound(): void {
   // Nobody starts a shift with the drawer hanging open.
   setDrawerOpen(false);
   bountyPay = 0;
+  fineBonus = 0;
   bountyMark = null;
   // What the sheet will say for the rest of the shift, whatever gets earned.
   bankShown = saveFile.inspector.pay;
@@ -3328,11 +3894,133 @@ function titleScreen(): void {
     // the gesture that lets it in. Either way the theme keeps running through
     // the briefing — the handover is the route, not this button.
     sound.unlock();
-    title.classList.remove('on');
-    // Only once. Somebody replaying Shift 1 has already been hired.
-    if (saveFile.inspector.name) briefing();
-    else application(briefing);
+    showSlotMenu();
   };
+}
+
+/**
+ * The second thing the title screen says: new file, or one of the old ones.
+ *
+ * Still the title screen. Picking a file is not a scene, and pushing it onto
+ * its own black panel would put a loading screen in front of a game that has
+ * never had one.
+ */
+function showSlotMenu(): void {
+  const menu = $('menu');
+  const slots = listSlots();
+  menu.innerHTML = `
+    <div class="tm-slots">
+      <button class="btn primary" id="btn-new-game">NEW GAME</button>
+      ${
+        slots.length
+          ? `<div class="tm-or">or continue</div>
+             <div class="tm-list">${slots.map(slotRow).join('')}</div>`
+          : `<div class="tm-or">No saved shifts yet.</div>`
+      }
+    </div>`;
+
+  $('btn-new-game').onclick = () => beginGame(null);
+  for (const s of slots) {
+    $(`slot-${s.id}`).onclick = () => beginGame(s.id);
+
+    /**
+     * Delete, in two clicks.
+     *
+     * The x sits a few pixels from the row you press to PLAY that campaign, and
+     * what it does cannot be undone — there is one copy of a save and no
+     * server holding another. So the first click only arms it: the button turns
+     * red and asks, and anything else on the screen puts it away again. One
+     * misclick costs a player their whole run otherwise.
+     */
+    const del = $<HTMLButtonElement>(`del-${s.id}`);
+    del.onclick = (ev) => {
+      ev.stopPropagation();
+      if (del.dataset.armed !== 'yes') {
+        disarmDeletes();
+        del.dataset.armed = 'yes';
+        del.textContent = 'Delete?';
+        del.setAttribute('aria-label', `Confirm deleting ${s.name ?? 'this file'}`);
+        return;
+      }
+      deleteSlot(s.id);
+      showSlotMenu();
+    };
+  }
+  // Clicking anywhere that is not an armed x is an answer of no.
+  menu.addEventListener('click', (ev) => {
+    if (!(ev.target as HTMLElement).closest('.tm-del')) disarmDeletes();
+  });
+}
+
+/** Put every armed delete back to being an x. */
+function disarmDeletes(): void {
+  for (const b of document.querySelectorAll<HTMLButtonElement>('.tm-del[data-armed]')) {
+    delete b.dataset.armed;
+    b.textContent = '×';
+    b.setAttribute('aria-label', 'Delete this file');
+  }
+}
+
+/**
+ * One saved file, named by the shift it stopped on and that shift's own date.
+ *
+ * The in-game date is a function of the shift, so the two together are
+ * redundant as identification — which is why the real-world timestamp is on
+ * there as well. Two files on Shift 3 are the same sentence otherwise, and the
+ * player's own question is "which one was I playing last night".
+ */
+function slotRow(s: SlotInfo): string {
+  const d = dateForLevel(s.level_id);
+  const who = s.name ? `${s.name} · ` : '';
+  // Every file on this list can be resumed. A dismissal deletes its own file,
+  // so there is no dead state to represent here.
+  // A row, not a button: the delete is its own control and a button cannot be
+  // nested inside another one.
+  return `<div class="tm-row">
+      <button class="btn tm-slot" id="slot-${s.id}" type="button">
+        <span class="tm-when">Shift ${s.level_id} — ${d.weekday}, ${d.label}</span>
+        <span class="tm-meta">${who}played ${playedAt(s.saved_at)}</span>
+      </button>
+      <button class="btn tm-del" id="del-${s.id}" type="button"
+              aria-label="Delete this file">&times;</button>
+    </div>`;
+}
+
+/** Real-world, and only as precise as it needs to be to tell two files apart. */
+function playedAt(ms: number): string {
+  if (!ms) return 'date unknown';
+  const d = new Date(ms);
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  if (sameDay) return `today, ${time}`;
+  return `${MONTHS[d.getMonth()]} ${d.getDate()}, ${time}`;
+}
+
+/**
+ * Take up a file and start playing it.
+ *
+ * `null` means a new one. Either way the module's round state is rebuilt from
+ * whatever the file says, because boot ran loadLevel(0) against no save at all
+ * — the thief, the bounty and the level itself all have to be re-read now that
+ * there is something to read them from.
+ */
+function beginGame(id: string | null): void {
+  if (id) activateSlot(id);
+  else newSlot();
+  saveFile = load();
+  saveFile.inspector.strikes_today = 0;
+  // Module state seeded from the save AT BOOT, when there was no slot to seed
+  // it from. The route re-reads this when a shift starts, but the briefing in
+  // between would otherwise announce $0 to somebody resuming on $180.
+  bankShown = saveFile.inspector.pay;
+  $('title').classList.remove('on');
+
+  const i = LEVELS.findIndex((l) => l.level_id === (saveFile.level_id ?? 1));
+  const start = () => gotoLevel(i < 0 ? 0 : i);
+  // Only once. Somebody replaying Shift 1 has already been hired.
+  if (saveFile.inspector.name) start();
+  else application(start);
 }
 
 async function boot(): Promise<void> {

@@ -13,11 +13,17 @@
  * authored date and an authored weekday can contradict each other, and a rule
  * that turns on the day of the week cannot afford that.
  *
- * 1 March 2027 is genuinely a Monday, which is what makes Level 1 a Monday
+ * 2 March 2026 is genuinely a Monday, which is what makes Level 1 a Monday
  * without the stored date lying.
+ *
+ * THE DAY IS PICKED BY THE WEEKDAY, not by the number. Moving the campaign from
+ * 2027 to 2026 could not keep 1 March, because that is a Sunday in 2026 — every
+ * shift would have slid one weekday and R-104 would have put the bins out on
+ * the wrong days for the whole game. The 2nd is the nearest Monday, so the
+ * authored `first_seen` dates all moved a day with it.
  */
 
-const START = { y: 2027, m: 3, d: 1 };
+const START = { y: 2026, m: 3, d: 2 };
 const DAYS_PER_LEVEL = 2;
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -56,6 +62,32 @@ export function binsAllowed(weekday: string): boolean {
 /** Whole days from `a` to `b`, both ISO. Negative if b precedes a. */
 export function daysBetween(a: string, b: string): number {
   return Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
+}
+
+/** The Monday on or before an ISO date, as a UTC millisecond stamp. */
+function weekStart(iso: string): number {
+  const t = Date.parse(`${iso}T00:00:00Z`);
+  // getUTCDay is 0 for Sunday, so Sunday belongs to the week that began six
+  // days earlier rather than to the one starting tomorrow.
+  const back = (new Date(t).getUTCDay() + 6) % 7;
+  return t - back * 86400000;
+}
+
+/**
+ * Is `iso` in a collection week, counting in twos from the week of `ref`?
+ *
+ * Recycling runs on alternate weeks. Whole WEEKS, not days: the answer has to
+ * be the same for every day of a given week, or the bin would be collectable on
+ * Tuesday and not on Wednesday. Weeks run Monday to Sunday, which is also how
+ * the campaign's shifts fall — Shift 4 is a Sunday and belongs with the three
+ * shifts before it, not with the week that starts the next morning.
+ *
+ * Symmetric about `ref`: the modulo is taken on the absolute difference so a
+ * date before the reference week answers the same as its mirror after it.
+ */
+export function isCollectionWeek(iso: string, ref: string): boolean {
+  const weeks = Math.abs(weekStart(iso) - weekStart(ref)) / (7 * 86400000);
+  return weeks % 2 === 0;
 }
 
 /**

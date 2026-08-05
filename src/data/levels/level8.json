@@ -1,6 +1,6 @@
 {
   "level_id": 8,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 8 is Monday 15 March.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 8 is Monday 16 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -11,7 +11,8 @@
     "R-106",
     "R-107",
     "R-108",
-    "R-109"
+    "R-109",
+    "R-110"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
@@ -38,15 +39,15 @@
     "Monday. Two weeks to the day since your first round.",
     "The Board reviews inspectors at the fortnight. That is not a warning. It is a date."
   ],
-  "artifact": {
+  "_artifact": {
     "title": "Slipped under the office door",
     "text": "An unsigned index card. “Ask them what a variance is. Ask them how many they granted last year.”"
   },
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 80001,
       "house": {
         "sprite": "house1"
@@ -58,7 +59,7 @@
           "sprite": "weed1",
           "anchor": "YARD_1",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-15"
+          "first_seen": "2026-03-16"
         }
       ],
       "truth": {
@@ -75,8 +76,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 80002,
       "house": {
         "sprite": "house2",
@@ -89,7 +90,7 @@
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-15",
+          "first_seen": "2026-03-16",
           "align": "left"
         }
       ],
@@ -110,7 +111,7 @@
       "street": "Bonerville",
       "seed": 80003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house13b"
       },
       "_teaching": "STUB — the boat is on day five and still legal; the packaging from Saturday is not, and it was warned then.",
       "props": [
@@ -119,14 +120,14 @@
           "sprite": "boat1",
           "anchor": "DRIVEWAY_3",
           "label": "Boat on trailer, driveway",
-          "first_seen": "2027-03-11"
+          "first_seen": "2026-03-12"
         },
         {
           "id": "boxes",
           "sprite": "boxes",
           "anchor": "YARD_2",
           "label": "Discarded packaging, front lawn",
-          "first_seen": "2027-03-13"
+          "first_seen": "2026-03-14"
         }
       ],
       "truth": {
@@ -148,8 +149,8 @@
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 80004,
       "house": {
         "sprite": "house4",
@@ -162,14 +163,14 @@
           "sprite": "trash-green",
           "anchor": "BINS_SCREENED",
           "label": "Refuse container, green — behind fence",
-          "first_seen": "2027-03-15"
+          "first_seen": "2026-03-16"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-15",
+          "first_seen": "2026-03-16",
           "align": "left"
         }
       ],
@@ -190,8 +191,8 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 80005,
       "house": {
         "sprite": "house5",

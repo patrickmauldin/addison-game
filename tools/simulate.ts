@@ -50,6 +50,7 @@ const TIMING: Record<string, ArticleTiming> = Object.fromEntries(
       weekday_window: a.weekday_window as string[] | undefined,
       season_window: a.season_window as { from: string; to: string } | undefined,
       grace_days: a.grace_days as number | undefined,
+      alternate_weeks: a.alternate_weeks as { week_of: string } | undefined,
     },
   ]),
 );
@@ -68,6 +69,12 @@ const BEHAVIORS: Behavior[] = [
     name: 'Cites what looks wrong',
     note: 'Never opens the binder. Flags anything that looks off, decoys included.',
     flag: (l) => [...(l.truth.violations ?? []).map((v) => v.object), ...(l.truth.decoys ?? []).map((d) => d.object)],
+    stamp: 'correct',
+  },
+  {
+    name: 'Guesses the verdict',
+    note: 'Marks NOTHING, but stamps the right severity every time. The exploit: the verdict is computed from what is wrong with the lot, not from what was written up, so this used to score a perfect day without opening the binder. A missed violation is a strike now, and this should fail every lot that has one.',
+    flag: () => [],
     stamp: 'correct',
   },
   {

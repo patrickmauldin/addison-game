@@ -1,6 +1,6 @@
 {
   "level_id": 3,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 3 is Friday 5 March (night).",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 3 is Friday 6 March (night).",
   "night": true,
   "weather": "clear",
   "active_rules": [
@@ -61,7 +61,8 @@
       "bonerville_03",
       "bonerville_04",
       "bonerville_05"
-    ]
+    ],
+    "hunt": true
   },
   "event": {
     "id": "bribe_lights",
@@ -88,8 +89,8 @@
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 30001,
       "house": {
         "sprite": "house1",
@@ -114,8 +115,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 30002,
       "house": {
         "sprite": "house2",
@@ -128,7 +129,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-05",
+          "first_seen": "2026-03-06",
           "group": "Trash cans, at the curb"
         },
         {
@@ -136,7 +137,7 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "first_seen": "2027-03-05",
+          "first_seen": "2026-03-06",
           "group": "Trash cans, at the curb"
         }
       ],
@@ -163,16 +164,29 @@
       "street": "Bonerville",
       "seed": 30003,
       "house": {
-        "sprite": "house3",
-        "variant": "house3-christmas",
+        "sprite": "house13b",
+        "variant": "house13b-christmas",
         "variantLabel": "Seasonal lighting, still up",
         "variantId": "lights",
         "variantGlows": true
       },
-      "_teaching": "THE BRIBE. Mark the lights and the owner comes out with forty dollars. Taking it un-marks the finding, which the Board will notice in the morning — the money is real and so is the audit.",
-      "props": [],
+      "_teaching": "THE HOUSE THAT ONLY GETS WORSE, second visit. The weeds it was warned for on Wednesday are untouched — which alone makes this a fine — and there are Christmas lights up in March on top of them. Two articles, one of them a repeat.",
+      "props": [
+        {
+          "id": "weeds_1",
+          "sprite": "weed3",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2026-03-04"
+        }
+      ],
       "truth": {
         "violations": [
+          {
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Warned on Wednesday. Nobody has touched it."
+          },
           {
             "object": "lights",
             "article": "R-103",
@@ -181,25 +195,24 @@
         ],
         "decoys": []
       },
-      "expected_verdict": "NOTICE"
+      "expected_verdict": "CITATION"
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 30004,
       "house": {
-        "sprite": "house4",
-        "mirror": true
+        "sprite": "house4"
       },
-      "_teaching": "Cut, at last. The address that has been warned and then fined for its weeds is clean, and clicking the turf out of habit is now a false positive.",
+      "_teaching": "Clean, with a sound fence — the night's near-miss, and the only quiet address on it.",
       "props": [
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-05",
+          "first_seen": "2026-03-06",
           "align": "left"
         }
       ],
@@ -216,8 +229,8 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 30005,
       "house": {
         "sprite": "house5",
@@ -230,7 +243,7 @@
           "sprite": "fence3",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "align": "left"
         },
         {
@@ -238,7 +251,7 @@
           "sprite": "trash-green",
           "anchor": "BINS_SCREENED",
           "label": "Refuse container, green — behind fence",
-          "first_seen": "2027-03-05"
+          "first_seen": "2026-03-06"
         }
       ],
       "truth": {

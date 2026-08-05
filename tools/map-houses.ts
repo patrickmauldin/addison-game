@@ -184,7 +184,20 @@ for (const r of rows) {
     table[name] = { hx: +fixed.hx.toFixed(3), hy: +fixed.hy.toFixed(3) };
   }
   if (unresolved.length) console.log(`  !! ${r.id}: could not place ${unresolved.join(', ')}`);
-  houses[r.id] = { _plan: '', anchors: table };
+  /**
+   * The paved run itself, not just its centre line.
+   *
+   * The anchors say WHERE to stand something; this says how much room there is
+   * to stand things side by side, which is a different question and the only
+   * one that can answer "do two cars fit on this driveway". Measured, like
+   * everything else here — a three-car garage and a single-width strip are both
+   * in this set and guessing would put a wheel on the lawn.
+   */
+  houses[r.id] = {
+    _plan: '',
+    drive: [+r.drive[0].toFixed(3), +r.drive[1].toFixed(3)],
+    anchors: table,
+  };
 }
 
 const PLANS: Record<string,string> = {
@@ -212,6 +225,7 @@ writeFileSync('src/data/houses.json', JSON.stringify({
   _check: 'core/scene.ts declares the surface each anchor must sit on; the validator re-samples the art and fails when one misses.',
   _screened: 'BINS_SCREENED sits just up-screen of FENCE_1 so props sorted by anchor y put the fence in front of the bins. R-104 treats screened containers as compliant on any day, whatever state the fence is in.',
   _fence: 'FENCE_1 is left-aligned (PropSpec.align) so the panel end post meets the house wall rather than straddling it. Clean right side on every plan, per the reference.',
+  _drive: 'The paved run as [left, right] fractions of the house rect. The anchors say where to stand one thing; this says how wide the driveway actually is, which is what decides whether a lot can take two cars abreast. See withParkedCar.',
   houses,
 }, null, 2) + '\n');
 console.log(`\nwrote src/data/houses.json for ${Object.keys(houses).length} houses`);

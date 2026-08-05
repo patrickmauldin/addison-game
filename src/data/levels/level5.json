@@ -1,6 +1,6 @@
 {
   "level_id": 5,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 5 is Tuesday 9 March.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 5 is Tuesday 10 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -10,7 +10,8 @@
     "R-103",
     "R-106",
     "R-107",
-    "R-108"
+    "R-108",
+    "R-110"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
@@ -66,8 +67,8 @@
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 50001,
       "house": {
         "sprite": "house1"
@@ -79,7 +80,7 @@
           "sprite": "dumpster",
           "anchor": "DRIVEWAY_3",
           "label": "Dumpster, driveway",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         }
       ],
       "truth": {
@@ -96,8 +97,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 50002,
       "house": {
         "sprite": "house2",
@@ -110,14 +111,14 @@
           "sprite": "storage",
           "anchor": "DRIVEWAY_3",
           "label": "Portable storage unit, driveway",
-          "first_seen": "2027-03-09"
+          "first_seen": "2026-03-10"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-09",
+          "first_seen": "2026-03-10",
           "align": "left"
         }
       ],
@@ -142,32 +143,60 @@
       "street": "Bonerville",
       "seed": 50003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house13b"
       },
-      "_teaching": "Weeds again at the address warned for them on Wednesday, with bins at the curb on a Tuesday sitting beside them looking exactly as illegal as they did on Friday. They are not.",
+      "_teaching": "THE HOUSE THAT ONLY GETS WORSE, third visit. Nothing has been cleared and more has arrived: the weeds, both appliances, the packaging, and now a storage pod. The pod is the one thing on it that is NOT a finding — R-108 gives it seven days and it landed today. The green bin is the new Article; the brown one beside it still is not.",
       "props": [
         {
           "id": "weeds_1",
           "sprite": "weed3",
           "anchor": "YARD_2",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-03"
+          "first_seen": "2026-03-04"
+        },
+        {
+          "id": "washer",
+          "sprite": "washer",
+          "anchor": "YARD_5",
+          "label": "Appliance, front lawn",
+          "first_seen": "2026-03-08"
+        },
+        {
+          "id": "dryer",
+          "sprite": "dryer",
+          "anchor": "YARD_1",
+          "label": "Appliance, front lawn",
+          "first_seen": "2026-03-08"
+        },
+        {
+          "id": "boxes",
+          "sprite": "boxes",
+          "anchor": "BED_FRONT",
+          "label": "Discarded packaging, planting bed",
+          "first_seen": "2026-03-10"
+        },
+        {
+          "id": "storage",
+          "sprite": "storage",
+          "anchor": "DRIVEWAY_3",
+          "label": "Portable storage unit, driveway",
+          "first_seen": "2026-03-10"
         },
         {
           "id": "bin_green",
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-09",
-          "group": "Trash cans, at the curb"
+          "group": "Trash cans",
+          "first_seen": "2026-03-10"
         },
         {
           "id": "bin_brown",
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "first_seen": "2027-03-09",
-          "group": "Trash cans, at the curb"
+          "group": "Trash cans",
+          "first_seen": "2026-03-10"
         }
       ],
       "truth": {
@@ -175,17 +204,37 @@
           {
             "object": "weeds_1",
             "article": "R-101",
-            "why": "Warned Wednesday. Still growing."
+            "why": "Third visit. Still growing."
+          },
+          {
+            "object": "washer",
+            "article": "R-107",
+            "why": "Still on the driveway."
+          },
+          {
+            "object": "dryer",
+            "article": "R-107",
+            "why": "Moved onto the lawn. That is not clearing it."
+          },
+          {
+            "object": "boxes",
+            "article": "R-107",
+            "why": "New this week, on top of everything already here."
+          },
+          {
+            "object": "bin_green",
+            "article": "R-110",
+            "why": "Recycling is not collected this week. The green container should not be at the curb at all."
           }
         ],
         "decoys": [
           {
-            "object": "bin_green",
-            "why": "Tuesday. Inside the window."
+            "object": "storage",
+            "why": "On record today. The Article allows seven days, and this is day nought."
           },
           {
             "object": "bin_brown",
-            "why": "Tuesday. Inside the window."
+            "why": "Refuse is collected weekly. Tuesday, inside the window, every week."
           }
         ]
       },
@@ -193,8 +242,8 @@
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 50004,
       "house": {
         "sprite": "house4",
@@ -207,7 +256,7 @@
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-09",
+          "first_seen": "2026-03-10",
           "align": "left"
         }
       ],
@@ -224,8 +273,8 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 50005,
       "house": {
         "sprite": "house5",

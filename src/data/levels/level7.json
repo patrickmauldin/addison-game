@@ -1,6 +1,6 @@
 {
   "level_id": 7,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 7 is Saturday 13 March.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 7 is Saturday 14 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -11,7 +11,8 @@
     "R-106",
     "R-107",
     "R-108",
-    "R-109"
+    "R-109",
+    "R-110"
   ],
   "quota": 5,
   "pay_per_inspection": 12,
@@ -48,8 +49,8 @@
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 70001,
       "house": {
         "sprite": "house1"
@@ -61,7 +62,7 @@
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-13",
+          "first_seen": "2026-03-14",
           "align": "left"
         }
       ],
@@ -78,8 +79,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 70002,
       "house": {
         "sprite": "house2",
@@ -92,7 +93,7 @@
           "sprite": "rv1",
           "anchor": "DRIVEWAY_3",
           "label": "Recreational vehicle, driveway",
-          "first_seen": "2027-03-04"
+          "first_seen": "2026-03-05"
         }
       ],
       "truth": {
@@ -113,7 +114,7 @@
       "street": "Bonerville",
       "seed": 70003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house13b"
       },
       "_teaching": "STUB — the boat, now on day three of its week and still nothing to cite; the clutter beside it is a finding.",
       "props": [
@@ -122,14 +123,14 @@
           "sprite": "boat1",
           "anchor": "DRIVEWAY_3",
           "label": "Boat on trailer, driveway",
-          "first_seen": "2027-03-11"
+          "first_seen": "2026-03-12"
         },
         {
           "id": "boxes",
           "sprite": "boxes",
           "anchor": "YARD_2",
           "label": "Discarded packaging, front lawn",
-          "first_seen": "2027-03-13"
+          "first_seen": "2026-03-14"
         }
       ],
       "truth": {
@@ -147,12 +148,12 @@
           }
         ]
       },
-      "expected_verdict": "NOTICE"
+      "expected_verdict": "CITATION"
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 70004,
       "house": {
         "sprite": "house4",
@@ -165,7 +166,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-11",
+          "first_seen": "2026-03-12",
           "group": "Trash cans, at the curb"
         },
         {
@@ -173,7 +174,7 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "first_seen": "2027-03-11",
+          "first_seen": "2026-03-12",
           "group": "Trash cans, at the curb"
         }
       ],
@@ -181,8 +182,8 @@
         "violations": [
           {
             "object": "bin_green",
-            "article": "R-104",
-            "why": "Warned Thursday. Out again on Saturday."
+            "article": "R-110",
+            "why": "Out on a Saturday, and in the week between recycling collections."
           },
           {
             "object": "bin_brown",
@@ -196,8 +197,8 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 70005,
       "house": {
         "sprite": "house5",
@@ -210,7 +211,7 @@
           "sprite": "trash-green",
           "anchor": "BINS_SCREENED",
           "label": "Refuse container, green — behind fence",
-          "first_seen": "2027-03-13"
+          "first_seen": "2026-03-14"
         }
       ],
       "truth": {

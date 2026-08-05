@@ -45,6 +45,24 @@ export type PropSpec = {
   /** Draw scale relative to the house scale. 1 = same world scale. */
   scale?: number;
   /**
+   * Sideways shift off the anchor, as a fraction of the house width.
+   *
+   * Anchors are NAMED SPOTS, and two things that share a spot land on top of
+   * each other. Two cars abreast want one anchor and half a car either side of
+   * it, which is a thing the anchor table cannot express — the offset depends
+   * on how wide the two cars happen to be. Positive is right, before mirroring.
+   */
+  nudge?: number;
+  /**
+   * The same, up the screen: a fraction of the house HEIGHT, positive is down.
+   *
+   * Not mirrored — reflecting a plan swaps left for right and leaves up alone.
+   * What it is for is lining sprites up by their tops rather than their bases:
+   * two vehicles abreast in a driveway are nose to nose, and a motorbike whose
+   * back wheel is level with a pickup's rear bumper reads as parked in the road.
+   */
+  nudgeY?: number;
+  /**
    * Horizontal alignment of the sprite on its anchor. Default 'center' suits
    * anything standing on a spot — a bin, a weed patch. 'left' suits anything
    * that BUTTS something: a fence panel running back from the house wall wants
@@ -297,7 +315,19 @@ function fill(r: Raster, y0: number, y1: number, c: Rgb): void {
  * touching the ground; the lid flaring wider than the wheels should not shift
  * where the bin stands.
  */
-type Footprint = { cx: number; baseY: number; topY: number; x0: number; x1: number };
+export type Footprint = { cx: number; baseY: number; topY: number; x0: number; x1: number };
+
+/**
+ * How tall a sprite actually DRAWS, ignoring the transparent margin.
+ *
+ * Every one of these carries a baked shadow and some padding, so the canvas
+ * height is not the height you see. Anything lining sprites up against each
+ * other has to measure the ink — see the driveway layout in main.ts.
+ */
+export function solidHeight(src: Bitmap): number {
+  const fp = footprint(src);
+  return fp.baseY - fp.topY + 1;
+}
 const footprintCache = new WeakMap<Bitmap, Footprint>();
 function footprint(src: Bitmap): Footprint {
   const hit = footprintCache.get(src);
@@ -430,7 +460,16 @@ export function renderLot(
     ? Object.fromEntries(Object.entries(base).map(([k, a]) => [k, { hx: 1 - a.hx, hy: a.hy }]))
     : base;
   const placedProps: PlacedProp[] = [];
-  const placed = spec.props.map((p) => ({ p, a: anchor(p.anchor, L, anchors) }));
+  const placed = spec.props.map((p) => {
+    const a = anchor(p.anchor, L, anchors);
+    // A sideways shift off the anchor, in fractions of the house width — and
+    // MIRRORED with the plan, like every other horizontal fact here, or two
+    // cars parked left-and-right of the driveway centre would swap sides with
+    // the garage and drive onto the lawn.
+    const dx = p.nudge ? Math.round((mirror ? -p.nudge : p.nudge) * L.house.w) : 0;
+    const dy = p.nudgeY ? Math.round(p.nudgeY * L.house.h) : 0;
+    return { p, a: dx || dy ? { x: a.x + dx, y: a.y + dy } : a };
+  });
   /**
    * Depth order, with one exception: overgrown turf goes under everything.
    *

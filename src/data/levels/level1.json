@@ -1,6 +1,6 @@
 {
   "level_id": 1,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 1 is Monday 1 March.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 1 is Monday 2 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -12,7 +12,7 @@
   "verdict_mode": "notice",
   "_verdict_mode": "Shift 1 has no FINE stamp at all. Escalation needs a warning to escalate FROM, and on the first round no address has one.",
   "_teaching": "Two rules, four lots, nothing you do costs anybody money. Violation, then a thing that is NOT one, then the second rule, then tell them apart.",
-  "briefing": "First day. Bonerville, outer loop. Two articles are live — turf and weeds — plus fence condition. Nothing else on that street is your business, however it looks.",
+  "briefing": "First day. Five addresses, five streets — they do not give a new inspector a block, they give him a route. Two articles are live, turf and weeds, plus fence condition. Nothing else you see out there is your business, however it looks.",
   "_cameos": "Named residents pinned to addresses rather than rolled. Anything not pinned stays random, so the street is still mostly strangers.",
   "cameos": [
     {
@@ -38,14 +38,14 @@
     "Welcome to the Addison Master Community Association, {name}. You are currently our only Compliance Inspector. The last guy.... is not with us anymore.",
     "You're at {address}, yes? Good. Short commute. Your own street is on the route — the Association does not consider that a conflict.",
     "Your predecessor also lived in the community. We won’t be discussing that.",
-    "Today you may pass an address or issue a warning. Nothing you do can cost anybody money.",
-    "Three errors ends your day. Three reprimands ends the arrangement."
+    "Today you may pass an address or issue a warning. Nothing you do can cost a homeowner money.",
+    "One mistake a day is forgiven. The rest come out of your pay — and more than four deductions in two shifts ends the arrangement."
   ],
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 10001,
       "house": {
         "sprite": "house1"
@@ -57,14 +57,14 @@
           "sprite": "grass1",
           "anchor": "YARD_2",
           "label": "Turf, overgrown",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         },
         {
           "id": "grass_2",
           "sprite": "grass3",
           "anchor": "YARD_5",
           "label": "Turf, overgrown",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         }
       ],
       "truth": {
@@ -86,22 +86,29 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 10002,
       "house": {
         "sprite": "house2",
         "mirror": true
       },
-      "_teaching": "Clean, and pointedly so — a sound fence is the first thing the player can click that is not a finding. Patrick and Savanna walk past, which is the other reason this address is the one they remember.",
+      "_teaching": "Clean, and pointedly so — a sound fence is the first thing the player can click that is not a finding, and the sign in the yard is the second. Neither is covered by anything in the binder. Patrick and Savanna walk past, which is the other reason this address is the one they remember.",
       "props": [
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-01",
+          "first_seen": "2026-03-02",
           "align": "left"
+        },
+        {
+          "id": "yard_sign",
+          "sprite": "yard-sign",
+          "anchor": "YARD_4",
+          "label": "Campaign sign",
+          "first_seen": "2026-03-02"
         }
       ],
       "truth": {
@@ -110,6 +117,10 @@
           {
             "object": "fence",
             "why": "Sound and complete. Age and colour are not disrepair."
+          },
+          {
+            "object": "yard_sign",
+            "why": "No Article covers signage. It is loud, it is political and it is somebody's opinion on a stick — and none of those is a thing the declaration gives you."
           }
         ]
       },
@@ -130,7 +141,7 @@
           "sprite": "fence2",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-01",
+          "first_seen": "2026-03-02",
           "align": "left"
         }
       ],
@@ -148,8 +159,8 @@
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 10004,
       "house": {
         "sprite": "house4",
@@ -162,21 +173,21 @@
           "sprite": "weed1",
           "anchor": "YARD_1",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         },
         {
           "id": "weeds_2",
           "sprite": "weed2",
           "anchor": "YARD_4",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-01"
+          "first_seen": "2026-03-02"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-01",
+          "first_seen": "2026-03-02",
           "align": "left"
         }
       ],

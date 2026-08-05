@@ -149,13 +149,45 @@
         background: #1a1814;
       }
       #lot { display: block; image-rendering: pixelated; }
-      /* Hover readout floats over the scene rather than reserving a row. */
-      #tools {
-        position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
-        padding: 6px 12px; pointer-events: none;
-        background: linear-gradient(to top, rgba(20,18,15,.72), transparent);
+      /* The hover readout used to be a strip along the foot of the scene, which
+         meant looking away from the thing you were pointing at to find out what
+         it was. It rides the cursor now.
+         Never takes a click and never sits under the pointer: it is placed
+         ABOVE the hotspot, and pointer-events:none guarantees it can never
+         steal the click it is describing or flicker by hovering itself. */
+      #hover {
+        position: absolute; z-index: 9; pointer-events: none;
+        /* left/top are written per frame; the shift is what puts it above the
+           cursor and centred on it, whatever the label turns out to measure. */
+        transform: translate(-50%, -100%);
+        /* `max-content` is load-bearing, not a tidy-up. An absolutely positioned
+           box with `left` set and `right` auto shrinks to the space remaining in
+           its containing block — so its width depended on where it currently
+           WAS, and the placement code measures it before moving it. Near an edge
+           that fed the clamp last frame's width and the tooltip hung off the
+           side until you moved again. Sized to its text and capped, it measures
+           the same wherever it happens to be sitting. */
+        width: max-content; max-width: 260px;
+        /* No plate behind it. A filled box beside a pixel-art street reads as a
+           piece of UI dropped on the scene; type with a hard shadow reads as a
+           label ON it — and the shadow is doing the same job the panel was,
+           which is keeping white legible over a bright lawn. */
+        color: rgba(255,255,255,.8); font-size: 12px; font-style: italic; line-height: 1.35;
+        text-shadow:
+          1px 1px 0 rgba(0,0,0,.85), -1px 1px 0 rgba(0,0,0,.85),
+          1px -1px 0 rgba(0,0,0,.85), -1px -1px 0 rgba(0,0,0,.85),
+          0 2px 3px rgba(0,0,0,.7);
+        /* WRAPS rather than ellipsising. Capped at 260px it was cutting the
+           date off "Turf, overgrown · first observed 2027-03-01", and a loupe
+           that hides half of what it was asked to show is worse than a loupe
+           two lines tall. */
+        text-align: center;
       }
-      #hover { color: #f0e8d2; font-size: 12px; font-style: italic; }
+      #hover[hidden] { display: none; }
+      /* Flipped under the cursor when there is no room over it. */
+      #hover.below { transform: translate(-50%, 0); }
+      /* The date is the quieter half of the same line. */
+      #hover .seen { font-style: normal; opacity: .66; }
 
       /* --- Pinned notice ------------------------------------------------ */
       /* Never intercepts a click: the thing you click is the cat in the yard,
@@ -187,8 +219,13 @@
          stacked: a lone notice already casts one from .fl-paper, and doubling
          it just thickens the edge. */
       #flyer.stacked .fl-paper {
-        box-shadow: 4px 5px 0 rgba(0,0,0,.45), 2px 3px 0 rgba(0,0,0,.35);
+        box-shadow: 4px 5px 0 rgba(0,0,0,.22), 2px 3px 0 rgba(0,0,0,.16);
       }
+      /* SAME SHEET, EVERY TIME. They are pages off one printer, so the one
+         behind must not be a different size — it is the same notice, offset.
+         Content decides height otherwise, and a wanted poster whose face has
+         not been drawn came out a third shorter than the one in front. */
+      #flyer.stacked .fl-paper { min-height: 218px; }
       /* The same arrows the binder turns its pages with, because it is the same
          gesture. Hidden until the pointer is over the stack — the notice is
          something you read, and a control parked on it permanently would make
@@ -1066,6 +1103,31 @@
          rather than three rows, so every image shares a column and every
          paragraph starts on the same left edge — three separately-sized icons
          would otherwise each set their own indent and the text would step. */
+      /* A thing on the desk, shown beside what is being said about it. Same
+         image-column-then-text shape as the how-to page, so a stamp introduced
+         on Shift 2 is laid out the way the stamps on Shift 1 were. */
+      #sheet .brief-note {
+        display: grid; grid-template-columns: 62px minmax(0, 1fr);
+        column-gap: 18px; align-items: start;
+        margin: 14px 0 4px; padding: 10px 12px 10px 0;
+        border-left: 3px solid rgba(43,39,33,.3);
+        background: rgba(43,39,33,.07);
+      }
+      #sheet .brief-note img {
+        justify-self: center; align-self: start;
+        max-width: 52px; max-height: 42px; width: auto; height: auto;
+        display: block; image-rendering: auto;
+      }
+      #sheet .brief-note p { margin: 0; font-size: 13px; }
+      #sheet .brief-note p + p { margin-top: 7px; }
+      /* The terms, under the three steps. Ruled off and inset so it reads as
+         small print on the same sheet rather than as a fourth instruction. */
+      #sheet .hw-terms {
+        margin-top: 14px; padding: 9px 11px;
+        border-left: 3px solid rgba(43,39,33,.3);
+        background: rgba(43,39,33,.07);
+        font-size: 13px;
+      }
       #sheet .howto {
         display: grid;
         grid-template-columns: 62px minmax(0, 1fr);
@@ -1124,38 +1186,43 @@
          sloppy rather than as lived in. */
       .bk-leaf {
         position: relative;
-        /* The right padding IS how far the block behind protrudes. */
-        padding: 0 5px 0 18px;
-        margin: 6px 0 2px;
+        /* No right padding any more: the block of leaves that used to protrude
+           on the fore edge is gone, so there is nothing out there to leave room
+           for. Left padding still clears the wire. */
+        padding: 0 0 0 18px;
+        /* Narrower than the sheet, and centred on it. It is a page from a ring
+           binder, and a binder page as wide as the briefing it is sitting on
+           stops reading as an object on the desk and starts reading as the
+           panel's own layout. */
+        max-width: 520px;
+        margin: 6px auto 2px;
         image-rendering: pixelated;
+        /**
+         * THE SHADOW LIVES HERE, and it has to.
+         *
+         * It was on .bk-leaf-book, which is also the element carrying
+         * `clip-path` for the stepped corners — and clip-path clips the
+         * FILTERED result. A drop-shadow is drawn outside the element's
+         * silhouette by definition, so the polygon cut every pixel of it away
+         * the moment it was painted. The coil kept its shadow only because it
+         * has no clip-path, which is why the book looked like it had none.
+         *
+         * On the unclipped wrapper it also shadows the page and the wire as one
+         * silhouette, which is the right answer anyway: they are one object.
+         */
+        filter: drop-shadow(3px 4px 0 rgba(0,0,0,.15));
       }
-      /* The block of leaves behind it, sticking out on the fore edge. Same
-         construction as the book's: one navy slab with the white inset inside
-         it, because a stack of hairlines reads as a rendering seam. Painted
-         first, so the page in front covers all of it but the protrusion. */
-      /* Carries the shadow the WHOLE book casts on the sheet, because it is the
-         hindmost piece and the one that reaches furthest right. */
-      .bk-leaf-edge {
-        position: absolute; left: 18px; right: 0; top: 4px; bottom: 4px;
-        background: var(--binder-ink);
-        clip-path: var(--leaf-corner);
-        filter: drop-shadow(-4px 7px 0 rgba(0,0,0,.2));
-      }
-      .bk-leaf-edge::before {
-        content: ''; position: absolute; inset: 2px;
-        background: #fff;
-        clip-path: var(--leaf-corner);
-      }
-      /* The front page, and the shadow it throws onto the leaves behind it —
-         down and to the RIGHT, which is the only side they show on. It sits
-         proud of the block top and bottom, so the same shadow falls on the
-         sheet under the foot of the book. */
+      /* One leaf, one shadow. It used to be two — the block behind carried the
+         book's shadow on the sheet while the front page threw its own onto the
+         block — and with the block gone a single hard shadow under the whole
+         thing is the whole of it.
+         The shadow itself is on .bk-leaf, not here — see the note up there. A
+         filter on this element is clipped away by its own clip-path. */
       .bk-leaf-book {
         position: relative;
         background: var(--binder-ink);
         clip-path: var(--leaf-corner);
         padding: 2px;
-        filter: drop-shadow(4px 5px 0 rgba(0,0,0,.22));
       }
       /* Wound round the outside, overshooting top and bottom the way a real
          wire does — the same three sprites the book uses, at the same size. */
@@ -1164,10 +1231,12 @@
          losing the overhang top, bottom and left, which is the entire thing
          that makes it read as wire wound round the outside rather than as a
          pattern printed on the paper. */
+      /* No shadow of its own now: the wrapper casts one for the whole object,
+         and the wire having a second, shorter one made it read as a separate
+         thing lying on top of the page rather than as part of the book. */
       .bk-leaf-spine {
         position: absolute; left: 0; top: -5px; bottom: -5px; width: 27px;
         display: flex; flex-direction: column; z-index: 2;
-        filter: drop-shadow(2px 2px 0 rgba(0,0,0,.22));
       }
       .bk-leaf-spine i { display: block; background-repeat: no-repeat; }
       .bk-leaf-spine .r-top {
@@ -1460,7 +1529,22 @@
         letter-spacing: .03em; color: var(--ink);
       }
       .money.fee { color: var(--stamp-green); }
+      /* Money leaving. The same red the FINE stamp is printed in, because it is
+         the same act pointed the other way. */
+      .money.debit { color: var(--stamp-red); }
       .money.total { font-size: 26px; }
+      /* The dismissal notice, at the foot of the last pay stub you will read.
+         Bordered and red-headed so it does not scan as another stub line. */
+      .dismissed {
+        margin-top: 18px; padding: 12px 14px;
+        border: 2px solid var(--stamp-red);
+        background: rgba(176, 58, 48, .07);
+      }
+      .dismissed h2 {
+        margin: 0 0 6px; font-family: var(--pixel-font); font-size: 17px;
+        letter-spacing: .1em; color: var(--stamp-red);
+      }
+      .dismissed p { margin: 4px 0; }
 
       /* --- Briefing pages ------------------------------------------------ */
       /* One idea per page. The old briefing was four paragraphs of gray text
@@ -1599,6 +1683,22 @@
         /* The shadow the board casts onto the sheet below it. */
         box-shadow: 0 1px 0 rgba(43,39,33,.28);
       }
+      /* A prior ruling: when, what it was stamped, and which articles it cited.
+         Wraps rather than truncating — an address written up under two articles
+         is exactly the case the player needs to read in full. */
+      #casefile .cf-line {
+        display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 6px;
+      }
+      #casefile .cf-line + .cf-line { margin-top: 6px; }
+      /* Filed, not prose. The pixel face and the rule down the side are the
+         binder's own vocabulary, so a citation on the case file looks like the
+         tab you would go and find it behind. */
+      #casefile .cf-art {
+        font-family: var(--pixel-font); font-size: 11px; letter-spacing: .04em;
+        padding: 1px 5px;
+        background: rgba(43,39,33,.1);
+        border-left: 2px solid rgba(43,39,33,.38);
+      }
       /* The address is what identifies the lot; it should read at a glance
          rather than compete with the card heading. */
       #cf-addr { font-size: 20px; line-height: 1.15; margin: 2px 0 4px; }
@@ -1623,15 +1723,35 @@
          over it. The gradient stays UNDERNEATH as a fallback and as the color
          the image is letterboxed against on aspect ratios it cannot cover;
          it is a dusk gradient under a daylight photograph now, which only
-         shows at the very edges of an extreme ratio. */
+         shows at the very edges of an extreme ratio.
+         The art tiles horizontally and drifts right to left, slowly enough that
+         it reads as travelling past the skyline rather than as an animation.
+         `auto 100%` rather than `cover`: repeat-x needs the image to fill the
+         height exactly and be free to run on sideways. */
       #title {
         position: fixed; inset: 0; z-index: 40; display: none;
         flex-direction: column; align-items: center; justify-content: center;
         gap: 22px; padding: 32px;
         background:
-          url('assets/title-bg2.jpg') center / cover no-repeat,
-          radial-gradient(ellipse at 50% 38%, #24303c 0%, #10161d 72%);
+          url('assets/title-bg2-tiled.jpg') 0 center / auto 100% repeat-x,
+          radial-gradient(ellipse at 50% 38%, #24303c 0%, #10161d 72%) center / cover no-repeat;
         image-rendering: pixelated;
+        animation: sky-drift 120s linear infinite;
+      }
+      /* One whole tile per iteration, so the loop lands on an identical pixel
+         and there is no seam to see.
+         THE UNIT IS vh, and it has to be: the tile is scaled to the viewport
+         HEIGHT, so its width on screen is 1672/941 of that — 177.6833vh — and
+         a px or % here would drift out of step the moment the window is
+         resized. Second layer pinned, or the gradient would crawl too. */
+      @keyframes sky-drift {
+        from { background-position: 0 center, center; }
+        to   { background-position: -177.6833vh center, center; }
+      }
+      /* A slow full-screen drift is exactly the kind of motion that provokes
+         vestibular discomfort. Asked not to move, it does not. */
+      @media (prefers-reduced-motion: reduce) {
+        #title { animation: none; }
       }
       #title.on { display: flex; }
       #title-logo {
@@ -1670,6 +1790,48 @@
         padding: 14px 0; font-size: 15px; letter-spacing: .2em;
         box-shadow: 0 3px 0 #1b2c1a, 0 6px 16px rgba(0,0,0,.45);
       }
+      /* --- Picking a file ------------------------------------------------ */
+      /* Still the title screen, so this stays inside #menu and inherits the
+         button style rather than restating it. Wider than the lone START GAME
+         was, because a saved shift is a sentence and not a word. */
+      .tm-slots { display: flex; flex-direction: column; gap: 10px; width: 380px; }
+      .tm-or {
+        text-align: center; font-family: var(--pixel-font); font-size: 11px;
+        letter-spacing: .18em; text-transform: uppercase;
+        color: rgba(255,255,255,.62); text-shadow: 0 1px 3px rgba(0,0,0,.8);
+        margin: 2px 0;
+      }
+      /* Capped and scrollable: a player who starts a lot of games must not push
+         the Back button off the bottom of the screen. */
+      .tm-list {
+        display: flex; flex-direction: column; gap: 8px;
+        max-height: 232px; overflow-y: auto; padding-right: 2px;
+      }
+      /* The file and its delete, side by side. The x takes only what it needs
+         so the row itself stays as wide as it was. */
+      .tm-row { display: flex; gap: 6px; align-items: stretch; }
+      .tm-row .tm-slot { flex: 1; min-width: 0; }
+      #menu .tm-del {
+        flex: 0 0 auto; width: 40px; padding: 0;
+        font-size: 17px; letter-spacing: 0; line-height: 1;
+        opacity: .5; transition: opacity .12s;
+      }
+      #menu .tm-del:hover, #menu .tm-del:focus-visible { opacity: 1; }
+      /* Armed. Reads as the destructive thing it is about to be, and widens to
+         fit the question rather than shrinking the file beside it. */
+      #menu .tm-del[data-armed] {
+        width: auto; padding: 0 12px; font-size: 12px; letter-spacing: .06em;
+        opacity: 1; color: var(--paper);
+        background: var(--stamp-red); border-color: #5e1c17;
+      }
+      /* A saved file is not a primary action — the paper style, two lines, and
+         ranged left because they are read as a list rather than as a label. */
+      #menu .tm-slot {
+        display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+        padding: 9px 12px; letter-spacing: normal; text-align: left;
+      }
+      .tm-when { font-family: var(--pixel-font); font-size: 13px; letter-spacing: .06em; }
+      .tm-meta { font-size: 11px; opacity: .68; }
 
       /* Boot guard. Visible by default; main.ts removes it once the module has
          actually executed. If the script never runs — the usual cause is
@@ -1780,9 +1942,10 @@
         <p id="phone-text"></p>
       </div>
 
-      <div id="tools">
-          <span id="hover"></span>
-        </div>
+      <!-- The loupe, at the pointer. What is under the cursor is named beside
+           the cursor, so reading a label costs no eye movement across the
+           scene. Positioned by main.ts on every mousemove. -->
+      <div id="hover" hidden></div>
       </div>
 
       <div id="desk">
@@ -1821,7 +1984,7 @@
                    where it is a content unit rather than a thing in the world. -->
               <div class="row"><span>Shift</span><span id="c-day">—</span></div>
               <div class="row"><span>Inspection</span><span id="c-prog">—</span></div>
-              <div class="row"><span>Strikes</span><span id="c-strikes">0 / 3</span></div>
+              <div class="row"><span>Mistakes</span><span id="c-strikes">0 / 1 free</span></div>
               <div class="row"><span>Bank Account</span><span id="c-pay">$0</span></div>
             </div>
 

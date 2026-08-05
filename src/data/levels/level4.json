@@ -1,6 +1,6 @@
 {
   "level_id": 4,
-  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 4 is Sunday 7 March.",
+  "_date": "DERIVED from the level number — see game/calendar.ts. Shift 4 is Sunday 8 March.",
   "weather": "clear",
   "active_rules": [
     "R-101",
@@ -37,7 +37,7 @@
     "Article XII joins the list today: clutter. Neatly stacked material for a live project is not an accumulation. A sofa is.",
     "Article VI as well — exterior condition. Cracked glazing. Dirty is not cracked."
   ],
-  "artifact": {
+  "_artifact": {
     "title": "Clipped to the binder",
     "text": "A board review memo. “Your predecessor’s accuracy was 94%. We mention it as a benchmark.”"
   },
@@ -60,8 +60,8 @@
   "lots": [
     {
       "lot_id": "bonerville_01",
-      "address": "4400 Bonerville",
-      "street": "Bonerville",
+      "address": "1204 Llama Alta",
+      "street": "Llama Alta",
       "seed": 40001,
       "house": {
         "sprite": "house1"
@@ -73,7 +73,7 @@
           "sprite": "couch",
           "anchor": "YARD_2",
           "label": "Upholstered furniture, front lawn",
-          "first_seen": "2027-03-07"
+          "first_seen": "2026-03-08"
         }
       ],
       "truth": {
@@ -90,8 +90,8 @@
     },
     {
       "lot_id": "bonerville_02",
-      "address": "4404 Bonerville",
-      "street": "Bonerville",
+      "address": "2214 Eyezetta",
+      "street": "Eyezetta",
       "seed": 40002,
       "house": {
         "sprite": "house2",
@@ -104,7 +104,7 @@
           "sprite": "trash-green",
           "anchor": "CURB_1",
           "label": "Refuse container, green",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "group": "Trash cans, at the curb"
         },
         {
@@ -112,7 +112,7 @@
           "sprite": "trash-brown",
           "anchor": "CURB_2",
           "label": "Refuse container, brown",
-          "first_seen": "2027-03-03",
+          "first_seen": "2026-03-04",
           "group": "Trash cans, at the curb"
         }
       ],
@@ -139,45 +139,71 @@
       "street": "Bonerville",
       "seed": 40003,
       "house": {
-        "sprite": "house3"
+        "sprite": "house13b"
       },
-      "_teaching": "The clutter decoy: material stacked for a live project is not an accumulation, and it is staged on the driveway, which is where a project actually stages.",
+      "_teaching": "THE HOUSE THAT ONLY GETS WORSE, second visit. Warned for weeds on Wednesday and still growing them, with a washer and dryer now dumped on the driveway. The weeds are the repeat, so the whole lot is a fine — and the appliances are a first offence inside it.",
       "props": [
         {
-          "id": "boxes",
-          "sprite": "boxes",
+          "id": "weeds_1",
+          "sprite": "weed3",
+          "anchor": "YARD_2",
+          "label": "Weed growth, front turf",
+          "first_seen": "2026-03-04"
+        },
+        {
+          "id": "washer",
+          "sprite": "washer",
+          "anchor": "DRIVEWAY_1",
+          "label": "Appliance, driveway",
+          "first_seen": "2026-03-08"
+        },
+        {
+          "id": "dryer",
+          "sprite": "dryer",
           "anchor": "DRIVEWAY_3",
-          "label": "Stacked materials, driveway",
-          "first_seen": "2027-03-07"
+          "label": "Appliance, driveway",
+          "first_seen": "2026-03-08"
         },
         {
           "id": "fence",
           "sprite": "fence1",
           "anchor": "FENCE_1",
           "label": "Side-yard fence",
-          "first_seen": "2027-03-07",
+          "first_seen": "2026-03-08",
           "align": "left"
         }
       ],
       "truth": {
-        "violations": [],
-        "decoys": [
+        "violations": [
           {
-            "object": "boxes",
-            "why": "Neatly stacked for an active project. R-107 covers accumulation, not storage."
+            "object": "weeds_1",
+            "article": "R-101",
+            "why": "Warned on Wednesday. Nobody has touched it."
           },
           {
+            "object": "washer",
+            "article": "R-107",
+            "why": "A washing machine on the driveway is an accumulation, not a project."
+          },
+          {
+            "object": "dryer",
+            "article": "R-107",
+            "why": "And its pair, beside it."
+          }
+        ],
+        "decoys": [
+          {
             "object": "fence",
-            "why": "Sound."
+            "why": "Sound. The one thing on this lot that is."
           }
         ]
       },
-      "expected_verdict": "PASS"
+      "expected_verdict": "CITATION"
     },
     {
       "lot_id": "bonerville_04",
-      "address": "4412 Bonerville",
-      "street": "Bonerville",
+      "address": "830 Drahma",
+      "street": "Drahma",
       "seed": 40004,
       "house": {
         "sprite": "house4",
@@ -202,8 +228,8 @@
     },
     {
       "lot_id": "bonerville_05",
-      "address": "4416 Bonerville",
-      "street": "Bonerville",
+      "address": "1620 Goodish",
+      "street": "Goodish",
       "seed": 40005,
       "house": {
         "sprite": "house5",
@@ -216,14 +242,14 @@
           "sprite": "washer",
           "anchor": "DRIVEWAY_3",
           "label": "Appliance, driveway",
-          "first_seen": "2027-03-07"
+          "first_seen": "2026-03-08"
         },
         {
           "id": "weeds_1",
           "sprite": "weed2",
           "anchor": "YARD_4",
           "label": "Weed growth, front turf",
-          "first_seen": "2027-03-07"
+          "first_seen": "2026-03-08"
         }
       ],
       "truth": {
