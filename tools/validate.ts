@@ -136,6 +136,34 @@ const HOUSE_ART = readdirSync('assets/houses')
   .map((f) => f.replace(/\.(jpg|png)$/, ''))
   .sort();
 
+/**
+ * Read a JPEG, on whatever machine this is running on.
+ *
+ * There is no JPEG decoder in core/png.ts, so one is borrowed from the OS and
+ * the result inspected as PNG. It used to borrow `sips` unconditionally — which
+ * is macOS-only, so on a Linux CI runner every house silently failed to decode
+ * and the run died on "required asset house1 is missing". Nothing was wrong
+ * with the art; the validator simply could not open it.
+ *
+ * ImageMagick is on the GitHub runners, sips is on the Macs, and the error says
+ * which are missing rather than blaming the file.
+ */
+function decodeJpeg(path: string, name: string): Bitmap {
+  const out = `/tmp/_v_${name}.png`;
+  const converters = [
+    `sips -s format png "${path}" --out "${out}"`,
+    `magick "${path}" "${out}"`,
+    `convert "${path}" "${out}"`,
+  ];
+  for (const cmd of converters) {
+    try {
+      execSync(cmd, { stdio: 'ignore' });
+      return decodePng(readFileSync(out));
+    } catch { /* try the next one */ }
+  }
+  throw new Error('no JPEG converter available (tried sips, magick, convert)');
+}
+
 for (const name of ['grass','road','sidewalk',...HOUSE_ART,'fence1','fence2','fence3','weed1','weed2','weed3','trash-green','trash-brown']) {
   // Houses are filed in their own folder; everything else sits at the top.
   const dir = name.startsWith('house') ? 'houses/' : '';
@@ -143,14 +171,8 @@ for (const name of ['grass','road','sidewalk',...HOUSE_ART,'fence1','fence2','fe
     const path = `assets/${dir}${name}.${ext}`;
     if (!existsSync(path)) continue;
     try {
-      if (ext === 'jpg') {
-        // No JPEG decoder here; macOS sips converts it for inspection only.
-        execSync(`sips -s format png "${path}" --out /tmp/_v_${name}.png`, { stdio: 'ignore' });
-        SPRITES.set(name, decodePng(readFileSync(`/tmp/_v_${name}.png`)));
-      } else {
-        SPRITES.set(name, decodePng(readFileSync(path)));
-      }
-    } catch { warn(`${name}: could not decode ${path}`); }
+      SPRITES.set(name, ext === 'jpg' ? decodeJpeg(path, name) : decodePng(readFileSync(path)));
+    } catch (e) { warn(`${name}: could not decode ${path} — ${(e as Error).message}`); }
     break;
   }
 }
