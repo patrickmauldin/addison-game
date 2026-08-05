@@ -36,29 +36,28 @@ build — see `assets/README.md`.
 
 ## Streets
 
-The nine streets live in `src/data/streets.json`. Character drives the
+The ten streets live in `src/data/streets.json`. Character drives the
 difficulty ramp and Act III's flood geography, so every street carries one:
 
-| Street | Was | Character |
-|---|---|---|
-| Bonerville | Bonerville | Outer loop, original phase. **Backs onto the creek — Act III flood street.** |
-| Llama Alta | Llama Alta | Smallest homes, tightest lots. Most friction. |
-| Dimelest | Dimelest | Interior. Baseline. |
-| Eyezeta | Eyezetta | Interior, south of Dimelest. Baseline; pairs with Dimelest on Day 3. |
-| Karaoke | Karaoke | North-south spine. Through-traffic, board members watch it. |
-| Bananalise | Bananalise | Southern arterial. Runs the full width and exits east. |
-| Zingersoll | Zingersoll | Newest phase, east side. **Top of the block also reaches the creek.** |
-| Goodish | Goodish | Newest phase, east side. |
-| Whistling Sparrow | Whistling Sparrow | **Unassigned** — not on the map extract on hand. |
+| Street | Character |
+|---|---|
+| Bonerville | Outer loop, original phase. **Backs onto the creek — Act III flood street.** |
+| Llama Alta | Smallest homes, tightest lots. Most friction. |
+| Drahma | Two blocks off the bottom of the Bonerville loop, and out. Goes nowhere. |
+| Dimelest | Interior. Baseline. |
+| Eyezetta | Interior, south of Dimelest. Baseline; pairs with Dimelest on Day 3. |
+| Karaoke | North-south spine. Through-traffic, board members watch it. |
+| Bananalise | Southern arterial. Runs the full width and exits east. |
+| Zingersoll | Newest phase, east side. **Top of the block also reaches the creek.** |
+| Goodish | Newest phase, east side. |
+| Whistling Sparrow | Newest section, far south-west. The quietest address on the map. |
 
-Characters are read off the real Addison street map, not inherited from the
-gameplan's section 7 list (which omits Bananalise and Whistling Sparrow). Two
-consequences: Bananalise is an arterial rather than an interior street, and the
-creek frontage belongs to Bonerville and Zingersoll, so Act III needs no
+Bananalise being an arterial rather than an interior street is deliberate, and
+the creek frontage belongs to Bonerville and Zingersoll — so Act III needs no
 separate greenbelt street.
 
-**Open:** Whistling Sparrow has no character yet — Whistling Sparrow is not on the
-map extract on hand, so its phase and position are unset rather than invented.
+Addison is invented, and so is every street on its map. Any resemblance to a
+real subdivision is not the point and is not documented here.
 
 ## Three-quarter scene
 

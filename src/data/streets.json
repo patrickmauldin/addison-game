@@ -1,11 +1,9 @@
 {
-  "_note": "The eight streets of Addison. Each keeps the character its real counterpart has on the map, because those characters carry the difficulty ramp and Act III's flood geography.",
-  "_source_note": "Characters below are read off the actual Addison street map rather than inherited from gameplan section 7's list, which did not include Bananalise or Whistling Sparrow. Two corrections follow from the map. Bananalise (<- Bananalise) is the southern arterial, not an interior street. And the the creek frontage is the NORTH ARC OF BONERVILLE plus the top of the Zingersoll block, not a separate greenbelt street — so Act III floods Bonerville and Zingersoll and needs no extra street name.",
+  "_note": "The ten streets of Addison. Each carries a character — outer loop, spine, arterial, newest phase — because those characters drive the difficulty ramp and Act III's flood geography.",
   "streets": [
     {
       "id": "bonerville",
       "name": "Bonerville",
-      "was": "Bonerville",
       "phase": "original",
       "role": "outer_loop",
       "creek_frontage": true,
@@ -14,7 +12,6 @@
     {
       "id": "llama_alta",
       "name": "Llama Alta",
-      "was": "Llama Alta",
       "phase": "original",
       "role": "residential",
       "creek_frontage": false,
@@ -23,7 +20,6 @@
     {
       "id": "drahma",
       "name": "Drahma",
-      "was": "Drahma",
       "phase": "original",
       "role": "residential",
       "creek_frontage": false,
@@ -32,7 +28,6 @@
     {
       "id": "dimelest",
       "name": "Dimelest",
-      "was": "Dimelest",
       "phase": "interior",
       "role": "residential",
       "creek_frontage": false,
@@ -41,7 +36,6 @@
     {
       "id": "eyezetta",
       "name": "Eyezetta",
-      "was": "Eyezetta",
       "phase": "interior",
       "role": "residential",
       "creek_frontage": false,
@@ -50,7 +44,6 @@
     {
       "id": "karaoke",
       "name": "Karaoke",
-      "was": "Karaoke",
       "phase": "interior",
       "role": "spine",
       "creek_frontage": false,
@@ -59,7 +52,6 @@
     {
       "id": "bananalise",
       "name": "Bananalise",
-      "was": "Bananalise",
       "phase": "arterial",
       "role": "arterial",
       "creek_frontage": false,
@@ -68,7 +60,6 @@
     {
       "id": "zingersoll",
       "name": "Zingersoll",
-      "was": "Zingersoll",
       "phase": "new",
       "role": "residential",
       "creek_frontage": true,
@@ -77,7 +68,6 @@
     {
       "id": "goodish",
       "name": "Goodish",
-      "was": "Goodish",
       "phase": "new",
       "role": "residential",
       "creek_frontage": false,
@@ -86,7 +76,6 @@
     {
       "id": "whistling_sparrow",
       "name": "Whistling Sparrow",
-      "was": "Whistling Sparrow",
       "phase": "new",
       "role": "residential",
       "creek_frontage": false,
